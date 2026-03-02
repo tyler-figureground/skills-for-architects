@@ -1,5 +1,5 @@
 ---
-name: zoning
+name: zoning-analyzer
 description: Analyze zoning envelope rules for lots in Maldonado, Uruguay using GIS data and TONE regulations
 allowed-tools:
   - Read
@@ -13,7 +13,7 @@ allowed-tools:
 user-invocable: true
 ---
 
-# /zoning — Zoning Envelope Analysis (Maldonado, Uruguay)
+# /zoning-analyzer — Zoning Envelope Analysis (Maldonado, Uruguay)
 
 Analyze building envelope rules for any lot in Maldonado using GIS data from the ArcGIS cadastral portal and the TONE (Volume V of the Digesto Departamental).
 
@@ -44,13 +44,13 @@ To convert EPSG:3857 to lat/lon for reference:
 
 ### Step 3: Look Up Location
 
-Read `~/.claude/skills/zoning/normativa/location-map.md` to match `nomloccat` to a TONE sector/region.
+Read `~/.claude/skills/zoning-analyzer/normativa/location-map.md` to match `nomloccat` to a TONE sector/region.
 
 If no match is found, search the digesto website at `https://digesto.maldonado.gub.uy/` for the location.
 
 ### Step 4: Load Normativa
 
-Read the corresponding normativa file from `~/.claude/skills/zoning/normativa/`.
+Read the corresponding normativa file from `~/.claude/skills/zoning-analyzer/normativa/`.
 
 If the file doesn't exist yet:
 1. Fetch the relevant articles from the digesto using WebFetch
@@ -92,7 +92,7 @@ Use the output format below to present a structured analysis.
 
 If new articles were fetched from the digesto during this analysis:
 1. Ask the user if they want to save them as a local normativa reference file
-2. If yes, write to `~/.claude/skills/zoning/normativa/` with a descriptive filename
+2. If yes, write to `~/.claude/skills/zoning-analyzer/normativa/` with a descriptive filename
 3. Update `location-map.md` with the new mapping
 
 ## Output Format

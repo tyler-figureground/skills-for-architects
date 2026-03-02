@@ -1,4 +1,4 @@
-# /zoning-envelope
+# /zoning-analyzer
 
 Zoning envelope analyzer for lots in Maldonado, Uruguay as a [Claude Code](https://docs.anthropic.com/en/docs/claude-code) skill. Paste GIS JSON from the [Maldonado cadastral portal](https://ide.maldonado.gub.uy/) and get a full building envelope analysis based on the TONE (Texto Ordenado de Normas de Edificación) regulations.
 
@@ -8,13 +8,13 @@ Zoning envelope analyzer for lots in Maldonado, Uruguay as a [Claude Code](https
 
 ```bash
 git clone https://github.com/AlpacaLabsLLC/skills.git
-ln -s "$(pwd)/skills/zoning" ~/.claude/skills/zoning
+ln -s "$(pwd)/skills/zoning-analyzer" ~/.claude/skills/zoning-analyzer
 ```
 
 ## Usage
 
 ```
-/zoning
+/zoning-analyzer
 ```
 
 Then paste the GIS JSON from the Maldonado ArcGIS cadastral portal. The skill:
@@ -102,7 +102,7 @@ For unmapped localities, the skill fetches regulations from the [Digesto Departa
 ## File Structure
 
 ```
-zoning/
+zoning-analyzer/
 ├── SKILL.md                              # Skill instructions and workflow
 └── normativa/
     ├── location-map.md                   # nomloccat → TONE sector/zone mapping

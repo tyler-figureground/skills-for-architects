@@ -10,7 +10,7 @@
 
 AI workplace strategy consultant that builds office space programs through conversation. Give it a headcount, square footage, and work policy — get area splits, room schedules, seat counts, and exportable reports backed by research from JLL, CBRE, Gensler, and others.
 
-### [`/zoning`](./zoning)
+### [`/zoning-analyzer`](./zoning-analyzer)
 
 Zoning envelope analyzer for lots in Maldonado, Uruguay. Paste GIS JSON from the [municipal cadastral portal](https://ide.maldonado.gub.uy/), get a full building envelope analysis — zone determination, setbacks, height limits, FOS/FOT, and an ASCII buildable-area sketch — all referenced to the TONE regulations.
 
@@ -22,14 +22,14 @@ cd skills
 
 # Symlink the skills you want (recommended — stays in sync with updates)
 ln -s "$(pwd)/workplace-programmer" ~/.claude/skills/workplace-programmer
-ln -s "$(pwd)/zoning" ~/.claude/skills/zoning
+ln -s "$(pwd)/zoning-analyzer" ~/.claude/skills/zoning-analyzer
 ```
 
 Then in Claude Code:
 
 ```
 /workplace-programmer 30,000 RSF tech company, 200 people, 3 days hybrid
-/zoning
+/zoning-analyzer
 ```
 
 ## What Are Claude Code Skills?
