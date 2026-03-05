@@ -94,7 +94,7 @@ Normativa files are bundled for the following localities:
 | Aiguá | Título V, Cap. II, Sector 2 | 2.2 (4 subzones) | Complete |
 | Pan de Azúcar | Título V, Cap. II, Sector 2 | 2.3 | Complete |
 | José Ignacio | Título III, Cap. III | — | Partial |
-| Punta del Este | Título II, Cap. II, Sector 1 | — | Not yet |
+| Punta del Este | Título II, Cap. II, Sector 1 | 1.1–1.3 (Faro, Centro, La Pastora) | Complete |
 | Piriápolis | Título IV, Cap. II | — | Not yet |
 
 For unmapped localities, the skill fetches regulations from the [Digesto Departamental](https://digesto.maldonado.gub.uy/) and offers to save them locally for future use.
@@ -108,6 +108,7 @@ zoning-analyzer/
     ├── location-map.md                   # nomloccat → TONE sector/zone mapping
     ├── titulo-ii-cap-ii-sector-2.md      # Maldonado (5 zones, 14 subzones)
     ├── titulo-iii-cap-ii-sector-1.md     # La Barra & Manantiales (6 zones)
+    ├── titulo-ii-cap-ii-sector-1.md      # Punta del Este (3 zones)
     ├── titulo-iii-cap-iii-sector-2.md    # José Ignacio (partial)
     ├── titulo-v-cap-i-sector-1.md        # San Carlos (5 zones)
     └── titulo-v-cap-ii-sector-2.md       # Garzón, Aiguá, Pan de Azúcar

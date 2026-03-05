@@ -11,7 +11,7 @@ Maps `nomloccat` values from the Maldonado GIS cadastral portal to TONE sectors 
 | JOSE IGNACIO | La Barra y José Ignacio | III | III | 2 | titulo-iii-cap-iii-sector-2.md |
 | FARO DE JOSE IGNACIO | La Barra y José Ignacio | III | III | 2 | titulo-iii-cap-iii-sector-2.md |
 | LA JUANITA | La Barra y José Ignacio | III | III | 2 | titulo-iii-cap-iii-sector-2.md |
-| PUNTA DEL ESTE | Maldonado - Punta del Este | II | II | 1 | (not yet created) |
+| PUNTA DEL ESTE | Maldonado - Punta del Este | II | II | 1 | titulo-ii-cap-ii-sector-1.md |
 | MALDONADO | Maldonado - Punta del Este | II | II | 2 | titulo-ii-cap-ii-sector-2.md |
 | PIRIAPOLIS | Piriápolis y Solís | IV | II | 1 | (not yet created) |
 | SAN CARLOS | Centros Poblados no Balnearios | V | I | 1 | titulo-v-cap-i-sector-1.md |
