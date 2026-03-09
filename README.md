@@ -34,21 +34,33 @@ PDF product spec parser. Feed it price books, fact sheets, or spec sheets — Cl
 
 Batch product image processor. Read image URLs from a Google Sheet, download at full resolution, normalize sizing (max 2000px, PNG), and remove backgrounds via rembg — saving output at each stage. Pairs with `/product-spec-bulk-fetch` for a full spec → image pipeline.
 
-## Quick Start
+## Install
 
 ```bash
 git clone https://github.com/AlpacaLabsLLC/skills.git
 cd skills
-
-# Symlink the skills you want (recommended — stays in sync with updates)
-ln -s "$(pwd)/workplace-programmer" ~/.claude/skills/workplace-programmer
-ln -s "$(pwd)/occupancy-calculator" ~/.claude/skills/occupancy-calculator
-ln -s "$(pwd)/zoning-analyzer" ~/.claude/skills/zoning-analyzer
-ln -s "$(pwd)/product-spec-bulk-fetch" ~/.claude/skills/product-spec-bulk-fetch
-ln -s "$(pwd)/product-spec-bulk-cleanup" ~/.claude/skills/product-spec-bulk-cleanup
-ln -s "$(pwd)/product-spec-pdf-parser" ~/.claude/skills/product-spec-pdf-parser
-ln -s "$(pwd)/product-image-processor" ~/.claude/skills/product-image-processor
 ```
+
+Install individual skills:
+
+```bash
+./install.sh workplace-programmer
+./install.sh occupancy-calculator product-spec-bulk-fetch   # or multiple at once
+```
+
+Or install everything:
+
+```bash
+./install.sh
+```
+
+List available skills:
+
+```bash
+./install.sh --list
+```
+
+Skills are symlinked into `~/.claude/skills/` so they stay in sync when you `git pull`.
 
 Then in Claude Code:
 
