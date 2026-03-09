@@ -37,27 +37,19 @@ Batch product image processor. Read image URLs from a Google Sheet, download at 
 ## Install
 
 ```bash
-git clone https://github.com/AlpacaLabsLLC/skills.git
+# Install all skills
+git clone https://github.com/AlpacaLabsLLC/skills.git && skills/install.sh
+
+# Or install just one
+git clone https://github.com/AlpacaLabsLLC/skills.git && skills/install.sh workplace-programmer
+```
+
+Already cloned? Install more skills anytime:
+
+```bash
 cd skills
-```
-
-Install individual skills:
-
-```bash
-./install.sh workplace-programmer
-./install.sh occupancy-calculator product-spec-bulk-fetch   # or multiple at once
-```
-
-Or install everything:
-
-```bash
-./install.sh
-```
-
-List available skills:
-
-```bash
-./install.sh --list
+./install.sh occupancy-calculator product-spec-bulk-fetch   # one or more
+./install.sh --list                                         # see what's available
 ```
 
 Skills are symlinked into `~/.claude/skills/` so they stay in sync when you `git pull`.
