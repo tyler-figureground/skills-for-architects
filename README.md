@@ -14,10 +14,6 @@ Color palette generator. Describe a mood, paste an image, or give it a single he
 
 Design brief builder. Feed it vague client requirements, meeting notes, or a project description — get a structured brief with program requirements, adjacency matrix, design criteria, technical constraints, and open questions. Runs a guided discovery interview when input is sparse.
 
-### [`/email-drafter`](./email-drafter)
-
-AEC email drafter. Tell it who you're writing to and what about — get a project email with the right tone and structure. Handles RFIs, submittal reviews, client updates, consultant coordination, contractor correspondence, meeting follow-ups, and scope change notices.
-
 ### [`/redline-punch-list`](./redline-punch-list)
 
 Construction punch list generator. Paste field notes or drag in site photos — get a structured punch list with CSI divisions, trade assignments, priority levels (critical/major/minor), and summary statistics. Exports to markdown or CSV for Procore/PlanGrid/BIM 360.
@@ -87,7 +83,6 @@ Then in Claude Code:
 ```
 /color-palette-generator warm earth tones for a desert spa
 /design-brief-builder 15,000 SF coworking space in Brooklyn, 200 members, mixed use
-/email-drafter RFI to the GC — the reflected ceiling plan doesn't match the mechanical drawings at grid line 4
 /redline-punch-list paint scuffed in room 201, ceiling tile missing in corridor, exit sign out in stairwell B
 /site-analysis-generator 250 Hudson St, New York NY
 /slide-deck-generator Q1 results for our consulting practice — revenue up 40%, 3 new clients

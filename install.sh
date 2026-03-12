@@ -7,7 +7,6 @@ REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 ALL_SKILLS=(
   color-palette-generator
   design-brief-builder
-  email-drafter
   occupancy-calculator
   product-image-processor
   product-spec-bulk-cleanup
