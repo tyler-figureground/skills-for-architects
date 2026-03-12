@@ -6,9 +6,33 @@
 
 ## Available Skills
 
+### [`/color-palette-generator`](./color-palette-generator)
+
+Color palette generator. Describe a mood, paste an image, or give it a single hex code — get a harmonious 8-12 color palette as a self-contained `.html` file with swatches, HEX/RGB/HSL codes, WCAG contrast ratios, and example pairings. The HTML itself uses the generated palette.
+
+### [`/design-brief-builder`](./design-brief-builder)
+
+Design brief builder. Feed it vague client requirements, meeting notes, or a project description — get a structured brief with program requirements, adjacency matrix, design criteria, technical constraints, and open questions. Runs a guided discovery interview when input is sparse.
+
+### [`/email-drafter`](./email-drafter)
+
+AEC email drafter. Tell it who you're writing to and what about — get a project email with the right tone and structure. Handles RFIs, submittal reviews, client updates, consultant coordination, contractor correspondence, meeting follow-ups, and scope change notices.
+
+### [`/redline-punch-list`](./redline-punch-list)
+
+Construction punch list generator. Paste field notes or drag in site photos — get a structured punch list with CSI divisions, trade assignments, priority levels (critical/major/minor), and summary statistics. Exports to markdown or CSV for Procore/PlanGrid/BIM 360.
+
+### [`/site-analysis-generator`](./site-analysis-generator)
+
+Site analysis research assistant. Give it an address or coordinates — get a comprehensive brief with climate data, zoning, transit access, demographics, neighborhood context, and natural features. Uses web search to pull real data.
+
 ### [`/slide-deck-generator`](./slide-deck-generator)
 
 HTML slide deck generator. Describe a topic, paste an outline, or feed it data — get a self-contained `.html` presentation with an editorial design system: Helvetica, left-aligned layout, monochrome palette, 22 slide types (stats, tables, bar charts, timelines, comparisons, image grids), keyboard/touch navigation, and a progress bar. Open in any browser.
+
+### [`/spec-writer`](./spec-writer)
+
+CSI outline specification writer. Feed it a materials list, product schedule, or project description — get structured specs organized by MasterFormat division with three-part sections (General, Products, Execution), performance criteria, and acceptable manufacturers.
 
 ### [`/workplace-programmer`](./workplace-programmer)
 
@@ -61,7 +85,13 @@ Skills are symlinked into `~/.claude/skills/` so they stay in sync when you `git
 Then in Claude Code:
 
 ```
+/color-palette-generator warm earth tones for a desert spa
+/design-brief-builder 15,000 SF coworking space in Brooklyn, 200 members, mixed use
+/email-drafter RFI to the GC — the reflected ceiling plan doesn't match the mechanical drawings at grid line 4
+/redline-punch-list paint scuffed in room 201, ceiling tile missing in corridor, exit sign out in stairwell B
+/site-analysis-generator 888 Brannan St, San Francisco CA
 /slide-deck-generator Q1 results for our consulting practice — revenue up 40%, 3 new clients
+/spec-writer porcelain tile, LVT flooring, painted gypsum board, acoustic ceiling tile, solid surface countertops
 /workplace-programmer 30,000 RSF tech company, 200 people, 3 days hybrid
 /occupancy-calculator 50,000 SF office building, 3 floors
 /zoning-analyzer
