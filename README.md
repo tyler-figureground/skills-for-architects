@@ -6,7 +6,7 @@
 
 ## Available Skills
 
-### [`/create-design-deck`](./create-design-deck)
+### [`/slide-deck-generator`](./slide-deck-generator)
 
 HTML slide deck generator. Describe a topic, paste an outline, or feed it data — get a self-contained `.html` presentation with an editorial design system: Helvetica, left-aligned layout, monochrome palette, 22 slide types (stats, tables, bar charts, timelines, comparisons, image grids), keyboard/touch navigation, and a progress bar. Open in any browser.
 
@@ -61,7 +61,7 @@ Skills are symlinked into `~/.claude/skills/` so they stay in sync when you `git
 Then in Claude Code:
 
 ```
-/create-design-deck Q1 results for our consulting practice — revenue up 40%, 3 new clients
+/slide-deck-generator Q1 results for our consulting practice — revenue up 40%, 3 new clients
 /workplace-programmer 30,000 RSF tech company, 200 people, 3 days hybrid
 /occupancy-calculator 50,000 SF office building, 3 floors
 /zoning-analyzer
