@@ -85,7 +85,7 @@ Skills are symlinked into `~/.claude/skills/` so they stay in sync when you upda
 
 | Skill | Description |
 |-------|-------------|
-| [`/product-research`](./05-materials-research/skills/product-research) | Product research companion — captures and organizes products into a persistent library as you browse. |
+| [`/product-research`](./05-materials-research/skills/product-research) | Brief-based product research — describe what you need, Claude searches and returns curated candidates. |
 | [`/product-spec-bulk-fetch`](./05-materials-research/skills/product-spec-bulk-fetch) | Extract FF&E specs from product URLs at scale — names, dimensions, materials, pricing, images. |
 | [`/product-spec-bulk-cleanup`](./05-materials-research/skills/product-spec-bulk-cleanup) | Normalize messy FF&E schedules — casing, dimensions, materials, categories, deduplication. |
 | [`/product-spec-pdf-parser`](./05-materials-research/skills/product-spec-pdf-parser) | Extract FF&E specs from PDFs — price books, fact sheets, spec sheets into standardized schedules. |

@@ -1,22 +1,102 @@
 # Site Planning
 
-Site planning skills for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — site research, analysis, and design brief building.
+A Claude Code plugin for site research and due diligence. Give it an address and it builds a comprehensive site analysis — climate, transit, demographics, neighborhood history, and zoning — using public data sources. What used to take days of manual research happens in minutes.
+
+## The Problem
+
+Early-stage site analysis requires pulling data from dozens of sources — NOAA for climate, Census Bureau for demographics, MTA for transit, Landmarks Preservation for historic districts, PLUTO for zoning. Architects and developers spend days assembling this into a coherent picture before design can even begin.
+
+## The Solution
+
+Five research skills that each investigate a different dimension of a site, plus a command that runs them all in sequence for full due diligence. Each skill searches authoritative public data sources, synthesizes findings, and outputs a structured markdown report.
+
+```
+                          ┌─────────────┐
+                          │   Address   │
+                          └──────┬──────┘
+                                 │
+            ┌────────────────────┼────────────────────┐
+            │                    │                    │
+            ▼                    ▼                    ▼
+  ┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐
+  │  Environmental   │ │    Mobility      │ │  Demographics    │
+  │                  │ │                  │ │                  │
+  │ Climate          │ │ Transit routes   │ │ Population       │
+  │ Precipitation    │ │ Walk/Bike/       │ │ Income           │
+  │ Wind patterns    │ │ Transit scores   │ │ Age distribution │
+  │ Sun angles       │ │ Major roads      │ │ Housing market   │
+  │ Flood zones      │ │ Airport access   │ │ Employment       │
+  │ Seismic risk     │ │ Ped. infra.      │ │                  │
+  │ Soil & topo      │ │                  │ │                  │
+  └────────┬─────────┘ └────────┬─────────┘ └────────┬─────────┘
+           │                    │                     │
+           ▼                    ▼                     ▼
+  ┌──────────────────┐ ┌──────────────────┐
+  │  Neighborhood    │ │  Design Brief    │
+  │  History         │ │  Builder         │
+  │                  │ │                  │
+  │ Adjacent uses    │ │ Client reqs →    │
+  │ Arch. character  │ │ structured brief │
+  │ Historic dist.   │ │ ready for SD     │
+  │ Landmarks        │ │                  │
+  │ Commercial       │ │                  │
+  │ Planned devt.    │ │                  │
+  └────────┬─────────┘ └────────┬─────────┘
+           │                    │
+           ▼                    ▼
+  ┌─────────────────────────────────────────┐
+  │         Markdown Reports                │
+  │                                         │
+  │  One file per analysis, each with:      │
+  │  Key Metrics table + detailed sections  │
+  └─────────────────────────────────────────┘
+```
+
+## Data Flow
+
+### Input
+
+Every research skill takes a single input: **an address or location**. It asks once, then researches autonomously without interrupting.
+
+### Research sources
+
+Each skill searches authoritative, governmental, and non-profit sources:
+
+| Skill | Primary sources |
+|-------|----------------|
+| Environmental | NOAA, USGS, EPA, NWS, NREL |
+| Mobility | MTA, DOT, Walk Score, FAA, USDOT |
+| Demographics | Census Bureau, BLS, HUD, NYC Open Data |
+| Neighborhood History | NYC LPC, National Register, DCP, Library of Congress |
+| Design Brief | Synthesizes from client input (no external sources) |
+
+### Output
+
+Each skill produces a **structured markdown report** with a Key Metrics summary table followed by detailed sections. Reports are saved to local files.
+
+### Pipeline
+
+The `/site-due-diligence-nyc` command runs all four research skills plus NYC zoning in sequence, carrying context forward between steps:
+
+```
+Address → Environmental → Mobility → Demographics → Neighborhood → Zoning → 5 reports
+```
 
 ## Skills
 
 | Skill | Description |
 |-------|-------------|
-| [environmental-analysis](skills/environmental-analysis/) | Climate and environmental site analysis — temperature, precipitation, wind, sun angles, flood zones, seismic risk, soil, topography. |
-| [mobility-analysis](skills/mobility-analysis/) | Transit and mobility site analysis — subway, bus, bike, pedestrian infrastructure, walk scores, airport access. |
-| [demographics-analysis](skills/demographics-analysis/) | Demographics and market site analysis — population, income, age, housing market, employment. |
-| [neighborhood-history](skills/neighborhood-history/) | Neighborhood context and history — adjacent uses, architectural character, landmarks, commercial activity, planned development. |
-| [design-brief-builder](skills/design-brief-builder/) | Turns vague client requirements into structured design briefs ready for schematic design. |
+| [environmental-analysis](skills/environmental-analysis/) | Climate and environmental conditions — temperature, precipitation, wind, sun, flood zones, seismic risk, soil, topography |
+| [mobility-analysis](skills/mobility-analysis/) | Transit and mobility — subway, bus, bike, pedestrian infrastructure, walk/bike/transit scores, airport access |
+| [demographics-analysis](skills/demographics-analysis/) | Demographics and market — population, income, age distribution, housing market, employment |
+| [neighborhood-history](skills/neighborhood-history/) | Neighborhood context — adjacent uses, architectural character, landmarks, commercial activity, planned development |
+| [design-brief-builder](skills/design-brief-builder/) | Turns vague client requirements into structured design briefs ready for schematic design |
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| [site-due-diligence-nyc](commands/site-due-diligence-nyc.md) | Full NYC site due diligence — environmental, mobility, demographics, history, and zoning from PLUTO. |
+| [site-due-diligence-nyc](commands/site-due-diligence-nyc.md) | Full NYC site due diligence — environmental, mobility, demographics, history, and zoning from PLUTO |
 
 ## Install
 
