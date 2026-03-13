@@ -67,7 +67,7 @@ Skills are symlinked into `~/.claude/skills/` so they stay in sync when you upda
 
 | Skill | Description |
 |-------|-------------|
-| [`/zoning-analyzer`](./zoning-analysis/skills/zoning-analyzer) | Buildable envelope analysis for lots in Maldonado, Uruguay — setbacks, heights, FOS/FOT from TONE regulations. |
+| [`/zoning-analysis-uruguay`](./zoning-analysis/skills/zoning-analysis-uruguay) | Buildable envelope analysis for lots in Maldonado, Uruguay — setbacks, heights, FOS/FOT from TONE regulations. |
 
 ### Specifications
 
