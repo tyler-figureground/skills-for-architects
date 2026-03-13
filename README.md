@@ -18,7 +18,7 @@
 |--------|--------|----------|-------------|
 | [programming](./programming) | 2 | 1 | Workplace strategy: space programs, occupancy loads, IBC compliance. |
 | [site-planning](./site-planning) | 2 | 1 | Site research, analysis, and design brief building. |
-| [zoning](./zoning) | 1 | — | Buildable envelope analysis from zoning regulations and GIS data. |
+| [zoning-analysis](./zoning-analysis) | 1 | — | Buildable envelope analysis from zoning regulations and GIS data. |
 | [specifications](./specifications) | 2 | — | CSI outline specs and construction punch lists. |
 | [data-management](./data-management) | 4 | 1 | FF&E spec extraction, cleanup, and image processing. |
 | [presentations](./presentations) | 2 | — | Slide deck generation and color palette creation. |
@@ -67,7 +67,7 @@ Skills are symlinked into `~/.claude/skills/` so they stay in sync when you upda
 
 | Skill | Description |
 |-------|-------------|
-| [`/zoning-analyzer`](./zoning/skills/zoning-analyzer) | Buildable envelope analysis for lots in Maldonado, Uruguay — setbacks, heights, FOS/FOT from TONE regulations. |
+| [`/zoning-analyzer`](./zoning-analysis/skills/zoning-analyzer) | Buildable envelope analysis for lots in Maldonado, Uruguay — setbacks, heights, FOS/FOT from TONE regulations. |
 
 ### Specifications
 
