@@ -6,14 +6,17 @@ Site planning skills for [Claude Code](https://docs.anthropic.com/en/docs/claude
 
 | Skill | Description |
 |-------|-------------|
-| [site-analysis-generator](skills/site-analysis-generator/) | Researches a site and produces a comprehensive analysis brief (climate, zoning, transit, demographics, environment) |
-| [design-brief-builder](skills/design-brief-builder/) | Turns vague client requirements into structured design briefs ready for schematic design |
+| [environmental-analysis](skills/environmental-analysis/) | Climate and environmental site analysis — temperature, precipitation, wind, sun angles, flood zones, seismic risk, soil, topography. |
+| [mobility-analysis](skills/mobility-analysis/) | Transit and mobility site analysis — subway, bus, bike, pedestrian infrastructure, walk scores, airport access. |
+| [demographics-analysis](skills/demographics-analysis/) | Demographics and market site analysis — population, income, age, housing market, employment. |
+| [neighborhood-history](skills/neighborhood-history/) | Neighborhood context and history — adjacent uses, architectural character, landmarks, commercial activity, planned development. |
+| [design-brief-builder](skills/design-brief-builder/) | Turns vague client requirements into structured design briefs ready for schematic design. |
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| [site-due-diligence-nyc](commands/site-due-diligence-nyc.md) | NYC site due diligence — site analysis followed by PLUTO zoning envelope |
+| [site-due-diligence-nyc](commands/site-due-diligence-nyc.md) | Full NYC site due diligence — environmental, mobility, demographics, history, and zoning from PLUTO. |
 
 ## Install
 

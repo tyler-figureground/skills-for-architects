@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**13 skills** and **3 commands** across **6 plugins** for architects, designers, and AEC professionals.
+**16 skills** and **3 commands** across **6 plugins** for architects, designers, and AEC professionals.
 
 ## What Are Skills and Commands?
 
@@ -17,7 +17,7 @@
 | Plugin | Skills | Commands | Description |
 |--------|--------|----------|-------------|
 | [programming](./programming) | 2 | 1 | Workplace strategy: space programs, occupancy loads, IBC compliance. |
-| [site-planning](./site-planning) | 2 | 2 | Site research, analysis, and design brief building. |
+| [site-planning](./site-planning) | 5 | 1 | Site research, analysis, and design brief building. |
 | [zoning-analysis](./zoning-analysis) | 1 | — | Buildable envelope analysis from zoning regulations and GIS data. |
 | [specifications](./specifications) | 2 | — | CSI outline specs and construction punch lists. |
 | [data-management](./data-management) | 4 | 1 | FF&E spec extraction, cleanup, and image processing. |
@@ -44,7 +44,7 @@ Skills are symlinked into `~/.claude/skills/` so they stay in sync when you upda
 | Command | Plugin | Description |
 |---------|--------|-------------|
 | `/space-program` | programming | Build a complete space program — occupancy loads then workplace programming. |
-| `/site-due-diligence-nyc` | site-planning | NYC site due diligence — site analysis followed by PLUTO zoning envelope. |
+| `/site-due-diligence-nyc` | site-planning | Full NYC site due diligence — environmental, mobility, demographics, history, and zoning. |
 | `/spec-package` | data-management | Full FF&E pipeline — fetch specs, clean data, process images. |
 
 ## All Skills
@@ -60,7 +60,10 @@ Skills are symlinked into `~/.claude/skills/` so they stay in sync when you upda
 
 | Skill | Description |
 |-------|-------------|
-| [`/site-analysis-generator`](./site-planning/skills/site-analysis-generator) | Comprehensive site research — climate, zoning, transit, demographics, neighborhood context from an address. |
+| [`/environmental-analysis`](./site-planning/skills/environmental-analysis) | Climate and environmental site analysis — temperature, precipitation, wind, sun angles, flood zones, seismic risk, soil, topography. |
+| [`/mobility-analysis`](./site-planning/skills/mobility-analysis) | Transit and mobility site analysis — subway, bus, bike, pedestrian infrastructure, walk scores, airport access. |
+| [`/demographics-analysis`](./site-planning/skills/demographics-analysis) | Demographics and market site analysis — population, income, age, housing market, employment. |
+| [`/neighborhood-history`](./site-planning/skills/neighborhood-history) | Neighborhood context and history — adjacent uses, architectural character, landmarks, commercial activity, planned development. |
 | [`/design-brief-builder`](./site-planning/skills/design-brief-builder) | Structured design briefs from vague requirements — program, adjacencies, criteria, and open questions. |
 
 ### Zoning

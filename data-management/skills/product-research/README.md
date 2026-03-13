@@ -1,6 +1,19 @@
 # Product Research
 
-FF&E product research companion for Claude Code. Captures, structures, and organizes products into a persistent library as the designer browses — no setup, no pipeline, just drop things in.
+FF&E product research companion for Claude Code. Captures, structures, and organizes products into a shared Google Sheet as the designer browses — the same sheet used by [Norma Jean](https://github.com/AlpacaLabsLLC/norma-jean) and the other data-management skills.
+
+## The idea
+
+One master Google Sheet holds every product the firm has ever researched. Products get in through multiple doors:
+
+| Source | How |
+|--------|-----|
+| **Norma Jean** | Browser extension — Alt+C on any product page |
+| **This skill** | Conversational — screenshots, paste, verbal notes, PDFs, search |
+| `/product-spec-bulk-fetch` | Batch URL extraction |
+| `/product-spec-pdf-parser` | PDF catalog parsing |
+
+Every source writes to the same 33-column schema. The sheet is the library.
 
 ## Usage
 
@@ -8,56 +21,40 @@ FF&E product research companion for Claude Code. Captures, structures, and organ
 /product-research
 ```
 
-Then start dropping URLs, PDFs, screenshots, or notes into the conversation. The skill captures product data, structures it into a standard FF&E schema, and saves it to a growing library.
+Connect to your Google Sheet (or create one), then start dropping things in.
 
-## What it does
+## What you can do
 
-- **Capture** — Drop a URL, PDF, screenshot, or verbal note. Claude extracts product specs and saves them.
-- **Search** — "Find sustainable acoustic panels under $300" — Claude searches the web and presents candidates.
+- **Capture** — Drop a screenshot, paste specs, describe a product, or share a PDF. Claude extracts what it can and appends to the sheet.
+- **Search** — "Find sustainable acoustic panels under $300" — Claude searches the web and presents candidates to capture.
 - **Recall** — "What chairs do we have?" — Filter and browse the library by category, brand, price, tags, or date.
-- **Organize** — Tag products, create collections, add notes, shortlist favorites.
-- **Compare** — Side-by-side comparison of products against any criteria.
-- **Export** — Output as CSV or Google Sheet in the standard FF&E schema, compatible with the other data-management skills.
+- **Organize** — Tag products, add notes, shortlist favorites, update status.
+- **Compare** — Side-by-side comparison of products on any criteria.
+- **Stats** — "How's the library?" — Category counts, brand breakdown, gap analysis.
 
-## Library
+## Schema
 
-Products are stored in a `product-library.json` file. Each entry includes the standard 15-field FF&E schema plus research metadata (tags, collections, notes, status, sustainability).
+29 columns from the Norma Jean standard + 4 research columns:
 
-The library persists across sessions and grows over time — useful for building a firm-wide product knowledge base.
+| Section | Columns |
+|---------|---------|
+| Product | Link, Thumbnail, Product Name, Description, SKU, Brand, Designer, Vendor, Collection, Category |
+| Dimensions | W, D, H, Seat H, Unit, Weight |
+| Materials & Finish | Materials, Colors/Finishes, Selected Color/Finish |
+| Pricing | List Price, Sale Price, Currency |
+| Logistics | Lead Time, Warranty, Certifications, COM/COL, Indoor/Outdoor |
+| Meta | Clipped At, Image URL |
+| Research | Tags, Notes, Status, Source |
 
 ## Works with
 
-| Skill | How |
-|-------|-----|
-| `/product-spec-bulk-cleanup` | Export the library (or a collection) and clean it up |
-| `/product-spec-pdf-parser` | Drop a PDF into the conversation — research companion parses it and adds to library |
-| `/product-image-processor` | Export image URLs from the library and batch-process them |
-| `/spec-package` | Export a collection and run the full pipeline |
-
-## Examples
-
-```
-# Drop a URL while browsing
-https://www.muuto.com/outline-sofa-3-seater
-
-# Verbal note
-Remember that walnut bench from the Hem showroom, around $1,200
-
-# Search
-Find me task chairs with GREENGUARD certification
-
-# Recall
-What do we have from HAY?
-Show the reception-inspo collection
-
-# Organize
-Tag the last 3 as project-oak
-Shortlist the Outline sofa
-Create a collection called lobby-options
-
-# Export
-Export my shortlist as CSV
-```
+| Tool | How |
+|------|-----|
+| [Norma Jean](https://github.com/AlpacaLabsLLC/norma-jean) | Browser clipper — writes to the same sheet |
+| `/product-spec-bulk-cleanup` | Normalize the sheet — casing, categories, dimensions, materials |
+| `/product-spec-bulk-fetch` | Batch-add products from URLs to the sheet |
+| `/product-spec-pdf-parser` | Extract products from PDF catalogs to the sheet |
+| `/product-image-processor` | Download and process images from the sheet's Image URL column |
 
 ## License
 
