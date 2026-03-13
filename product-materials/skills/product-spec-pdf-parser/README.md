@@ -7,7 +7,7 @@ PDF product spec parser for [Claude Code](https://docs.anthropic.com/en/docs/cla
 ## Install
 
 ```bash
-claude install github:AlpacaLabsLLC/skills-for-architects/data-management
+claude install github:AlpacaLabsLLC/skills-for-architects/product-materials
 ```
 
 ### Dependencies

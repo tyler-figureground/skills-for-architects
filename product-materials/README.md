@@ -1,6 +1,6 @@
-# Data Management
+# Product & Materials Research
 
-Product data management skills for Claude Code — FF&E product research, spec extraction, cleanup, PDF parsing, and image processing.
+Product and materials research skills for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — FF&E product research, spec extraction, cleanup, PDF parsing, and image processing.
 
 ## Skills
 
@@ -21,7 +21,7 @@ Product data management skills for Claude Code — FF&E product research, spec e
 ## Install
 
 ```bash
-claude install github:AlpacaLabsLLC/skills-for-architects/data-management
+claude install github:AlpacaLabsLLC/skills-for-architects/product-materials
 ```
 
 ## License

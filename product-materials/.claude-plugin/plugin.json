@@ -1,7 +1,7 @@
 {
-  "name": "data-management",
+  "name": "product-materials",
   "version": "1.0.0",
-  "description": "Product data management skills — FF&E product research, spec extraction, cleanup, PDF parsing, and image processing.",
+  "description": "Product and materials research skills — FF&E product research, spec extraction, cleanup, PDF parsing, and image processing.",
   "author": {
     "name": "ALPA",
     "url": "https://alpa.llc"

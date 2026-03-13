@@ -1,6 +1,6 @@
 # Skills for Architects
 
-> Agentic skills, commands, and plugins for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — from programming to site planning, specifications, and creative delivery.
+> Agentic skills, commands, and plugins for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — from site research to zoning, programming, specifications, and creative delivery.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -14,21 +14,23 @@
 
 ## Plugins
 
-| Plugin | Skills | Commands | Description |
-|--------|--------|----------|-------------|
-| [programming](./programming) | 2 | 1 | Workplace strategy: space programs, occupancy loads, IBC compliance. |
-| [site-planning](./site-planning) | 5 | 1 | Site research, analysis, and design brief building. |
-| [zoning-analysis](./zoning-analysis) | 1 | — | Buildable envelope analysis from zoning regulations and GIS data. |
-| [specifications](./specifications) | 2 | — | CSI outline specs and construction punch lists. |
-| [data-management](./data-management) | 5 | 1 | FF&E product research, spec extraction, cleanup, and image processing. |
-| [presentations](./presentations) | 2 | — | Slide deck generation and color palette creation. |
+Organized by project lifecycle — from site research through delivery.
+
+| # | Plugin | Skills | Commands | Description |
+|---|--------|--------|----------|-------------|
+| 1 | [site-planning](./site-planning) | 5 | 1 | Site research: environmental, mobility, demographics, neighborhood history, design briefs. |
+| 2 | [zoning-analysis](./zoning-analysis) | 1 | — | Buildable envelope analysis from zoning regulations and public data APIs. |
+| 3 | [programming](./programming) | 2 | 1 | Workplace strategy: space programs, occupancy loads, IBC compliance. |
+| 4 | [specifications](./specifications) | 2 | — | CSI outline specs and construction punch lists. |
+| 5 | [product-materials](./product-materials) | 5 | 1 | FF&E product research, spec extraction, cleanup, and image processing. |
+| 6 | [presentations](./presentations) | 2 | — | Slide deck generation and color palette creation. |
 
 ## Quick Start
 
 ### Install a Single Plugin
 
 ```bash
-claude install github:AlpacaLabsLLC/skills-for-architects/programming
+claude install github:AlpacaLabsLLC/skills-for-architects/site-planning
 ```
 
 ### Install All Plugins
@@ -43,20 +45,13 @@ Skills are symlinked into `~/.claude/skills/` so they stay in sync when you upda
 
 | Command | Plugin | Description |
 |---------|--------|-------------|
-| `/space-program` | programming | Build a complete space program — occupancy loads then workplace programming. |
 | `/site-due-diligence-nyc` | site-planning | Full NYC site due diligence — environmental, mobility, demographics, history, and zoning. |
-| `/spec-package` | data-management | Full FF&E pipeline — fetch specs, clean data, process images. |
+| `/space-program` | programming | Build a complete space program — occupancy loads then workplace programming. |
+| `/spec-package` | product-materials | Full FF&E pipeline — fetch specs, clean data, process images. |
 
 ## All Skills
 
-### Programming
-
-| Skill | Description |
-|-------|-------------|
-| [`/workplace-programmer`](./programming/skills/workplace-programmer) | AI workplace strategy consultant — area splits, room schedules, seat counts from 10 archetypes and 43 research findings. |
-| [`/occupancy-calculator`](./programming/skills/occupancy-calculator) | IBC occupancy load calculator — per-area loads from Table 1004.5, egress requirements, use group classification. |
-
-### Site Planning
+### 1. Site Planning
 
 | Skill | Description |
 |-------|-------------|
@@ -66,30 +61,37 @@ Skills are symlinked into `~/.claude/skills/` so they stay in sync when you upda
 | [`/neighborhood-history`](./site-planning/skills/neighborhood-history) | Neighborhood context and history — adjacent uses, architectural character, landmarks, commercial activity, planned development. |
 | [`/design-brief-builder`](./site-planning/skills/design-brief-builder) | Structured design briefs from vague requirements — program, adjacencies, criteria, and open questions. |
 
-### Zoning
+### 2. Zoning Analysis
 
 | Skill | Description |
 |-------|-------------|
 | [`/zoning-analysis-nyc`](./zoning-analysis/skills/zoning-analysis-nyc) | Buildable envelope analysis for lots in New York City — FAR, height, setbacks, use groups from PLUTO data and the Zoning Resolution. |
 
-### Specifications
+### 3. Programming
+
+| Skill | Description |
+|-------|-------------|
+| [`/workplace-programmer`](./programming/skills/workplace-programmer) | AI workplace strategy consultant — area splits, room schedules, seat counts from 10 archetypes and 43 research findings. |
+| [`/occupancy-calculator`](./programming/skills/occupancy-calculator) | IBC occupancy load calculator — per-area loads from Table 1004.5, egress requirements, use group classification. |
+
+### 4. Specifications
 
 | Skill | Description |
 |-------|-------------|
 | [`/spec-writer`](./specifications/skills/spec-writer) | CSI outline specs from a materials list — MasterFormat divisions, three-part sections, performance criteria. |
 | [`/redline-punch-list`](./specifications/skills/redline-punch-list) | Field notes to structured punch lists — CSI divisions, trade assignments, priority levels. |
 
-### Data Management
+### 5. Product & Materials Research
 
 | Skill | Description |
 |-------|-------------|
-| [`/product-research`](./data-management/skills/product-research) | Product research companion — captures and organizes products into a persistent library as you browse. |
-| [`/product-spec-bulk-fetch`](./data-management/skills/product-spec-bulk-fetch) | Extract FF&E specs from product URLs at scale — names, dimensions, materials, pricing, images. |
-| [`/product-spec-bulk-cleanup`](./data-management/skills/product-spec-bulk-cleanup) | Normalize messy FF&E schedules — casing, dimensions, materials, categories, deduplication. |
-| [`/product-spec-pdf-parser`](./data-management/skills/product-spec-pdf-parser) | Extract FF&E specs from PDFs — price books, fact sheets, spec sheets into standardized schedules. |
-| [`/product-image-processor`](./data-management/skills/product-image-processor) | Batch download, resize, and remove backgrounds from product images. |
+| [`/product-research`](./product-materials/skills/product-research) | Product research companion — captures and organizes products into a persistent library as you browse. |
+| [`/product-spec-bulk-fetch`](./product-materials/skills/product-spec-bulk-fetch) | Extract FF&E specs from product URLs at scale — names, dimensions, materials, pricing, images. |
+| [`/product-spec-bulk-cleanup`](./product-materials/skills/product-spec-bulk-cleanup) | Normalize messy FF&E schedules — casing, dimensions, materials, categories, deduplication. |
+| [`/product-spec-pdf-parser`](./product-materials/skills/product-spec-pdf-parser) | Extract FF&E specs from PDFs — price books, fact sheets, spec sheets into standardized schedules. |
+| [`/product-image-processor`](./product-materials/skills/product-image-processor) | Batch download, resize, and remove backgrounds from product images. |
 
-### Presentations
+### 6. Presentations
 
 | Skill | Description |
 |-------|-------------|
@@ -102,7 +104,7 @@ Have a skill for the built environment? Open a PR. Each skill needs:
 
 1. A `SKILL.md` with clear instructions and domain knowledge
 2. A `README.md` with install, usage, and sample output
-3. Any supporting data files in a `data/` or `normativa/` directory
+3. Any supporting data files in a `data/` or `zoning-rules/` directory
 
 ## License
 
