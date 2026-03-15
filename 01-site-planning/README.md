@@ -1,6 +1,6 @@
 # Site Planning
 
-A Claude Code plugin for site research and due diligence. Give it an address and it builds a comprehensive site analysis — climate, transit, demographics, neighborhood history, and zoning — using public data sources. What used to take days of manual research happens in minutes.
+A Claude Code plugin for site research and due diligence. Give it an address and it builds a comprehensive site analysis — climate, transit, demographics, history, and zoning — using public data sources. What used to take days of manual research happens in minutes.
 
 ## The Problem
 
@@ -8,7 +8,7 @@ Early-stage site analysis requires pulling data from dozens of sources — NOAA 
 
 ## The Solution
 
-Five research skills that each investigate a different dimension of a site, plus a command that runs them all in sequence for full due diligence. Each skill searches authoritative public data sources, synthesizes findings, and outputs a structured markdown report.
+Four research skills that each investigate a different dimension of a site, plus a command that runs them all in sequence for full due diligence. Each skill searches authoritative public data sources, synthesizes findings, and outputs a structured markdown report.
 
 ```
                           ┌─────────────┐
@@ -31,19 +31,18 @@ Five research skills that each investigate a different dimension of a site, plus
   └────────┬─────────┘ └────────┬─────────┘ └────────┬─────────┘
            │                    │                     │
            ▼                    ▼                     ▼
-  ┌──────────────────┐ ┌──────────────────┐
-  │  Neighborhood    │ │  Design Brief    │
-  │  History         │ │  Builder         │
-  │                  │ │                  │
-  │ Adjacent uses    │ │ Client reqs →    │
-  │ Arch. character  │ │ structured brief │
-  │ Historic dist.   │ │ ready for SD     │
-  │ Landmarks        │ │                  │
-  │ Commercial       │ │                  │
-  │ Planned devt.    │ │                  │
-  └────────┬─────────┘ └────────┬─────────┘
-           │                    │
-           ▼                    ▼
+  ┌──────────────────┐
+  │  History         │
+  │                  │
+  │ Adjacent uses    │
+  │ Arch. character  │
+  │ Historic dist.   │
+  │ Landmarks        │
+  │ Commercial       │
+  │ Planned devt.    │
+  └────────┬─────────┘
+           │
+           ▼
   ┌─────────────────────────────────────────┐
   │         Markdown Reports                │
   │                                         │
@@ -67,8 +66,7 @@ Each skill searches authoritative, governmental, and non-profit sources:
 | Environmental | NOAA, USGS, EPA, NWS, NREL |
 | Mobility | MTA, DOT, Walk Score, FAA, USDOT |
 | Demographics | Census Bureau, BLS, HUD, NYC Open Data |
-| Neighborhood History | NYC LPC, National Register, DCP, Library of Congress |
-| Design Brief | Synthesizes from client input (no external sources) |
+| History | NYC LPC, National Register, DCP, Library of Congress |
 
 ### Output
 
@@ -89,8 +87,8 @@ Address → Environmental → Mobility → Demographics → Neighborhood → Zon
 | [environmental-analysis](skills/environmental-analysis/) | Climate and environmental conditions — temperature, precipitation, wind, sun, flood zones, seismic risk, soil, topography |
 | [mobility-analysis](skills/mobility-analysis/) | Transit and mobility — subway, bus, bike, pedestrian infrastructure, walk/bike/transit scores, airport access |
 | [demographics-analysis](skills/demographics-analysis/) | Demographics and market — population, income, age distribution, housing market, employment |
-| [neighborhood-history](skills/neighborhood-history/) | Neighborhood context — adjacent uses, architectural character, landmarks, commercial activity, planned development |
-| [design-brief-builder](skills/design-brief-builder/) | Turns vague client requirements into structured design briefs ready for schematic design |
+| [history](skills/history/) | Neighborhood context — adjacent uses, architectural character, landmarks, commercial activity, planned development |
+
 
 ## Commands
 

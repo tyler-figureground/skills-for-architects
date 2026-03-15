@@ -1,5 +1,5 @@
 ---
-description: Run full NYC site due diligence — environmental, mobility, demographics, neighborhood history, and zoning envelope from PLUTO.
+description: Run full NYC site due diligence — environmental, mobility, demographics, history, and zoning envelope from PLUTO.
 argument-hint: [NYC address, e.g. "375 Sterling Place, Brooklyn NY"]
 ---
 
@@ -23,9 +23,9 @@ Invoke the `/demographics-analysis` skill for the same address. Research populat
 
 Save the output before proceeding.
 
-## Step 4: Neighborhood History
+## Step 4: History
 
-Invoke the `/neighborhood-history` skill for the same address. Research adjacent land uses, architectural character, historic districts, landmarks, commercial activity, and planned development.
+Invoke the `/history` skill for the same address. Research adjacent land uses, architectural character, historic districts, landmarks, commercial activity, and planned development.
 
 Save the output before proceeding.
 

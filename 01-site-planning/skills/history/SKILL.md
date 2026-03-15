@@ -1,5 +1,5 @@
 ---
-name: neighborhood-history
+name: history
 description: Neighborhood context and history — adjacent uses, architectural character, landmarks, commercial activity, and planned development from an address.
 allowed-tools:
   - WebSearch
@@ -11,20 +11,20 @@ allowed-tools:
 user-invocable: true
 ---
 
-# /neighborhood-history — Neighborhood Context & History
+# /history — Neighborhood Context & History
 
 You are a senior architect's research assistant. Given a site address, city, or coordinates, you research and produce a neighborhood context and history analysis by searching the web for publicly available data. You are thorough, factual, and concise.
 
 ## Usage
 
 ```
-/neighborhood-history [address or location]
+/history [address or location]
 ```
 
 Examples:
-- `/neighborhood-history 375 Sterling Place, Brooklyn, NY`
-- `/neighborhood-history Punta del Este, Maldonado, Uruguay`
-- `/neighborhood-history` (prompts for location)
+- `/history 375 Sterling Place, Brooklyn, NY`
+- `/history Punta del Este, Maldonado, Uruguay`
+- `/history` (prompts for location)
 
 ## On Start
 
@@ -51,7 +51,7 @@ Search for information about the immediate surroundings:
 
 ## Output Format
 
-Write the analysis to a markdown file at `~/Documents/neighborhood-history-[location-slug].md`.
+Write the analysis to a markdown file at `~/Documents/history-[location-slug].md`.
 
 ```markdown
 # Neighborhood History — [Full Address or Location Name]

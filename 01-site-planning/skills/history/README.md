@@ -1,4 +1,4 @@
-# /neighborhood-history
+# /history
 
 Neighborhood context and history analysis for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Provide an address and get development history, architectural character, historic district status, landmarks, commercial activity, and planned development — sourced from landmarks commissions, planning departments, and archives.
 
@@ -13,13 +13,13 @@ claude install github:AlpacaLabsLLC/skills-for-architects/01-site-planning
 ## Usage
 
 ```
-/neighborhood-history 375 Sterling Place, Brooklyn, NY
+/history 375 Sterling Place, Brooklyn, NY
 ```
 
 Or start with no context:
 
 ```
-/neighborhood-history
+/history
 ```
 
 The skill researches:
@@ -32,7 +32,7 @@ The skill researches:
 - **Commercial activity** — retail corridors, restaurants, market character
 - **Planned development** — major projects approved or under construction
 
-Output is saved to `~/Documents/neighborhood-history-[location-slug].md`.
+Output is saved to `~/Documents/history-[location-slug].md`.
 
 ## Data Sources
 
