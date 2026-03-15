@@ -9,8 +9,7 @@
 ## Prerequisites
 
 - **Claude Desktop** (recommended) or **Claude Code CLI**
-- A [Claude subscription](https://claude.ai) (Pro, Team, or Enterprise)
-- **Git** — to clone this repo and stay in sync
+- A [Claude subscription](https://claude.ai) (Pro, Max, Team, or Enterprise)
 
 ## What Are Skills and Commands?
 
@@ -20,30 +19,14 @@
 
 ## Quick Start
 
-### Option A: Claude Desktop (Cowork) — recommended
+### Option A: Claude Desktop — recommended
 
-Clone the repo and symlink the skills you want:
+1. Open **Customize** → **Browse plugins** → click **+** → **Add marketplace from GitHub**
+2. Enter `AlpacaLabsLLC/skills-for-architects`
+3. Install the plugins you want from the **Personal** tab
+4. Type `/skills` in any conversation to verify
 
-```bash
-# Clone
-git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git ~/skills-for-architects
-
-# Symlink all skills at once
-for plugin in ~/skills-for-architects/0*/skills/*/; do
-  ln -s "$plugin" ~/.claude/skills/$(basename "$plugin")
-done
-
-# Verify — open Claude Desktop and type:
-/skills
-```
-
-To update later:
-
-```bash
-cd ~/skills-for-architects && git pull
-```
-
-Symlinks stay in sync automatically.
+Updates sync through the marketplace automatically.
 
 ### Option B: Claude Code (CLI)
 
