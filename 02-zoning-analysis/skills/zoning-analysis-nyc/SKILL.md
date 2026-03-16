@@ -272,6 +272,49 @@ Based on current rules (post-City of Yes where applicable):
 | With IH bonus | ... | ... | ... |
 | With UAP bonus | ... | ... | ... |
 
+## Buildable Envelope
+
+### Plan View
+ASCII diagram showing the lot boundary with setbacks and buildable zone. Orient with the primary street frontage at the bottom. Label dimensions, setback distances, and buildable area. Use PLUTO lot dimensions (lotfront, lotdepth) where available.
+
+Example:
+```
+                    ← 170 ft →
+         ┌────────────────────────────┐
+         │        20 ft rear yard     │  ↑
+         │  ┌──────────────────────┐  │  |
+         │  │                      │  │  |
+         │  │   BUILDABLE ZONE     │  │  130 ft
+         │  │   ~150 ft × 170 ft   │  │  |
+         │  │                      │  │  |
+         │  │                      │  │  |
+         │  └──────────────────────┘  │  ↓
+         └────────────────────────────┘
+              HUDSON ST (wide street)
+              ← no front setback →
+```
+
+### Section View
+ASCII cross-section showing the height and setback envelope from street level. Include base height, setback, sky exposure plane, and maximum height. For contextual districts, show the mandatory streetwall height range.
+
+Example:
+```
+  290 ft ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ max height
+         │              ╱
+         │            ╱  sky exposure
+         │          ╱    plane (5.6:1)
+         │        ╱
+   85 ft ├──────┤ ← setback line
+         │      │
+         │      │ base / streetwall
+         │      │ (60–85 ft)
+         │      │
+  ───────┴──────┴──────────────── street
+         HUDSON ST (wide)
+```
+
+Adapt both diagrams to the specific lot. Use actual dimensions and controls from the analysis. If the lot is irregular or split-zone, note the complexity and simplify where needed.
+
 ## Caveats
 - This analysis is based on publicly available zoning data (PLUTO) and general Zoning Resolution rules
 - Always verify with NYC Department of City Planning and ZoLa (zola.planning.nyc.gov)
