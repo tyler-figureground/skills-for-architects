@@ -13,7 +13,7 @@ user-invocable: true
 
 # /nyc-property-report — NYC Property Data
 
-Look up building and property data for any NYC address. Queries NYC Open Data (Socrata) and NYC Geoclient APIs across 7 data domains: property identification, landmarks, DOB permits, DOB violations, ACRIS property records, HPD (residential), and BSA variances.
+Look up building and property data for any NYC address. Queries NYC Open Data (Socrata) across 7 data domains: property identification, landmarks, DOB permits, DOB violations, ACRIS property records, HPD (residential), and BSA variances. No API key required — works out of the box using PLUTO for address resolution.
 
 ## Usage
 
@@ -37,25 +37,14 @@ Examples:
 
 ## Environment Variables
 
-Check these at startup. If `NYC_GEOCLIENT_KEY` is missing and the user provides an address (not BBL), print setup instructions and stop.
+No API keys are required. The skill uses PLUTO (Socrata) for address resolution — fully public, no registration.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `NYC_GEOCLIENT_KEY` | Yes (for address input) | NYC Geoclient API subscription key. Register at https://api-portal.nyc.gov, subscribe to "Geoclient v2" |
 | `NYC_SOCRATA_TOKEN` | No (recommended) | NYC Open Data app token for higher rate limits. Register at https://data.cityofnewyork.us/profile/edit/developer_settings |
+| `NYC_GEOCLIENT_KEY` | No (optional upgrade) | NYC Geoclient API key for richer address data (100+ geographic fields). Register at https://api-portal.nyc.gov |
 
-To check: `echo $NYC_GEOCLIENT_KEY` via Bash.
-
-If missing:
-```
-⚠ NYC_GEOCLIENT_KEY not set. To use this skill with an address:
-1. Register at https://api-portal.nyc.gov
-2. Subscribe to "Geoclient v2"
-3. Copy your subscription key
-4. Set it: export NYC_GEOCLIENT_KEY=your_key_here
-
-Alternatively, provide a BBL directly (no Geoclient needed).
-```
+If `NYC_SOCRATA_TOKEN` is set, append `&$$app_token={token}` to all Socrata queries for higher rate limits (1000/hour vs throttled).
 
 ## Step 1: Parse Input
 
@@ -71,24 +60,63 @@ Parse the address into components: house number, street name, borough (or zip). 
 
 Detect mode from the last word of the arguments: landmarks, permits, violations, acris, hpd, bsa. If none specified, mode = "full".
 
-## Step 2: Resolve to BBL/BIN (Geoclient)
+## Step 2: Resolve to BBL/BIN
 
-If the user provided an address (not BBL/BIN), call the Geoclient API:
+If the user provided an address (not BBL/BIN), resolve it via PLUTO — the same approach used by `/zoning-analysis-nyc`. No API key required.
+
+### Default: PLUTO Lookup (no auth)
+
+Query PLUTO by address:
+```
+https://data.cityofnewyork.us/resource/64uk-42ks.json?$where=upper(address) LIKE '%{STREET}%'&borough='{BOROUGH_CODE}'&$limit=5
+```
+
+Or by address + zip (more precise):
+```
+https://data.cityofnewyork.us/resource/64uk-42ks.json?$where=address='{HOUSE_NUM} {STREET}'&zipcode='{ZIP}'
+```
+
+PLUTO returns all the fields needed for subsequent queries:
+- `bbl` — 10-digit BBL
+- `bin` — BIN (labeled `bldgbin` in some PLUTO versions)
+- `address`, `zipcode`, `borough`
+- `bldgclass` — building class (needed to determine if HPD applies)
+- `zonedist1`, `landuse`, `yearbuilt`, `numfloors`, `unitstotal`, `lotarea`, `bldgarea`
+- `histdist` — historic district name (bonus: partial landmark check from PLUTO itself)
+- `ownername` — owner name (bonus: cross-reference with ACRIS)
+- `cd` — community district
+- `latitude`, `longitude`
+
+If the PLUTO query returns multiple rows, show the options and ask the user to pick. If zero rows, try variations:
+- Normalize the address: uppercase, strip unit numbers, try alternate spellings (ST vs STREET, AVE vs AVENUE)
+- Try without zip code
+- Suggest the user provide a BBL directly
+
+**Address normalization:** Before querying, normalize the address:
+- Uppercase everything
+- Strip apartment/unit/floor suffixes
+- Expand abbreviations only if needed for matching (try exact first)
+- Borough names to codes: Manhattan=MN, Bronx=BX, Brooklyn=BK, Queens=QN, Staten Island=SI
+
+### Optional Upgrade: Geoclient (richer data)
+
+If `NYC_GEOCLIENT_KEY` is set (check via `echo $NYC_GEOCLIENT_KEY` in Bash), use Geoclient for address resolution instead. It returns 100+ geographic identifiers (census tract, council district, police precinct, fire company, school district, etc.) that PLUTO does not have.
 
 ```
 GET https://api.nyc.gov/geo/geoclient/v2/address?houseNumber={num}&street={street}&borough={borough}
 Header: Ocp-Apim-Subscription-Key: {NYC_GEOCLIENT_KEY}
 ```
 
-Use WebFetch to call this URL. The response is JSON with fields including:
-- `bbl` — 10-digit BBL
-- `buildingIdentificationNumber` (BIN)
-- `boeFlag`, `communityDistrict`, `congressionalDistrict`, `councilDistrict`, `censusBlock`, `censusTract2020`, `fireCompanyNumber`, `policePrecinct`, `schoolDistrict`, `zipCode`
-- `latitude`, `longitude`
+If Geoclient is used, the Property Identification section of the report will be richer. If PLUTO is used, the identification section shows what PLUTO provides (BBL, BIN, address, borough, zip, community district, coordinates, building class, zoning, year built).
 
-If the address is not found, the response has a `message` field with the error. Display it and suggest alternatives.
+### From BBL or BIN (direct)
 
-Store the BBL and BIN for use in all subsequent queries. Parse BBL into borough code, block (5 digits), and lot (4 digits) for APIs that need them separately.
+If the user provides a BBL (10-digit number) or BIN (7-digit number), skip address resolution entirely. Query PLUTO by BBL to get the remaining fields:
+```
+https://data.cityofnewyork.us/resource/64uk-42ks.json?bbl={BBL}
+```
+
+Parse BBL into borough code (1st digit), block (digits 2-6), and lot (digits 7-10) for APIs that need them separately.
 
 ## Step 3: Query Data Domains
 
@@ -100,7 +128,7 @@ Read `socrata-reference.md` for the full API reference with field names and SoQL
 
 ### Domain 1: Property Identification (always runs)
 
-Already resolved in Step 2. Format the Geoclient response as a summary table.
+Already resolved in Step 2 via PLUTO (or Geoclient if key is set). Format as a summary table showing BBL, BIN, address, borough, zip, community district, building class, zoning district, year built, lot area, number of floors, coordinates, and owner name — all from the PLUTO response.
 
 ### Domain 2: Landmarks (mode: "landmarks" or "full")
 
