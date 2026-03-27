@@ -7,7 +7,13 @@ Combined NYC property report as a [Claude Code](https://docs.anthropic.com/en/do
 ## Install
 
 ```bash
-claude install github:AlpacaLabsLLC/skills-for-architects/00-due-diligence
+# Via plugin system
+claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin install 00-due-diligence@skills-for-architects
+
+# Or symlink just this skill
+git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+ln -s $(pwd)/skills-for-architects/00-due-diligence/skills/nyc-property-report ~/.claude/skills/nyc-property-report
 ```
 
 ## Usage

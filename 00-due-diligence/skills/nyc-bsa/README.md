@@ -7,7 +7,13 @@ BSA variance and special permit lookup for any NYC property as a [Claude Code](h
 ## Install
 
 ```bash
-claude install github:AlpacaLabsLLC/skills-for-architects/00-due-diligence
+# Via plugin system
+claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin install 00-due-diligence@skills-for-architects
+
+# Or symlink just this skill
+git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+ln -s $(pwd)/skills-for-architects/00-due-diligence/skills/nyc-bsa ~/.claude/skills/nyc-bsa
 ```
 
 ## Usage

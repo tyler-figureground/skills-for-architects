@@ -7,7 +7,13 @@ Generates harmonious color palettes from descriptions, moods, images, or referen
 ## Install
 
 ```bash
-claude install github:AlpacaLabsLLC/skills-for-architects/07-presentations
+# Via plugin system
+claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin install 07-presentations@skills-for-architects
+
+# Or symlink just this skill
+git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+ln -s $(pwd)/skills-for-architects/07-presentations/skills/color-palette-generator ~/.claude/skills/color-palette-generator
 ```
 
 ## Usage

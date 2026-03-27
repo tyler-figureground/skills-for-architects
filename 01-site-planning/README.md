@@ -86,8 +86,24 @@ Address → Environmental → Mobility → Demographics → History → Zoning �
 
 ## Install
 
+**Claude Desktop:**
+
+1. Open the **+** menu → **Add marketplace from GitHub**
+2. Enter `AlpacaLabsLLC/skills-for-architects`
+3. Install the **Site Planning** plugin
+
+**Claude Code (terminal):**
+
 ```bash
-claude install github:AlpacaLabsLLC/skills-for-architects/01-site-planning
+claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin install 01-site-planning@skills-for-architects
+```
+
+**Manual:**
+
+```bash
+git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+ln -s $(pwd)/skills-for-architects/01-site-planning/skills/environmental-analysis ~/.claude/skills/environmental-analysis
 ```
 
 ## License

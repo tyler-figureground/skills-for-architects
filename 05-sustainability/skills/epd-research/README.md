@@ -7,7 +7,13 @@ Search for Environmental Product Declarations by product category, CSI division,
 ## Install
 
 ```bash
-claude install github:AlpacaLabsLLC/skills-for-architects/05-sustainability
+# Via plugin system
+claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin install 05-sustainability@skills-for-architects
+
+# Or symlink just this skill
+git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+ln -s $(pwd)/skills-for-architects/05-sustainability/skills/epd-research ~/.claude/skills/epd-research
 ```
 
 ## Usage

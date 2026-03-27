@@ -7,7 +7,13 @@ Neighborhood context and history analysis for [Claude Code](https://docs.anthrop
 ## Install
 
 ```bash
-claude install github:AlpacaLabsLLC/skills-for-architects/01-site-planning
+# Via plugin system
+claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin install 01-site-planning@skills-for-architects
+
+# Or symlink just this skill
+git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+ln -s $(pwd)/skills-for-architects/01-site-planning/skills/history ~/.claude/skills/history
 ```
 
 ## Usage

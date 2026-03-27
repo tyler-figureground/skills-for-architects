@@ -39,8 +39,24 @@ All skills share a **42-column EPD schema** covering product identity, EPD metad
 
 ## Install
 
+**Claude Desktop:**
+
+1. Open the **+** menu → **Add marketplace from GitHub**
+2. Enter `AlpacaLabsLLC/skills-for-architects`
+3. Install the **Sustainability** plugin
+
+**Claude Code (terminal):**
+
 ```bash
-claude install github:AlpacaLabsLLC/skills-for-architects/05-sustainability
+claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin install 05-sustainability@skills-for-architects
+```
+
+**Manual:**
+
+```bash
+git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+ln -s $(pwd)/skills-for-architects/05-sustainability/skills/epd-parser ~/.claude/skills/epd-parser
 ```
 
 ## License

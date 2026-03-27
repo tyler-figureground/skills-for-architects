@@ -7,7 +7,13 @@ DOB and ECB violation lookup for any NYC building as a [Claude Code](https://doc
 ## Install
 
 ```bash
-claude install github:AlpacaLabsLLC/skills-for-architects/00-due-diligence
+# Via plugin system
+claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin install 00-due-diligence@skills-for-architects
+
+# Or symlink just this skill
+git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+ln -s $(pwd)/skills-for-architects/00-due-diligence/skills/nyc-dob-violations ~/.claude/skills/nyc-dob-violations
 ```
 
 ## Usage

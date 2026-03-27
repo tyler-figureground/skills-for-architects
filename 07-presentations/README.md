@@ -91,8 +91,24 @@ Considers warm/cool balance, dominant/supporting/accent proportions, and tinted 
 
 ## Install
 
+**Claude Desktop:**
+
+1. Open the **+** menu → **Add marketplace from GitHub**
+2. Enter `AlpacaLabsLLC/skills-for-architects`
+3. Install the **Presentations** plugin
+
+**Claude Code (terminal):**
+
 ```bash
-claude install github:AlpacaLabsLLC/skills-for-architects/07-presentations
+claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin install 07-presentations@skills-for-architects
+```
+
+**Manual:**
+
+```bash
+git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+ln -s $(pwd)/skills-for-architects/07-presentations/skills/slide-deck-generator ~/.claude/skills/slide-deck-generator
 ```
 
 ## License

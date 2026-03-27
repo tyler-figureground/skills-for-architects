@@ -7,7 +7,13 @@ AI workplace strategy consultant for [Claude Code](https://docs.anthropic.com/en
 ## Install
 
 ```bash
-claude install github:AlpacaLabsLLC/skills-for-architects/03-programming
+# Via plugin system
+claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin install 03-programming@skills-for-architects
+
+# Or symlink just this skill
+git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+ln -s $(pwd)/skills-for-architects/03-programming/skills/workplace-programmer ~/.claude/skills/workplace-programmer
 ```
 
 ## Usage

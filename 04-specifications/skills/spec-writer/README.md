@@ -7,7 +7,13 @@ CSI outline specification writer for [Claude Code](https://docs.anthropic.com/en
 ## Install
 
 ```bash
-claude install github:AlpacaLabsLLC/skills-for-architects/04-specifications
+# Via plugin system
+claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin install 04-specifications@skills-for-architects
+
+# Or symlink just this skill
+git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+ln -s $(pwd)/skills-for-architects/04-specifications/skills/spec-writer ~/.claude/skills/spec-writer
 ```
 
 ## Usage

@@ -7,7 +7,13 @@ Extract structured environmental impact data from EPD PDFs for [Claude Code](htt
 ## Install
 
 ```bash
-claude install github:AlpacaLabsLLC/skills-for-architects/05-sustainability
+# Via plugin system
+claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin install 05-sustainability@skills-for-architects
+
+# Or symlink just this skill
+git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+ln -s $(pwd)/skills-for-architects/05-sustainability/skills/epd-parser ~/.claude/skills/epd-parser
 ```
 
 ## Usage

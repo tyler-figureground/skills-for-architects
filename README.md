@@ -32,14 +32,18 @@ Updates sync through the marketplace automatically.
 ### Option B: Claude Code (CLI)
 
 ```bash
-# Install a single plugin
-claude install github:AlpacaLabsLLC/skills-for-architects/01-site-planning
+# Add the marketplace (one-time)
+claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
 
-# Or install all plugins
-claude install github:AlpacaLabsLLC/skills-for-architects
+# Install a single plugin
+claude plugin install 01-site-planning@skills-for-architects
+
+# Or clone and symlink individual skills
+git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+ln -s $(pwd)/skills-for-architects/01-site-planning/skills/environmental-analysis ~/.claude/skills/environmental-analysis
 ```
 
-Skills stay in sync automatically when the source is updated.
+Plugin-installed skills sync automatically. Symlinked skills stay in sync when you `git pull`.
 
 ## Where to Start
 

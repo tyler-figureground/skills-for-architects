@@ -83,8 +83,24 @@ A skill that queries the city's PLUTO dataset for lot-specific data, identifies 
 
 ## Install
 
+**Claude Desktop:**
+
+1. Open the **+** menu → **Add marketplace from GitHub**
+2. Enter `AlpacaLabsLLC/skills-for-architects`
+3. Install the **Zoning Analysis** plugin
+
+**Claude Code (terminal):**
+
 ```bash
-claude install github:AlpacaLabsLLC/skills-for-architects/02-zoning-analysis
+claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin install 02-zoning-analysis@skills-for-architects
+```
+
+**Manual:**
+
+```bash
+git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+ln -s $(pwd)/skills-for-architects/02-zoning-analysis/skills/zoning-analysis-nyc ~/.claude/skills/zoning-analysis-nyc
 ```
 
 ## License

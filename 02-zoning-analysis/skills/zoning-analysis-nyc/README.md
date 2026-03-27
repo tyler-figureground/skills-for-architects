@@ -7,7 +7,13 @@ Zoning envelope analyzer for lots in New York City as a [Claude Code](https://do
 ## Install
 
 ```bash
-claude install github:AlpacaLabsLLC/skills-for-architects/02-zoning-analysis
+# Via plugin system
+claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin install 02-zoning-analysis@skills-for-architects
+
+# Or symlink just this skill
+git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+ln -s $(pwd)/skills-for-architects/02-zoning-analysis/skills/zoning-analysis-nyc ~/.claude/skills/zoning-analysis-nyc
 ```
 
 ## Usage
