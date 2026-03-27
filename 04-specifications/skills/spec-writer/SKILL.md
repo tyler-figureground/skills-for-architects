@@ -1,4 +1,5 @@
 ---
+name: spec-writer
 description: CSI outline specification writer — takes a materials or products list and generates structured specs with MasterFormat divisions, performance criteria, and acceptable manufacturers.
 allowed-tools:
   - Read
