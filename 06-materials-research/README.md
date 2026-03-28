@@ -100,6 +100,11 @@ Norma Jean ─────────┼──→ Master Sheet ──→ /bulk-
 | [product-spec-pdf-parser](skills/product-spec-pdf-parser/) | Utility | Extract specs from PDF catalogs, price books, and spec sheets |
 | [product-image-processor](skills/product-image-processor/) | Utility | Download, resize, and remove backgrounds from product images |
 | [ffe-schedule](skills/ffe-schedule/) | Workflow | Turn raw product lists into formatted FF&E specification schedules |
+| [product-enrich](skills/product-enrich/) | Utility | Auto-tag products with categories, colors, materials, and style tags |
+| [product-match](skills/product-match/) | Workflow | Find similar products from an image, name, or description |
+| [product-pair](skills/product-pair/) | Workflow | Suggest complementary products that pair well with a given item |
+| [csv-to-sif](skills/csv-to-sif/) | Utility | Convert CSV product lists to SIF format for dealer systems |
+| [sif-to-csv](skills/sif-to-csv/) | Utility | Convert SIF files from dealers into readable spreadsheets |
 
 ## Commands
 
