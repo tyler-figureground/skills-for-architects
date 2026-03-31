@@ -70,7 +70,7 @@ Search the web for EPDs matching the brief. Use multiple targeted queries to cov
 
 | Source | URL pattern | Notes |
 |--------|------------|-------|
-| **Building Transparency / EC3** | buildingtransparency.org | Largest open EPD database. Searchable by material, region, GWP. |
+| **Building Transparency / EC3** | buildingtransparency.org | Largest EPD database. Requires authenticated API access (free professional account + API key). See notes below. |
 | **UL EPD Program** | ul.com | Major US program operator. Product-specific EPDs. |
 | **NSF International** | nsf.org | US program operator, strong in concrete/masonry. |
 | **SCS Global Services** | scsglobalservices.com | US program operator. |
@@ -83,8 +83,8 @@ Search the web for EPDs matching the brief. Use multiple targeted queries to cov
 
 For a brief like "ready-mix concrete EPDs, 4000 PSI, near NYC":
 
-1. **Registry search**: `site:buildingtransparency.org ready-mix concrete EPD New York`
-2. **Program operator search**: `site:ul.com ready-mix concrete environmental product declaration`
+1. **Program operator search**: `site:ul.com ready-mix concrete environmental product declaration`
+2. **International registry search**: `site:environdec.com ready-mix concrete EPD`
 3. **Manufacturer + region search**: `ready-mix concrete EPD northeast US 4000 PSI`
 4. **Specific manufacturer searches** if mentioned: `Holcim ready-mix EPD`, `CEMEX concrete EPD`
 5. **Industry body search**: `NRMCA concrete EPD` (National Ready Mixed Concrete Association)
@@ -204,7 +204,7 @@ The user may want to refine:
 
 ## Notes
 
-- **EC3 is the primary database** but requires searching their public pages — we don't use their API. Web search + WebFetch is the access pattern.
+- **EC3 (Building Transparency) requires an API key.** EC3 is the largest EPD database, but all data is behind authenticated API access — `site:buildingtransparency.org` web searches will not return results. If the user hasn't configured EC3 API credentials, tell them: *"EC3 has the largest EPD database but requires a free API key from buildingtransparency.org (professional account with a business email). I'll search program operator registries and manufacturer sites directly instead."* Then proceed with the other sources listed above — UL, NSF, Environdec, IBU, SCS, ASTM, and manufacturer sustainability pages all publish EPDs publicly.
 - **EPD validity matters.** A 2019 EPD based on EN 15804+A1 is less useful than a 2024 EPD based on +A2. Prefer newer EPDs when available.
 - **Regional EPDs are more useful than national averages.** A plant-specific EPD from a nearby facility is more valuable for a project than a company-wide average.
 - **This skill finds EPDs. `/epd-parser` extracts full data from the PDFs.** If the user wants deep data from a found EPD, download the PDF and run `/epd-parser`.
