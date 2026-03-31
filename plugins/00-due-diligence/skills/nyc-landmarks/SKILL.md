@@ -52,17 +52,17 @@ Parse BBL into: boro (1 digit), block (5 digits zero-padded), lot (4 digits zero
 
 ## Step 3: Query LPC Database
 
-Query by BIN first:
+Use the Individual Landmarks dataset (`buis-pvji`). Query by BBL first:
 ```
-https://data.cityofnewyork.us/resource/7mgd-s57w.json?bin_number={BIN}
-```
-
-If no results, fallback by BBL:
-```
-https://data.cityofnewyork.us/resource/7mgd-s57w.json?bbl={BBL}
+https://data.cityofnewyork.us/resource/buis-pvji.json?bbl={BBL}
 ```
 
-Key fields: `lpc_name`, `lpc_number`, `date_designated`, `building_type`, `style`, `architect`, `historic_district_name`, `status`
+If no results, fallback by block + lot:
+```
+https://data.cityofnewyork.us/resource/buis-pvji.json?$where=block='{BLOCK}' AND lot='{LOT}' AND borough='{BOROUGH}'
+```
+
+Key fields: `lpc_name`, `lpc_lpnumb`, `desdate`, `landmarkty`, `lpc_sitede`, `lpc_sitest`, `lpc_altern`, `address`, `url_report`
 
 Also check PLUTO's `histdist` field from Step 2 — if it has a value, the property is in a historic district even if not individually listed in the LPC dataset.
 
@@ -75,17 +75,19 @@ Also check PLUTO's `histdist` field from Step 2 — if it has a value, the prope
 
 | Field | Value |
 |-------|-------|
-| LP Number | ... |
-| Name | ... |
-| Designation Date | YYYY-MM-DD |
-| Type | Individual / Interior / Historic District |
-| Style | ... |
-| Architect | ... |
-| Historic District | ... |
+| LP Number | {lpc_lpnumb} |
+| Name | {lpc_name} |
+| Designation Date | {desdate} |
+| Type | {landmarkty} |
+| Site Description | {lpc_sitede} |
+| Site Style | {lpc_sitest} |
+| Also Known As | {lpc_altern} |
+| LPC Report | {url_report} |
+| Historic District | {histdist from PLUTO} |
 
 **Implications:** Exterior alterations require LPC Certificate of Appropriateness before DOB permit.
 
-Source: [LPC Building Database](https://data.cityofnewyork.us/Housing-Development/LPC-Individual-Landmark-and-Historic-District-Buil/7mgd-s57w)
+Source: [LPC Individual Landmarks](https://data.cityofnewyork.us/Housing-Development/Individual-Landmarks/buis-pvji)
 ```
 
 If not landmarked and not in a historic district: "No landmark designation found for this property."

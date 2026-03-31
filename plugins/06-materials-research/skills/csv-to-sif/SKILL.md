@@ -103,8 +103,8 @@ TG=Executive Lounge
 OD=Santos Palisander / Black MCL Leather
 AN=DIM
 AD=32.75W x 32.5D x 33.5H in
-ProductURL=https://store.hermanmiller.com/eames-lounge-chair
-ImageURL=https://store.hermanmiller.com/media/eames-lounge.jpg
+ProductURL=https://www.hermanmiller.com/products/seating/lounge-seating/eames-lounge-chair-and-ottoman/
+ImageURL=https://www.hermanmiller.com/content/dam/hmicom/page_assets/products/eames_lounge_chair_and_ottoman/mh_prd_ovw_eames_lounge_chair_and_ottoman.jpg
 
 PN=164-500
 PD=Saarinen Round Dining Table 54"

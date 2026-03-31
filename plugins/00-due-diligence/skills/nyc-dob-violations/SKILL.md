@@ -62,9 +62,9 @@ Key fields: `isn_dob_bis_viol`, `violation_type`, `issue_date`, `violation_categ
 
 ### ECB Violations
 ```
-https://data.cityofnewyork.us/resource/6bgk-3dad.json?$where=bin='{BIN}'&$order=violation_date DESC&$limit=50
+https://data.cityofnewyork.us/resource/6bgk-3dad.json?$where=bin='{BIN}'&$order=issue_date DESC&$limit=50
 ```
-Key fields: `isn_dob_bis_viol`, `ecb_violation_number`, `ecb_violation_type`, `violation_date`, `penalty_applied`, `amount_paid`, `amount_baldue`, `ecb_penalty_status`
+Key fields: `isn_dob_bis_extract`, `ecb_violation_number`, `violation_type`, `issue_date`, `penality_imposed`, `amount_paid`, `balance_due`, `hearing_status`, `ecb_violation_status`, `severity`
 
 ### Active/Open Violations
 ```
@@ -93,9 +93,9 @@ Open violations go first, flagged with ⚠.
 
 ### ECB Violations ({count} total)
 
-| ISN | ECB # | Date | Violation Type | Penalty | Paid | Balance Due | Status |
-|-----|-------|------|----------------|---------|------|-------------|--------|
-| ... | ... | ... | ... | $X,XXX | $X,XXX | $X,XXX | ... |
+| ECB # | Date | Violation Type | Severity | Penalty Imposed | Paid | Balance Due | Status |
+|-------|------|----------------|----------|-----------------|------|-------------|--------|
+| {ecb_violation_number} | {issue_date} | {violation_type} | {severity} | ${penality_imposed} | ${amount_paid} | ${balance_due} | {hearing_status} |
 
 **Total penalties assessed:** ${amount}
 **Total balance due:** ${amount}

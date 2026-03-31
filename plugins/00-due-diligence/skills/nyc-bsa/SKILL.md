@@ -54,24 +54,24 @@ Parse BBL into: boro (1 digit), block (5 digits zero-padded), lot (4 digits zero
 
 Query by BBL first:
 ```
-https://data.cityofnewyork.us/resource/yvxd-uipr.json?$where=bbl='{BBL}'&$order=calendar_date DESC
+https://data.cityofnewyork.us/resource/yvxd-uipr.json?$where=bbl='{BBL}'&$order=date DESC
 ```
 
 If no results, try address fallback:
 ```
-https://data.cityofnewyork.us/resource/yvxd-uipr.json?$where=upper(premises_address) LIKE '%{STREET}%' AND borough='{BOROUGH}'&$order=calendar_date DESC
+https://data.cityofnewyork.us/resource/yvxd-uipr.json?$where=upper(street_name) LIKE '%{STREET}%' AND borough='{BOROUGH}'&$order=date DESC
 ```
 
-Key fields: `application_number`, `bsa_type`, `status`, `decision`, `calendar_date`, `premises_address`, `bbl`, `borough`
+Key fields: `application`, `section`, `status`, `date`, `street_number`, `street_name`, `bbl`, `borough`, `decisions_url`, `project_description`
 
 ## Step 4: Print Results
 
 ```markdown
 ## BSA Variances & Special Permits — {Address}
 
-| Calendar # | Type | Decision | Date | Description |
-|------------|------|----------|------|-------------|
-| ... | Variance / Special Permit | Approved / Denied / Pending | YYYY-MM-DD | ... |
+| Application # | Section | Status | Date | Description | Decisions |
+|---------------|---------|--------|------|-------------|-----------|
+| {application} | {section} | {status} | YYYY-MM-DD | {project_description} | {decisions_url} |
 
 **Note:** Approved variances remain with the land. Check if conditions affect proposed work.
 

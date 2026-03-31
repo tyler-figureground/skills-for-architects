@@ -15,13 +15,13 @@ Reference for all NYC Open Data (Socrata) endpoints used by the `/nyc-property-r
 
 | Domain | Dataset | ID | Key Fields | Filter Field |
 |--------|---------|-----|-----------|-------------|
-| LPC Landmarks | Individual Landmark & Historic District | `7mgd-s57w` | lpc_name, lpc_number, date_designated, building_type, style, architect, historic_district_name, status | bin_number, bbl |
+| LPC Landmarks | Individual Landmarks | `buis-pvji` | lpc_name, lpc_lpnumb, desdate, landmarkty, lpc_sitede, lpc_sitest, lpc_altern, address, url_report | bbl, block+lot+borough |
 | DOB Permits (Legacy) | DOB Permit Issuance | `ipu4-2q9a` | permit_si_no, job__, job_type, issuance_date, expiration_date, permittee_s_first_name/last_name, owner_s_first_name/last_name, borough, block, lot | bin__ |
 | DOB Filings (Legacy) | DOB Job Application Filings | `ic3t-wcy2` | job__, doc__, job_type, job_status, latest_action_date, applicant_s_first_name/last_name, owner_s_first_name/last_name, borough, block, lot | bin__ |
 | DOB Permits (NOW) | DOB NOW Build Approved Permits | `rbx6-tga4` | job_filing_number, permit_status, filing_date, approved_date, job_type, borough, bin, bbl | bin |
 | DOB Filings (NOW) | DOB NOW Build Job Application Filings | `w9ak-ipjd` | job_filing_number, filing_status, filing_date, job_type, borough, bin, bbl | bin |
 | DOB Violations | DOB Violations | `3h2n-5cm9` | isn_dob_bis_viol, violation_type, issue_date, violation_category, disposition_date, disposition_comments | bin |
-| DOB ECB Violations | DOB ECB Violations | `6bgk-3dad` | isn_dob_bis_viol, ecb_violation_number, ecb_violation_type, violation_date, penalty_applied, amount_paid, amount_baldue, ecb_penalty_status | bin |
+| DOB ECB Violations | DOB ECB Violations | `6bgk-3dad` | isn_dob_bis_extract, ecb_violation_number, violation_type, issue_date, penality_imposed, amount_paid, balance_due, hearing_status, ecb_violation_status, severity | bin |
 | DOB Active Violations | Active DOB Violations | `sjhj-bc8q` | All fields from 3h2n-5cm9 but pre-filtered to open | bin |
 | ACRIS Master | ACRIS Real Property Master | `bnx9-e6tj` | document_id, record_type, crfn, doc_type, doc_date, doc_amount, recorded_filed | document_id |
 | ACRIS Legals | ACRIS Real Property Legals | `8h5j-fqxa` | document_id, borough, block, lot, property_type, street_number, street_name | borough, block, lot |
@@ -29,9 +29,9 @@ Reference for all NYC Open Data (Socrata) endpoints used by the `/nyc-property-r
 | ACRIS Doc Types | ACRIS Document Control Codes | `7isb-wh4c` | doc__type, doc__type_description | (lookup table) |
 | HPD Violations | Housing Maintenance Code Violations | `wvxf-dwi5` | violationid, violationclass, inspectiondate, approveddate, originalcertifybydate, novdescription | boroid, block, lot |
 | HPD Open Violations | Open HPD Violations | `csn4-vhvf` | Same fields, pre-filtered to open | boroid, block, lot |
-| HPD Complaints | Complaints and Problems | `ygpa-z7cr` | complaintid, receiveddate, status, statusdate | boroid, block, lot |
+| HPD Complaints | Complaints and Problems | `ygpa-z7cr` | complaint_id, received_date, complaint_status, complaint_status_date, major_category, minor_category, problem_status | borough (text), block, lot |
 | HPD Registrations | Multiple Dwelling Registrations | `tesw-yqqr` | registrationid, buildingid, boroid, block, lot, registrationenddate, ownerfirstname, ownerlastname | boroid, block, lot |
-| BSA Applications | BSA Applications Status | `yvxd-uipr` | application_number, bsa_type, status, decision, calendar_date, premises_address, bbl, borough | bbl |
+| BSA Applications | BSA Applications Status | `yvxd-uipr` | application, section, status, date, street_number, street_name, decisions_url, project_description, bbl, borough | bbl |
 
 ## ACRIS 3-Table Join Logic
 

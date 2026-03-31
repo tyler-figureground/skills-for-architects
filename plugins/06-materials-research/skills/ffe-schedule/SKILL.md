@@ -8,8 +8,6 @@ allowed-tools:
   - Bash
   - Glob
   - Grep
-  - WebSearch
-  - WebFetch
   - AskUserQuestion
   - mcp__google__sheets_values_get
   - mcp__google__sheets_values_update

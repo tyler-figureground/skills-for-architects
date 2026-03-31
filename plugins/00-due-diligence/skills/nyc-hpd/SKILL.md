@@ -76,10 +76,13 @@ https://data.cityofnewyork.us/resource/csn4-vhvf.json?$where=boroid='{boro}' AND
 Pre-filtered to currently open violations.
 
 ### Complaints
+
+**Note:** The complaints dataset uses `borough` (text like "MANHATTAN", "BRONX", "BROOKLYN", "QUEENS", "STATEN ISLAND") — NOT `boroid`. Map boro codes: 1→MANHATTAN, 2→BRONX, 3→BROOKLYN, 4→QUEENS, 5→STATEN ISLAND.
+
 ```
-https://data.cityofnewyork.us/resource/ygpa-z7cr.json?$where=boroid='{boro}' AND block='{block}' AND lot='{lot}'&$order=receiveddate DESC&$limit=30
+https://data.cityofnewyork.us/resource/ygpa-z7cr.json?$where=borough='{BOROUGH_NAME}' AND block='{block}' AND lot='{lot}'&$order=received_date DESC&$limit=30
 ```
-Key fields: `complaintid`, `receiveddate`, `status`, `statusdate`
+Key fields: `complaint_id`, `received_date`, `complaint_status`, `complaint_status_date`, `major_category`, `minor_category`, `problem_status`
 
 ### Registrations
 ```
@@ -113,7 +116,7 @@ Key fields: `registrationid`, `buildingid`, `registrationenddate`, `ownerfirstna
 |-------------|-------|-----------------|---------------|-------------|
 
 ### Recent Complaints ({count} total, showing 30 most recent)
-| Complaint ID | Received | Status | Status Date |
+| Complaint ID | Received | Category | Status | Status Date |
 |-------------|----------|--------|-------------|
 
 Source: [HPD Violations](https://data.cityofnewyork.us/Housing-Development/Housing-Maintenance-Code-Violations/wvxf-dwi5) | [HPD Complaints](https://data.cityofnewyork.us/Housing-Development/Housing-Maintenance-Code-Complaints-and-Problems/ygpa-z7cr)

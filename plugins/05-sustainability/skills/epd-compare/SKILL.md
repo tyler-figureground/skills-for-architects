@@ -125,14 +125,11 @@ Use `—` for missing data. Never fill in missing values.
 | *Industry average* | *~400 kg CO2e/m3* | — | — |
 ```
 
-Include industry average baseline if known. Common baselines:
-- Ready-mix concrete (4000 PSI): ~400 kg CO2e/m3 (NRMCA)
-- Structural steel (hot-rolled): ~1.16 kg CO2e/kg (AISC)
-- Rebar: ~0.83 kg CO2e/kg
-- Mineral wool insulation: ~1.2 kg CO2e/kg
-- Carpet tile: ~10 kg CO2e/m2
+Include an industry average baseline **only if the user provides one** (e.g., from an industry-average EPD or a published baseline document). Do not use approximate or hardcoded baselines.
 
-If you don't have a reliable baseline for the material, search for current CLF (Carbon Leadership Forum) or industry data rather than guessing.
+If the user hasn't provided a baseline, ask: **"Do you have an industry-average EPD or published baseline for this material category? If so, share it and I'll include it in the comparison. We're working on EC3 API integration that will automate baseline lookups — for now, provide an EPD or use `/epd-research` to find one."**
+
+If no baseline is available, omit the "vs. Industry Avg" column entirely rather than guessing.
 
 #### c. LEED v4.1 MRc2 assessment
 
@@ -206,6 +203,6 @@ Next steps:
 ## Notes
 
 - **This skill reads, not writes.** It does not add rows to the EPD Google Sheet. It produces a comparison report as a markdown file.
-- **Industry baselines change.** Search for current values rather than relying on hardcoded numbers. CLF and NRMCA publish updated baselines periodically.
+- **No hardcoded baselines.** Never use approximate GWP baselines from training data. If the user needs a baseline comparison, ask them to provide an industry-average EPD or use `/epd-research` to find one. EC3 API integration is in progress and will automate this.
 - **GWP (A1-A3) is the primary metric** for most comparisons and LEED. Other indicators (ODP, AP, EP) provide a fuller picture but GWP drives most specification decisions.
 - **Suggest next skills.** After comparison, the natural next steps are `/epd-to-spec` (to write spec language) or `/epd-research` (to find alternatives).

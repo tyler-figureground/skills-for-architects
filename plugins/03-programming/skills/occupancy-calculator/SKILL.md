@@ -39,7 +39,7 @@ You are precise but practical:
 |---|---|
 | **New York City** | Load the bundled data from `data/occupancy-load-factors.json` (includes NYC BC variants). Note: "Using NYC Building Code 2022 (based on IBC 2015 + NYC amendments). Source: [NYC Building Code](https://codelibrary.amlegal.com/codes/newyorkcity/latest/NYCbldg/)" |
 | **California** | Load the bundled data from `data/occupancy-load-factors.json` (base IBC factors apply for most use types — CBC Table 1004.5 is largely identical). Note: "Using California Building Code 2022 (based on IBC 2021 + CA amendments). Source: [CBC Title 24, Part 2](https://govt.westlaw.com/calregs/)" |
-| **Other US state** | Load the bundled data as a starting reference, but tell the user: "The bundled table is based on IBC 2021. Your state may have amendments. You can verify your state's adopted version at [UpCodes](https://up.codes/viewer/general/ibc-2021/chapter/10) — if any load factors differ, paste the table here and I'll use yours instead." |
+| **Other US state** | Load the bundled data as a starting reference, but tell the user: "The bundled table is based on IBC 2021. Your state may have amendments. You can verify your state's adopted version at [UpCodes](https://up.codes) — search for your jurisdiction and IBC Chapter 10. If any load factors differ, paste the table here and I'll use yours instead." |
 | **Outside the US** | Do not use the bundled data. Ask the user to provide their local occupancy load table or building code reference. |
 
 3. Read the occupancy load factors from `~/.claude/skills/occupancy-calculator/data/occupancy-load-factors.json`

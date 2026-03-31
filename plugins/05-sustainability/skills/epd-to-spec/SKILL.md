@@ -73,18 +73,17 @@ Read the user's input and build an inventory:
 
 If the user provided EPD sheet data or a comparison report, extract the GWP values and declared units from there.
 
-If no GWP thresholds are specified, use industry baselines and mark with `[VERIFY THRESHOLD]`:
+If no GWP thresholds are specified, **do not use approximate baselines.** Instead, ask the user:
 
-| Material | Baseline GWP | Declared Unit | Source |
-|----------|-------------|---------------|--------|
-| Ready-mix concrete (4000 PSI) | 400 | kg CO2e/m3 | NRMCA |
-| Structural steel (hot-rolled) | 1.16 | kg CO2e/kg | AISC |
-| Rebar | 0.83 | kg CO2e/kg | CRSI |
-| Gypsum board | 3.4 | kg CO2e/m2 | GA |
-| Mineral wool insulation | 1.2 | kg CO2e/kg | NAIMA |
-| Carpet tile | 10 | kg CO2e/m2 | NSF |
+**"I need GWP thresholds to write the spec. You can provide them by:**
+1. **Sharing an EPD** — I'll extract the GWP value and declared unit
+2. **Using `/epd-research`** — I'll find EPDs for your material categories
+3. **Using `/epd-compare`** — compare products and pick a threshold from the results
+4. **Stating a number** — e.g., 'concrete max 350 kg CO2e/m3'
 
-**These baselines are approximate.** Search for current published values when writing specs for a real project.
+**We're working on EC3 API integration that will automate baseline lookups — for now, provide an EPD or a specific threshold."**
+
+Do not fall back to hardcoded numbers. Write the spec with `[THRESHOLD TBD]` placeholders if the user asks to proceed without data, and flag every placeholder clearly.
 
 Report the mapping:
 
@@ -337,7 +336,7 @@ Sections flagged for review: [count]
 ## Edge Cases
 
 - **Single material**: Generate one section. Still include the full three-part structure.
-- **No GWP threshold provided**: Use industry baseline and flag with `[VERIFY THRESHOLD]`. Always tell the user: "I used industry baseline values. Confirm these thresholds are appropriate for your project before issuing."
+- **No GWP threshold provided**: Do not use approximate baselines. Ask the user to provide an EPD, run `/epd-research`, or state a specific threshold. If the user asks to proceed without data, use `[THRESHOLD TBD]` placeholders and flag every one.
 - **Materials outside common EPD divisions**: Some materials (Division 10 specialties, Division 12 furnishings) rarely have EPDs. Note: "EPDs are uncommon for this product category. Consider requiring manufacturer environmental data sheets as an alternative submittal."
 - **Mixed metric/imperial**: GWP declared units follow industry convention — concrete in kg CO2e/m3, steel in kg CO2e/kg. Don't convert these to imperial.
 - **Multiple concrete mixes**: Create separate GWP thresholds per strength class (3000, 4000, 5000 PSI) if the user specifies different mixes.
@@ -347,5 +346,5 @@ Sections flagged for review: [count]
 
 - **This skill generates spec language, not data.** It reads from the EPD sheet or conversation context but writes `.md` specification files.
 - **Pair with `/spec-writer` for complete specs.** This skill adds EPD/sustainability requirements to specific sections. The general `/spec-writer` produces full outline specs without EPD language. For a complete specification package, use both.
-- **GWP thresholds are getting more aggressive.** What was considered "low carbon" concrete 5 years ago (350 kg CO2e/m3) is now closer to average. Always verify thresholds against current industry data.
+- **No hardcoded baselines.** Never use approximate GWP baselines from training data. Always require the user to provide an EPD or a specific threshold. EC3 API integration is in progress and will automate baseline lookups.
 - **Buy America / regional sourcing**: Some projects (federal, state-funded) require domestic materials. The regional materials preference in Part 2 can be strengthened to a requirement if needed.

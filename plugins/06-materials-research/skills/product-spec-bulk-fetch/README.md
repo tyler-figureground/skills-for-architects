@@ -15,7 +15,7 @@ Then provide URLs — paste inline, point to a file, or give a Google Sheet colu
 ```
 /product-spec-bulk-fetch
 
-https://www.hermanmiller.com/products/seating/lounge-chairs/eames-lounge-chair/
+https://www.hermanmiller.com/products/seating/lounge-seating/eames-lounge-chair-and-ottoman/
 https://www.steelcase.com/products/collaborative-chairs/gesture/
 https://www.ikea.pr/puertorico/es/pd/vardagen-vaso-art-70313106
 ```
