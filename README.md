@@ -8,31 +8,6 @@
 
 **7 agents**, **36 skills**, **6 rules**, and **3 hooks** across **9 plugins**. Built by [ALPA](https://alpa.llc).
 
-## Quick Start
-
-### Install
-
-**Claude Desktop:** Open **Customize** → **Browse plugins** → **+** → **Add marketplace from GitHub** → enter `AlpacaLabsLLC/skills-for-architects`
-
-**Claude Code:**
-```bash
-claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
-claude plugin install 01-site-planning@skills-for-architects
-```
-
-### Use
-
-Type `/studio` followed by what you need. The router reads your request and hands off to the right agent or skill.
-
-```
-/studio task chair, mesh back, under $800
-/studio 123 Main St, Brooklyn NY
-/studio I need a space program for 200 people
-/studio parse this EPD
-```
-
-Type `/skills` for the full menu. Or call any skill directly by name (e.g. `/environmental-analysis 123 Main St`).
-
 ## Architecture
 
 ```
@@ -74,6 +49,31 @@ Architecture Studio
 ```
 
 **Agents** orchestrate skills across plugins — they assess your input, choose a path, and exercise judgment. **Skills** are single-purpose tools invoked with a slash command. **Rules** govern every output. **Hooks** are event-driven automations. Skills are grouped into **plugins** (installable bundles organized by project lifecycle).
+
+## Quick Start
+
+### Install
+
+**Claude Desktop:** Open **Customize** → **Browse plugins** → **+** → **Add marketplace from GitHub** → enter `AlpacaLabsLLC/skills-for-architects`
+
+**Claude Code:**
+```bash
+claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin install 01-site-planning@skills-for-architects
+```
+
+### Use
+
+Type `/studio` followed by what you need. The router reads your request and hands off to the right agent or skill.
+
+```
+/studio task chair, mesh back, under $800
+/studio 123 Main St, Brooklyn NY
+/studio I need a space program for 200 people
+/studio parse this EPD
+```
+
+Type `/skills` for the full menu. Or call any skill directly by name (e.g. `/environmental-analysis 123 Main St`).
 
 ## Agents
 
