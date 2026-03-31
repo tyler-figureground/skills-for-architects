@@ -33,18 +33,47 @@ Type `/studio` followed by what you need. The router reads your request and hand
 
 Type `/skills` for the full menu. Or call any skill directly by name (e.g. `/environmental-analysis 123 Main St`).
 
-## How It Works
+## Architecture
 
-Studio has four layers:
+```
+Architecture Studio
+├── /studio                              ← entry point
+│
+├── agents/
+│   ├── site-planner                     4 skills · site research + synthesis
+│   ├── nyc-zoning-expert                9 skills · property records + zoning + 3D
+│   ├── workplace-strategist             2 skills · occupancy + programming
+│   ├── product-and-materials-researcher 5 skills · find, extract, tag
+│   ├── ffe-designer                     6 skills · schedule, QA, export
+│   ├── sustainability-specialist        4 skills · EPDs, GWP, LEED
+│   └── brand-manager                    2 skills · decks + palettes
+│
+├── plugins/
+│   ├── 00-due-diligence                 7 skills
+│   ├── 01-site-planning                 4 skills
+│   ├── 02-zoning-analysis               3 skills
+│   ├── 03-programming                   2 skills
+│   ├── 04-specifications                1 skill
+│   ├── 05-sustainability                4 skills
+│   ├── 06-materials-research           11 skills
+│   ├── 07-presentations                 2 skills
+│   └── 08-dispatcher                    2 skills
+│
+├── rules/
+│   ├── units-and-measurements
+│   ├── code-citations
+│   ├── professional-disclaimer
+│   ├── csi-formatting
+│   ├── terminology
+│   └── output-formatting
+│
+└── hooks/
+    ├── post-write-disclaimer-check
+    ├── post-output-metadata
+    └── pre-commit-spec-lint
+```
 
-| Layer | What it does | Count |
-|-------|-------------|-------|
-| **Agents** | Autonomous specialists that orchestrate skills, choose paths, and exercise judgment | 7 |
-| **Skills** | Single-purpose tools invoked with a slash command | 36 |
-| **Rules** | Always-on conventions that govern every output | 6 |
-| **Hooks** | Event-driven automations — file checks, metadata stamps, lint | 3 |
-
-Skills are grouped into **plugins** (installable bundles organized by project lifecycle phase). Agents work across plugins.
+**Agents** orchestrate skills across plugins — they assess your input, choose a path, and exercise judgment. **Skills** are single-purpose tools invoked with a slash command. **Rules** govern every output. **Hooks** are event-driven automations. Skills are grouped into **plugins** (installable bundles organized by project lifecycle).
 
 ## Agents
 
