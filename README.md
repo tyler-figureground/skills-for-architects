@@ -1,10 +1,10 @@
-# Studio
+# Architecture Studio
 
 > Agents, skills, and rules for architects, designers, and AEC professionals — use with [Claude Desktop](https://claude.ai) or [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**Studio** teaches Claude architecture-specific workflows — site analysis, zoning, space programming, specifications, materials research, sustainability, and presentations.
+**Architecture Studio** teaches Claude architecture-specific workflows — site analysis, zoning, space programming, specifications, materials research, sustainability, and presentations.
 
 **7 agents**, **36 skills**, **6 rules**, and **3 hooks** across **9 plugins**. Built by [ALPA](https://alpa.llc).
 
