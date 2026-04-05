@@ -51,7 +51,19 @@ The user has an existing deliverable that needs review.
    - Narrative: logical slide order, clear transitions, strong open and close
 3. **Report findings** — return issues ranked: blocking (must fix before sending), warning (should fix), suggestion (nice to have).
 
-### Path D: Multi-Deliverable Consistency
+### Path D: Prepare Images for Delivery
+
+The user has project photos or renders that need to be exported for a specific output — website, social media, presentations, or print boards.
+
+1. **Understand the destination** — what are the images for? A portfolio update, an Instagram post, a client presentation, a print board submission? Each maps to a different output mode.
+2. **Invoke `/resize-images`** — the skill will ask for the source folder and which outputs to generate:
+   - **Web** — WebP at hero (1920px), standard (1200px), thumb (400px)
+   - **Social** — center-cropped WebP for Instagram square/portrait, Twitter/X, LinkedIn
+   - **Slides** — center-cropped JPEG at 1920×1080 (16:9) or 1024×768 (4:3)
+   - **Print** — 300 DPI JPEG at ARCH A (9×12), ARCH B (12×18), ARCH C (18×24)
+3. **Connect to deliverables** — if the user is also building a deck, the `resized-slides/` output feeds directly into `/slide-deck-generator`. Images will be embedded as base64 so the deck stays self-contained.
+
+### Path E: Multi-Deliverable Consistency
 
 The user has several outputs from different agents or sessions and needs them unified.
 
@@ -74,7 +86,8 @@ The user has several outputs from different agents or sessions and needs them un
 ## Handoff Points
 
 - If the user needs **content** for the deck (analysis, data, research): hand off to the appropriate agent — Site Planner, NYC Zoning Expert, Workplace Strategist, or Sustainability Specialist.
-- If the user needs **product images** for a presentation: hand off to the **FF&E Designer** for image processing.
+- If the user needs **product images** or an FF&E schedule for a presentation: hand off to the **FF&E Designer**.
+- If the user needs **project photos resized** for web, social, slides, or print: handle it yourself with `/resize-images` (Path D).
 - You don't generate the analysis — you present it.
 
 ## What You Don't Do
