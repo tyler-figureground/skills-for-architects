@@ -6,7 +6,7 @@
 
 **Architecture Studio** teaches Claude architecture-specific workflows — site analysis, zoning, space programming, specifications, materials research, sustainability, and presentations.
 
-**7 agents**, **36 skills**, **7 rules**, and **3 hooks** across **9 plugins**. Built by [ALPA](https://alpa.llc).
+**7 agents**, **37 skills**, **7 rules**, and **3 hooks** across **9 plugins**. Built by [ALPA](https://alpa.llc).
 
 ## Architecture
 
@@ -31,7 +31,7 @@ Architecture Studio
 │   ├── 04-specifications                1 skill
 │   ├── 05-sustainability                4 skills
 │   ├── 06-materials-research           11 skills
-│   ├── 07-presentations                 2 skills
+│   ├── 07-presentations                 3 skills
 │   └── 08-dispatcher                    2 skills
 │
 ├── rules/
@@ -104,11 +104,11 @@ Organized by project lifecycle — from due diligence through delivery.
 | 4 | [Specifications](./plugins/04-specifications) | 1 | CSI outline specifications from a materials list. |
 | 5 | [Sustainability](./plugins/05-sustainability) | 4 | EPD parsing, research, comparison, and GWP thresholds. |
 | 6 | [Materials Research](./plugins/06-materials-research) | 11 | FF&E product research, spec extraction, cleanup, and image processing. |
-| 7 | [Presentations](./plugins/07-presentations) | 2 | Slide deck generation and color palette creation. |
+| 7 | [Presentations](./plugins/07-presentations) | 3 | Slide deck generation, color palette creation, and image resizing for web, social, slides, and print. |
 | 8 | [Dispatcher](./plugins/08-dispatcher) | 2 | Studio router (`/studio`) and help menu (`/skills`). |
 
 <details>
-<summary><strong>All 36 skills</strong></summary>
+<summary><strong>All 37 skills</strong></summary>
 
 ### Due Diligence
 
@@ -183,6 +183,7 @@ Organized by project lifecycle — from due diligence through delivery.
 |-------|-------------|
 | [`/slide-deck-generator`](./plugins/07-presentations/skills/slide-deck-generator) | HTML slide decks — editorial layout, 22 slide types |
 | [`/color-palette-generator`](./plugins/07-presentations/skills/color-palette-generator) | Color palettes from descriptions, images, or hex codes |
+| [`/resize-images`](./plugins/07-presentations/skills/resize-images) | Batch-resize photos for web, social, slides, and print |
 
 </details>
 
