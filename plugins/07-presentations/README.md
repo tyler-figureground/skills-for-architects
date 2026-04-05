@@ -10,53 +10,6 @@ Architects and designers spend hours on visual production work — fighting Powe
 
 Three skills that handle visual production. The slide deck generator builds complete HTML presentations from a topic or outline. The color palette generator creates systematic palettes with WCAG contrast checks from any starting point. The image resizer batch-exports project photos to every required format — web, social, slides, and print — in one step.
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│                     DESIGNER INPUT                           │
-│                                                              │
-│  Topic, outline,       OR       "warm earthy tones for a     │
-│  data, or document              boutique hotel lobby"         │
-│  to present                     or an image file             │
-└─────────────┬────────────────────────────┬───────────────────┘
-              │                            │
-              ▼                            ▼
-   ┌───────────────────┐        ┌───────────────────┐
-   │  Slide Deck       │        │  Color Palette    │
-   │  Generator        │        │  Generator        │
-   │                   │        │                   │
-   │  22 slide types:  │        │  8-12 colors in   │
-   │  • Title          │        │  4 groups:        │
-   │  • Heading+Body   │        │  • Primary (2-3)  │
-   │  • Stats          │        │  • Secondary (2-3)│
-   │  • Data Table     │        │  • Neutral (2-3)  │
-   │  • Bar Chart      │        │  • Accent (1-2)   │
-   │  • Timeline       │        │                   │
-   │  • Comparison     │        │  For each color:  │
-   │  • Image grids    │        │  HEX, RGB, HSL,   │
-   │  • Statements     │        │  suggested use,   │
-   │  • ...            │        │  contrast ratios  │
-   │                   │        │                   │
-   │  Design system:   │        │  WCAG AA checked  │
-   │  Helvetica, left- │        │  (4.5:1 text,     │
-   │  aligned, massive │        │   3:1 large text) │
-   │  whitespace,      │        │                   │
-   │  editorial layout │        │  From: text,      │
-   │                   │        │  image, brand,    │
-   │  Keyboard + touch │        │  single color,    │
-   │  navigation       │        │  or combination   │
-   └─────────┬─────────┘        └─────────┬─────────┘
-             │                            │
-             ▼                            ▼
-   ┌───────────────────┐        ┌───────────────────┐
-   │  presentation.html│        │  palette-         │
-   │                   │        │  [name].html      │
-   │  Self-contained   │        │                   │
-   │  single file —    │        │  Self-contained   │
-   │  open in any      │        │  single file —    │
-   │  browser, share   │        │  uses its own     │
-   │  as-is, no deps   │        │  palette colors   │
-   └───────────────────┘        └───────────────────┘
-```
 
 ## Data Flow
 
