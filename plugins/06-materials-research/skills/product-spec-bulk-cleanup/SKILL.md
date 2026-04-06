@@ -18,13 +18,13 @@ allowed-tools:
 
 Takes a messy FF&E schedule and normalizes everything: casing, dimensions, units, language, materials vocabulary, currency formatting, and duplicates. Outputs a clean, consistent, spec-ready schedule.
 
-Operates on the **master Google Sheet** — the same 33-column schema used by Norma Jean, `/product-research`, and all other data-management skills. Also works on standalone CSV files and pasted tables.
+Operates on the **master Google Sheet** — the same 33-column schema used by all product skills. Also works on standalone CSV files and pasted tables.
 
 ## Input
 
 The user provides a schedule in one of these ways:
 
-1. **Master Google Sheet** — the shared product library (same sheet used by Norma Jean). Provide spreadsheet ID or URL.
+1. **Master Google Sheet** — the shared product library. Provide spreadsheet ID or URL.
 2. **File path** — a `.csv`, `.tsv`, `.xlsx` export, or `.md` file
 3. **Pasted table** — markdown or tab-separated data in the message
 

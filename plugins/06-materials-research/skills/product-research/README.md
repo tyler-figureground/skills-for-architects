@@ -12,7 +12,7 @@ Brief → Search → Candidates → Pick → Sheet
 2. **Research** — Claude searches across brands, trade platforms, and design publications
 3. **Candidates** — Get 6-10 options with specs, pricing, and reasoning
 4. **Pick** — Choose which products to save
-5. **Sheet** — Saved to the same Google Sheet used by Norma Jean and other skills
+5. **Sheet** — Saved to the master Google Sheet
 
 ## Usage
 
@@ -35,23 +35,10 @@ steel base, under $3,000, needs to ship in 6 weeks"
 
 Category, use context, style, materials, dimensions, budget, sustainability certs, lead time, quantity, indoor/outdoor, brand preferences, and must-haves. **Only mention what matters — it works with whatever you give it.**
 
-## How it relates to Norma Jean
-
-| | Norma Jean | /product-research |
-|--|-----------|-------------------|
-| **Mode** | Sidecar — you browse, it clips | Brief — you describe, it searches |
-| **Who drives** | The designer | Claude |
-| **Input** | Alt+C on a product page | "Find me..." |
-| **Output** | Row in Google Sheet | Curated shortlist → Google Sheet |
-| **Best for** | Known products, fast capture | Discovery, exploration, alternatives |
-
-Both write to the same master sheet with the same schema.
-
 ## Works with
 
 | Tool | How |
 |------|-----|
-| [Norma Jean](https://github.com/AlpacaLabsLLC/norma-jean) | Same sheet, different door — sidecar mode |
 | `/product-spec-bulk-cleanup` | Normalize the sheet after adding products |
 | `/product-spec-bulk-fetch` | Batch-add from URLs |
 | `/product-spec-pdf-parser` | Extract from PDF catalogs |

@@ -36,7 +36,7 @@ Or a folder:
 
 ### Output
 
-Appends rows to the **master Google Sheet** (same sheet used by Norma Jean and all data-management skills) using the 33-column schema. PDF-specific data (variant, price adder, country of origin, source filename) is stored in the Notes column. Can also output to local CSV or markdown.
+Appends rows to the **master Google Sheet** using the 33-column schema. PDF-specific data (variant, price adder, country of origin, source filename) is stored in the Notes column. Can also output to local CSV or markdown.
 
 ## How it fits
 
@@ -86,7 +86,6 @@ After every batch: `Parsed: X products from Y PDF(s)`
 
 | Skill | Relationship |
 |-------|-------------|
-| [Norma Jean](https://github.com/AlpacaLabsLLC/norma-jean) | Same sheet — Norma Jean clips from browser, this parses PDFs |
 | `/product-research` | Designer drops a PDF during research, this extracts the data |
 | `/product-spec-bulk-cleanup` | Run after parsing to normalize the sheet |
 | `/product-image-processor` | Run after parsing to process product images |

@@ -71,7 +71,6 @@ After every batch: success/failure counts per stage.
 
 | Skill | Relationship |
 |-------|-------------|
-| [Norma Jean](https://github.com/AlpacaLabsLLC/norma-jean) | Processes images from the same master sheet |
 | `/product-research` | Processes images from research results |
 | `/product-spec-bulk-fetch` | Processes images from fetched products |
 | `/product-spec-bulk-cleanup` | Run cleanup first, then process images |

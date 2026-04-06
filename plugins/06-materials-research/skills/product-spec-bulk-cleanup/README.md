@@ -20,7 +20,7 @@ Or paste a markdown table directly in the conversation.
 
 ### Input formats
 
-- **Master Google Sheet** — the shared product library (same sheet used by Norma Jean)
+- **Master Google Sheet** — the shared product library
 - **File path** — `.csv`, `.tsv`, or `.md`
 - **Pasted table** — markdown or tab-separated data
 
@@ -52,7 +52,7 @@ HAY                   →  HAY  (preserved — known abbreviation)
 
 ### Categories
 
-Maps free text to 22 canonical categories (unified vocabulary shared by Norma Jean and all skills):
+Maps free text to 22 canonical categories (unified vocabulary shared by all skills):
 
 | Input | → Canonical |
 |-------|-------------|
@@ -103,7 +103,6 @@ Flags identical Product Name + Brand or identical URL — presents for review, n
 
 | Skill | Relationship |
 |-------|-------------|
-| [Norma Jean](https://github.com/AlpacaLabsLLC/norma-jean) | Cleans up the same master sheet Norma Jean writes to |
 | `/product-research` | Normalizes research results after saving |
 | `/product-spec-bulk-fetch` | Normalizes fetched data |
 | `/product-spec-pdf-parser` | Normalizes parsed PDF data |

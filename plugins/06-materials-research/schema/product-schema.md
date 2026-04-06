@@ -2,7 +2,7 @@
 
 Version 1.1 · 33 columns (A–AG)
 
-One row per product. All FF&E skills in this plugin read and write to this schema — whether the target is a Google Sheet, CSV file, or markdown table. Compatible with [Norma Jean](https://github.com/AlpacaLabsLLC/norma-jean) (columns A–AC) and all `/product-*` skills (columns A–AG).
+One row per product. All FF&E skills in this plugin read and write to this schema — whether the target is a Google Sheet, CSV file, or markdown table.
 
 ## Column Reference
 
@@ -73,10 +73,6 @@ One row per product. All FF&E skills in this plugin read and write to this schem
 | AE | Notes | Text | Free text | Skill-specific notes, reasoning, flags, variant info. See **Notes Conventions** below. |
 | AF | Status | Text | Lowercase | Row lifecycle state. See **Status Values** below. |
 | AG | Source | Text | Lowercase | Which skill created the row. See **Source Values** below. |
-
-## Norma Jean Compatibility
-
-Norma Jean (Chrome extension) writes columns A–AC (29 columns). Skills extend this with AD–AG (4 columns). Both share the same header row. Norma Jean always sets Source to `norma-jean`.
 
 ## Category Vocabulary
 
@@ -160,7 +156,6 @@ Numbered sequentially within each prefix: S-01, S-02, T-01, L-01, etc.
 | Value | Written by |
 |-------|-----------|
 | `research` | `/product-research` |
-| `norma-jean` | Norma Jean Chrome extension |
 | `bulk-fetch` | `/product-spec-bulk-fetch` |
 | `pdf-parser` | `/product-spec-pdf-parser` |
 | `ffe-schedule` | `/ffe-schedule` |

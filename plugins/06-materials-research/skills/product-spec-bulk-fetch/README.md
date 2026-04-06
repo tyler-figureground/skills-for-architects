@@ -28,7 +28,7 @@ https://www.ikea.pr/puertorico/es/pd/vardagen-vaso-art-70313106
 
 ### Output
 
-Appends rows to the **master Google Sheet** (same sheet used by Norma Jean and all data-management skills) using the 33-column schema. Can also output to local CSV or markdown.
+Appends rows to the **master Google Sheet** using the 33-column schema. Can also output to local CSV or markdown.
 
 ## How it fits
 
@@ -61,7 +61,7 @@ Also extracts when available: Description, SKU, Designer, Vendor, Collection, Se
 Never stops a batch on a single failure:
 
 - **Trade/dealer sites** with hidden pricing → row included, price left blank
-- **JS-rendered pages** → may return partial data or fail (use Norma Jean for these)
+- **JS-rendered pages** → may return partial data or fail
 - **Login-required pages** → logged as failed, batch continues
 - **Non-product pages** → detected and skipped
 
@@ -71,7 +71,6 @@ After every batch: `Fetched: X/Y successful, Z partial, W failed`
 
 | Skill | Relationship |
 |-------|-------------|
-| [Norma Jean](https://github.com/AlpacaLabsLLC/norma-jean) | Same sheet — Norma Jean clips from browser, this fetches from URLs |
 | `/product-research` | Research finds candidates, this pulls full specs |
 | `/product-spec-bulk-cleanup` | Run after fetching to normalize the sheet |
 | `/product-image-processor` | Run after fetching to process product images |

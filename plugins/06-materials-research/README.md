@@ -19,17 +19,17 @@ One master Google Sheet. Multiple ways to get products in. Every entry structure
 └──────────┬───────────────────┬───────────────────┬──────────────┘
            │                   │                   │
            ▼                   ▼                   ▼
-┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐
-│ /product-research│ │   Norma Jean     │ │  /pdf-parser     │
-│                  │ │                  │ │  /bulk-fetch     │
-│ "Here are 8      │ │  Alt+C → clipped │ │                  │
-│  candidates..."  │ │  in 3 seconds    │ │  12 products     │
-│                  │ │                  │ │  extracted        │
-│ Claude searches  │ │ Designer browses │ │                  │
-│ the web          │ │ and clips        │ │ Batch processing │
-└────────┬─────────┘ └────────┬─────────┘ └────────┬─────────┘
-         │                    │                     │
-         ▼                    ▼                     ▼
+┌──────────────────┐ ┌──────────────────┐
+│ /product-research│ │  /pdf-parser     │
+│                  │ │  /bulk-fetch     │
+│ "Here are 8      │ │                  │
+│  candidates..."  │ │  12 products     │
+│                  │ │  extracted        │
+│ Claude searches  │ │                  │
+│ the web          │ │ Batch processing │
+└────────┬─────────┘ └────────┬─────────┘
+         │                    │
+         ▼                    ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                                                                 │
 │                   MASTER GOOGLE SHEET                            │
@@ -43,7 +43,7 @@ One master Google Sheet. Multiple ways to get products in. Every entry structure
 │  │ Designer│ Weight   │           │        │COM/COL  │ Source │ │
 │  └─────────┴──────────┴───────────┴────────┴─────────┴────────┘ │
 │                                                                 │
-│  Source: research · norma-jean · bulk-fetch · pdf-parser         │
+│  Source: research · bulk-fetch · pdf-parser                      │
 │                                                                 │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
@@ -64,7 +64,6 @@ One master Google Sheet. Multiple ways to get products in. Every entry structure
 | Source | Skill | Input | What happens |
 |--------|-------|-------|-------------|
 | Research brief | `/product-research` | "Find me sustainable acoustic panels under $300" | Claude searches the web, returns 6-10 candidates with specs and reasoning. Designer picks winners → saved to sheet. |
-| Browser | [Norma Jean](https://github.com/AlpacaLabsLLC/norma-jean) | Alt+C on any product page | Chrome extension reads the rendered DOM, sends to Claude for extraction, writes structured row to sheet in ~3 seconds. |
 | URL list | `/product-spec-bulk-fetch` | List of product page URLs | Fetches each page, extracts specs via AI, appends rows to sheet. Handles partial results and failures gracefully. |
 | PDF catalog | `/product-spec-pdf-parser` | PDF file or folder of PDFs | Extracts text via PyMuPDF, Claude parses product data from price books, fact sheets, and spec sheets. Handles variants and SKU expansion. |
 
@@ -77,16 +76,14 @@ One master Google Sheet. Multiple ways to get products in. Every entry structure
 
 ### Data flows through, not around
 
-Every skill reads from and writes back to the same Google Sheet. Data from a Norma Jean clip can be cleaned by `/bulk-cleanup`, then its images processed by `/image-processor`. A `/product-research` result can be re-fetched by `/bulk-fetch` to pull fuller specs. The `Source` column tracks where each row came from, but once in the sheet, all rows are equal.
+Every skill reads from and writes back to the same Google Sheet. Data from any source can be cleaned by `/bulk-cleanup`, then its images processed by `/image-processor`. A `/product-research` result can be re-fetched by `/bulk-fetch` to pull fuller specs. The `Source` column tracks where each row came from, but once in the sheet, all rows are equal.
 
 ```
 /product-research ──┐
                     │
-Norma Jean ─────────┼──→ Master Sheet ──→ /bulk-cleanup ──→ Master Sheet
+/bulk-fetch ────────┼──→ Master Sheet ──→ /bulk-cleanup ──→ Master Sheet
                     │         │
-/bulk-fetch ────────┤         └──→ /image-processor ──→ local image files
-                    │
-/pdf-parser ────────┘
+/pdf-parser ────────┘         └──→ /image-processor ──→ local image files
 ```
 
 ## Skills

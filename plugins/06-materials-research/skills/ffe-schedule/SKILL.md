@@ -16,7 +16,7 @@ allowed-tools:
 
 # /ffe-schedule — FF&E Schedule Generator
 
-Takes raw, unstructured product data and formats it into a proper FF&E specification schedule. Input can be notes, a CSV, a pasted spreadsheet, or a conversation. Output is a formatted schedule as markdown, CSV, or written to a Google Sheet — using the same 33-column schema as `/product-research`, `/product-spec-bulk-fetch`, and Norma Jean.
+Takes raw, unstructured product data and formats it into a proper FF&E specification schedule. Input can be notes, a CSV, a pasted spreadsheet, or a conversation. Output is a formatted schedule as markdown, CSV, or written to a Google Sheet — using the same 33-column schema as `/product-research`, `/product-spec-bulk-fetch`, and other product skills.
 
 ## When to Use
 

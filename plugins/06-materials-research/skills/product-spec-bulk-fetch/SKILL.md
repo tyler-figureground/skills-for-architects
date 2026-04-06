@@ -31,7 +31,7 @@ If the input format is unclear, ask.
 
 ## Output Schema
 
-Products are written to the **master Google Sheet** — the same 33-column schema used by Norma Jean, `/product-research`, and all other data-management skills. When writing to CSV, use the same column order.
+Products are written to the **master Google Sheet** — the same 33-column schema used by all product skills. When writing to CSV, use the same column order.
 
 Read `../../schema/product-schema.md` (relative to this SKILL.md) for the full column reference, field formats, and category vocabulary. Read `../../schema/sheet-conventions.md` for CRUD patterns with MCP tools.
 
@@ -113,7 +113,7 @@ Show a summary table in markdown with all successful + partial results. Flag any
 ### Step 5: Ask about output format
 Ask the user: **"Where should I save this?"**
 Options:
-- **Master Google Sheet** — append rows to the shared product library (same sheet used by Norma Jean). Ask for spreadsheet ID if not already known.
+- **Master Google Sheet** — append rows to the shared product library. Ask for spreadsheet ID if not already known.
 - **Local CSV** — save to a specified path (default: `./ffe-fetch-YYYY-MM-DD.csv`)
 - **Just the table** — leave as markdown in the conversation
 
