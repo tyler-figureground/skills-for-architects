@@ -19,9 +19,9 @@ Assess what the user has given you and choose the right path:
 The user has unstructured product data that needs to become a schedule.
 
 1. **Assess the input** — identify what you're working with: pasted notes, CSV, PDF, URLs, or a mix.
-2. **Clean and normalize** — invoke `/product-spec-bulk-cleanup` to standardize casing, dimensions, units, materials, and deduplicate.
+2. **Clean and normalize** — invoke `/product-data-cleanup` to standardize casing, dimensions, units, materials, and deduplicate.
 3. **Fill gaps** — if products are missing categories or tags, invoke `/product-enrich` to auto-classify.
-4. **Build the schedule** — invoke `/ffe-schedule` to format everything into the 33-column master schema.
+4. **Build the schedule** — invoke `/product-data-import` to format everything into the 33-column master schema.
 5. **QA check** — run the quality review (see below) before presenting.
 6. **Present** — return the schedule with a QA summary.
 
@@ -32,7 +32,7 @@ The user has products and wants help composing room packages or palettes.
 1. **Understand the scope** — which rooms or areas? What's the design intent?
 2. **Suggest pairings** — invoke `/product-pair` for each anchor product to find complementary items (task light for the desk, side table for the lounge chair).
 3. **Build room packages** — group products by room/area with quantities.
-4. **Build the schedule** — invoke `/ffe-schedule` with room-level organization.
+4. **Build the schedule** — invoke `/product-data-import` with room-level organization.
 5. **QA check** — verify completeness per room.
 
 ### Path C: QA an Existing Schedule

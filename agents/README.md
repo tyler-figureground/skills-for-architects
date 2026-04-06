@@ -10,7 +10,7 @@ Agents are autonomous specialists that orchestrate multiple skills to complete a
 | [nyc-zoning-expert](./nyc-zoning-expert.md) | Due Diligence + Zoning | nyc-landmarks, nyc-dob-permits, nyc-dob-violations, nyc-acris, nyc-hpd, nyc-bsa, nyc-property-report, zoning-analysis-nyc, zoning-envelope |
 | [workplace-strategist](./workplace-strategist.md) | Programming | occupancy-calculator, workplace-programmer |
 | [product-and-materials-researcher](./product-and-materials-researcher.md) | Materials Research | product-research, product-spec-bulk-fetch, product-spec-pdf-parser, product-match, product-enrich |
-| [ffe-designer](./ffe-designer.md) | FF&E Design | product-pair, product-spec-bulk-cleanup, ffe-schedule, product-image-processor, csv-to-sif, sif-to-csv |
+| [ffe-designer](./ffe-designer.md) | FF&E Design | product-pair, product-data-cleanup, product-data-import, product-enrich, product-image-processor, csv-to-sif, sif-to-csv |
 | [sustainability-specialist](./sustainability-specialist.md) | Sustainability | epd-research, epd-compare, epd-parser, epd-to-spec |
 | [brand-manager](./brand-manager.md) | Presentations | slide-deck-generator, color-palette-generator |
 

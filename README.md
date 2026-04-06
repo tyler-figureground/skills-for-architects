@@ -167,10 +167,11 @@ Organized by project lifecycle — from due diligence through delivery.
 |-------|-------------|
 | [`/product-research`](./plugins/06-materials-research/skills/product-research) | Find products from a design brief |
 | [`/product-spec-bulk-fetch`](./plugins/06-materials-research/skills/product-spec-bulk-fetch) | Extract specs from product URLs at scale |
-| [`/product-spec-bulk-cleanup`](./plugins/06-materials-research/skills/product-spec-bulk-cleanup) | Normalize messy FF&E schedules |
+| [`/product-data-cleanup`](./plugins/06-materials-research/skills/product-data-cleanup) | Normalize messy FF&E schedules |
 | [`/product-spec-pdf-parser`](./plugins/06-materials-research/skills/product-spec-pdf-parser) | Extract specs from PDF catalogs |
 | [`/product-image-processor`](./plugins/06-materials-research/skills/product-image-processor) | Batch download, resize, remove backgrounds |
-| [`/ffe-schedule`](./plugins/06-materials-research/skills/ffe-schedule) | Format raw product data into a schedule |
+| [`/product-data-import`](./plugins/06-materials-research/skills/product-data-import) | Import raw product data into the master schedule |
+| [`/master-schedule`](./plugins/06-materials-research/skills/master-schedule) | Connect a product library sheet to the project |
 | [`/product-enrich`](./plugins/06-materials-research/skills/product-enrich) | Auto-tag products with categories, colors, materials |
 | [`/product-match`](./plugins/06-materials-research/skills/product-match) | Find similar products |
 | [`/product-pair`](./plugins/06-materials-research/skills/product-pair) | Suggest complementary products |

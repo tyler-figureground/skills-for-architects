@@ -10,8 +10,8 @@ allowed-tools:
   - Grep
   - WebFetch
   - AskUserQuestion
-  - mcp__google__sheets_values_get
-  - mcp__google__sheets_spreadsheet_get
+  - mcp__google-sheets__get_sheet_data
+  - mcp__google-sheets__list_sheets
 ---
 
 # /product-image-processor — Product Image Processor
@@ -30,7 +30,7 @@ If no arguments provided, ask the user:
 
 ## Step 2: Read URLs from Google Sheet
 
-Use `mcp__google__sheets_spreadsheet_get` to inspect the sheet, then `mcp__google__sheets_values_get` to read the image URL column and optional name column.
+Use `mcp__google-sheets__list_sheets` to inspect the sheet, then `mcp__google-sheets__get_sheet_data` to read the image URL column and optional name column.
 
 Build a list of `{ index, url, name }` entries. Skip empty rows.
 

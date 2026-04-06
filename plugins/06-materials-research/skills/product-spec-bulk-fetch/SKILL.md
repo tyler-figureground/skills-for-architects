@@ -10,9 +10,9 @@ allowed-tools:
   - Grep
   - WebFetch
   - AskUserQuestion
-  - mcp__google__sheets_values_get
-  - mcp__google__sheets_values_update
-  - mcp__google__sheets_spreadsheet_get
+  - mcp__google-sheets__get_sheet_data
+  - mcp__google-sheets__update_cells
+  - mcp__google-sheets__list_sheets
 ---
 
 # /product-spec-bulk-fetch — Bulk Product Spec Fetcher
@@ -118,7 +118,7 @@ Options:
 - **Just the table** — leave as markdown in the conversation
 
 ### Step 6: Save
-Write the output in the chosen format using the 33-column master schema. For Google Sheets, use `mcp__google__sheets_values_update` to append rows. Set `Clipped At` to current timestamp and `Source` to `bulk-fetch`.
+Write the output in the chosen format using the 33-column master schema. For Google Sheets, use `mcp__google-sheets__update_cells` to append rows. Set `Clipped At` to current timestamp and `Source` to `bulk-fetch`.
 
 ## CSV Format
 

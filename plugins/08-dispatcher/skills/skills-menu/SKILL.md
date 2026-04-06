@@ -70,12 +70,13 @@ Print the following menu. Do not read any files — the menu is static.
 /product-research — find products from a design brief
 /product-spec-bulk-fetch — extract specs from product URLs
 /product-spec-pdf-parser — extract specs from PDF catalogs
-/product-spec-bulk-cleanup — normalize a messy FF&E schedule
+/product-data-cleanup — normalize a messy FF&E schedule
 /product-enrich — auto-tag products with categories, colors, materials
 /product-match — find similar products
 /product-pair — suggest complementary products
 /product-image-processor — download, resize, remove backgrounds
-/ffe-schedule — format raw product data into a schedule
+/product-data-import — import raw product data into the master schedule
+/master-schedule — connect a product library sheet to the project
 /csv-to-sif — convert CSV to dealer format
 /sif-to-csv — convert dealer format to CSV
 
