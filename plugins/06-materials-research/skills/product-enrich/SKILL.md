@@ -114,9 +114,9 @@ Flag any products where enrichment is uncertain:
 
 ### To Google Sheet
 Write enriched fields to the master 33-column schema:
-- Column J (Category) — enriched category
-- Column Q (Materials) — enriched materials
-- Column R (Colors/Finishes) — enriched color
+- Column A (Category) — enriched category
+- Column R (Materials) — enriched materials
+- Column S (Colors/Finishes) — enriched color
 - Column AD (Tags) — enriched style tags, appended to existing tags
 
 Do NOT overwrite existing values unless the field is empty or the user explicitly asks to overwrite.

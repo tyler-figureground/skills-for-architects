@@ -173,16 +173,18 @@ Item #, SKU, Product, Brand, Qty, List Price, Discount %, Sell Price, Ext List, 
 
 ### Google Sheet (master schema)
 Write to the 33-column schema (defined in `../../schema/product-schema.md`, CRUD patterns in `../../schema/sheet-conventions.md`):
-- Column A (Link) ← ProductURL
-- Column C (Product Name) ← PD
-- Column E (SKU) ← PN
-- Column F (Brand) ← MC expanded
-- Column J (Category) ← GC or PRC
-- Column K-O (Dims) ← parsed from AD where AN=DIM
-- Column P (Weight) ← WT
-- Column T (List Price) ← PL/P1/I1
-- Column U (Sale Price) ← calculated sell price
-- Column S (Selected Finish) ← OD
+See `../../schema/sif-crosswalk.md` for the full column-to-SIF mapping. Key fields:
+
+- Column J (Link) ← ProductURL
+- Column E (Product Name) ← PD
+- Column I (SKU) ← PN
+- Column B (Brand) ← MC expanded
+- Column A (Category) ← GC or PRC
+- Column L-P (Dims) ← parsed from AD where AN=DIM
+- Column Q (Weight) ← WT
+- Column U (List Price) ← PL/P1/I1
+- Column V (Sale Price) ← calculated sell price
+- Column T (Selected Finish) ← OD
 - Column AC (Image URL) ← ImageURL
 - Column AD (Tags) ← TG
 - Column AE (Notes) ← "From SIF: {ST}. Discount: {S-}%. Qty: {QT} · Ext: ${ext_sell}"

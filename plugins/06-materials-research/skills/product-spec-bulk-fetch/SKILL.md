@@ -40,7 +40,7 @@ Skill-specific column values:
 - **AG (Source):** `bulk-fetch`
 - **AD (Tags):** Blank (set by user later)
 - **AE (Notes):** Blank
-- **S (Selected Color/Finish):** Blank (unknown from URL)
+- **T (Selected Color/Finish):** Blank (unknown from URL)
 
 ## Extraction Process
 

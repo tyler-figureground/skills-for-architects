@@ -93,6 +93,7 @@ Norma Jean ─────────┼──→ Master Sheet ──→ /bulk-
 
 | Skill | Type | Description |
 |-------|------|-------------|
+| [master-schedule](skills/master-schedule/) | Setup | Connect a product library sheet to the project (auto-runs before other skills) |
 | [product-research](skills/product-research/) | Workflow | Give a brief, get curated candidates with specs and reasoning |
 | [product-spec-bulk-fetch](skills/product-spec-bulk-fetch/) | Utility | Batch-extract specs from product page URLs |
 | [product-spec-bulk-cleanup](skills/product-spec-bulk-cleanup/) | Utility | Normalize casing, categories, dimensions, materials, language |
@@ -120,16 +121,17 @@ All skills write to a shared 33-column Google Sheet. The full column reference, 
 
 - **[schema/product-schema.md](schema/product-schema.md)** — column definitions, types, formats, category vocabulary, category aliases, status/source values, item number prefixes
 - **[schema/sheet-conventions.md](schema/sheet-conventions.md)** — tab naming, header formatting, section colors, CRUD patterns with MCP tools
+- **[schema/sif-crosswalk.md](schema/sif-crosswalk.md)** — SIF field code ↔ schema column mapping for dealer interchange
 
 Quick reference:
 
 | Section | Columns |
 |---------|---------|
-| Product Identity | A–J |
-| Dimensions | K–P |
-| Materials & Finish | Q–S |
-| Pricing | T–V |
-| Logistics | W–AA |
+| Product Identity | A–K |
+| Dimensions | L–Q |
+| Materials & Finish | R–T |
+| Pricing | U–W |
+| Logistics | X–AA |
 | Meta | AB–AC |
 | Research | AD–AG |
 

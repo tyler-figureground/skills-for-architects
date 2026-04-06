@@ -158,7 +158,7 @@ Skill-specific column values:
 - **AF (Status):** `saved`
 - **AD (Tags):** From brief context (e.g. "lobby-reno, walnut")
 - **AE (Notes):** The "Why" reasoning from the presentation
-- **S (Selected Color/Finish):** Blank (designer hasn't configured yet)
+- **T (Selected Color/Finish):** Blank (designer hasn't configured yet)
 
 ### After saving
 

@@ -1,62 +1,62 @@
 # FF&E Product Schema
 
-Version 1.0 · 33 columns (A–AG)
+Version 1.1 · 33 columns (A–AG)
 
 One row per product. All FF&E skills in this plugin read and write to this schema — whether the target is a Google Sheet, CSV file, or markdown table. Compatible with [Norma Jean](https://github.com/AlpacaLabsLLC/norma-jean) (columns A–AC) and all `/product-*` skills (columns A–AG).
 
 ## Column Reference
 
-### Product Identity (A–J)
+### Product Identity (A–K)
 
 | Col | Field | Type | Format | Notes |
 |-----|-------|------|--------|-------|
-| A | Link | Formula | `=HYPERLINK(url, "Link")` | Source page URL. Blank for PDFs or manually entered products. |
-| B | Thumbnail | Formula | `=IMAGE(image_url)` | Product hero image. Blank if no image available. |
-| C | Product Name | Text | Title Case | Full product name as listed by manufacturer. |
-| D | Description | Text | Sentence case | 1–2 sentence description or tagline. |
-| E | SKU | Text | As listed | Model number, part number, or catalog number. |
-| F | Brand | Text | Title Case | Manufacturer name. Preserve known abbreviations (HAY, USM, HBF, OFS, DWR, CB2). |
-| G | Designer | Text | Title Case | Designer or design studio if attributed. Blank if N/A. |
-| H | Vendor | Text | Title Case | Retailer or website selling the product. May differ from Brand. |
-| I | Collection | Text | Title Case | Product line or collection name. Blank if N/A. |
-| J | Category | Text | Title Case | One of 22 canonical terms. See **Category Vocabulary** below. |
+| A | Category | Text | Title Case | One of 22 canonical terms. See **Category Vocabulary** below. |
+| B | Brand | Text | Title Case | Manufacturer name. Preserve known abbreviations (HAY, USM, HBF, OFS, DWR, CB2). |
+| C | Vendor | Text | Title Case | Retailer or website selling the product. May differ from Brand. |
+| D | Thumbnail | Formula | `=IMAGE(AC{row})` | Product hero image. Blank if no image available. |
+| E | Product Name | Text | Title Case | Full product name as listed by manufacturer. |
+| F | Designer | Text | Title Case | Designer or design studio if attributed. Blank if N/A. |
+| G | Indoor/Outdoor | Text | `Indoor`, `Outdoor`, or `Indoor/Outdoor` | Use context. Blank if unspecified. |
+| H | Description | Text | Sentence case | 1–2 sentence description or tagline. |
+| I | SKU | Text | As listed | Model number, part number, or catalog number. |
+| J | Link | Formula | `=HYPERLINK(url, "Link")` | Source page URL. Blank for PDFs or manually entered products. |
+| K | Collection | Text | Title Case | Product line or collection name. Blank if N/A. |
 
-### Dimensions (K–P)
-
-| Col | Field | Type | Format | Notes |
-|-----|-------|------|--------|-------|
-| K | W | Number | Decimal | Width. Numeric only, no units. |
-| L | D | Number | Decimal | Depth. Numeric only, no units. |
-| M | H | Number | Decimal | Height. Numeric only, no units. |
-| N | Seat H | Number | Decimal | Seat height. Seating products only, blank otherwise. |
-| O | Unit | Text | `in`, `cm`, or `mm` | Dimension unit. Keep manufacturer's original — do not convert. |
-| P | Weight | Text | As stated | Weight with unit, e.g. "45 lbs", "20 kg". |
-
-### Materials & Finish (Q–S)
+### Dimensions (L–Q)
 
 | Col | Field | Type | Format | Notes |
 |-----|-------|------|--------|-------|
-| Q | Materials | Text | Comma-separated | Primary materials, e.g. "Molded plywood, full grain leather". |
-| R | Colors/Finishes | Text | Comma-separated | All available color and finish options. |
-| S | Selected Color/Finish | Text | — | Designer's specific selection. Often blank initially. |
+| L | W | Number | Decimal | Width. Numeric only, no units. |
+| M | D | Number | Decimal | Depth. Numeric only, no units. |
+| N | H | Number | Decimal | Height. Numeric only, no units. |
+| O | Seat H | Number | Decimal | Seat height. Seating products only, blank otherwise. |
+| P | Unit | Text | `in`, `cm`, or `mm` | Dimension unit. Keep manufacturer's original — do not convert. |
+| Q | Weight | Text | As stated | Weight with unit, e.g. "45 lbs", "20 kg". |
 
-### Pricing (T–V)
-
-| Col | Field | Type | Format | Notes |
-|-----|-------|------|--------|-------|
-| T | List Price | Number | Decimal, no symbol | Manufacturer list price. No currency symbols or commas. |
-| U | Sale Price | Number | Decimal, no symbol | Discounted price if applicable. Blank otherwise. |
-| V | Currency | Text | ISO code | `USD`, `EUR`, `GBP`, `UYU`, etc. Default `USD`. |
-
-### Logistics (W–AA)
+### Materials & Finish (R–T)
 
 | Col | Field | Type | Format | Notes |
 |-----|-------|------|--------|-------|
-| W | Lead Time | Text | As stated | Delivery estimate, e.g. "8–12 weeks", "In stock". |
-| X | Warranty | Text | As stated | Warranty terms if found. |
-| Y | Certifications | Text | Comma-separated | GREENGUARD, FSC, BIFMA, Cradle to Cradle, etc. |
-| Z | COM/COL | Text | `COM`, `COL`, or `COM/COL` | Customer's Own Material / Leather availability. Blank if N/A. |
-| AA | Indoor/Outdoor | Text | `Indoor`, `Outdoor`, or `Indoor/Outdoor` | Use context. Blank if unspecified. |
+| R | Materials | Text | Comma-separated | Primary materials, e.g. "Molded plywood, full grain leather". |
+| S | Colors/Finishes | Text | Comma-separated | All available color and finish options. |
+| T | Selected Color/Finish | Text | — | Designer's specific selection. Often blank initially. |
+
+### Pricing (U–W)
+
+| Col | Field | Type | Format | Notes |
+|-----|-------|------|--------|-------|
+| U | List Price | Number | Decimal, no symbol | Manufacturer list price. No currency symbols or commas. |
+| V | Sale Price | Number | Decimal, no symbol | Discounted price if applicable. Blank otherwise. |
+| W | Currency | Text | ISO code | `USD`, `EUR`, `GBP`, `UYU`, etc. Default `USD`. |
+
+### Logistics (X–AA)
+
+| Col | Field | Type | Format | Notes |
+|-----|-------|------|--------|-------|
+| X | Lead Time | Text | As stated | Delivery estimate, e.g. "8–12 weeks", "In stock". |
+| Y | Warranty | Text | As stated | Warranty terms if found. |
+| Z | Certifications | Text | Comma-separated | GREENGUARD, FSC, BIFMA, Cradle to Cradle, etc. |
+| AA | COM/COL | Text | `COM`, `COL`, or `COM/COL` | Customer's Own Material / Leather availability. Blank if N/A. |
 
 ### Meta (AB–AC)
 
@@ -80,7 +80,7 @@ Norma Jean (Chrome extension) writes columns A–AC (29 columns). Skills extend 
 
 ## Category Vocabulary
 
-Use exactly ONE of these 22 terms in column J:
+Use exactly ONE of these 22 terms in column A:
 
 Chair · Table · Sofa · Bed · Light · Storage · Desk · Shelving · Rug · Mirror · Accessory · Tabletop · Kitchen · Bath · Window · Door · Outdoor Furniture · Textile · Acoustic · Planter · Partition · Other
 
@@ -199,7 +199,7 @@ Column AD (Tags) holds comma-separated identifiers. Skills append to existing ta
 When writing to CSV, use this exact header row:
 
 ```csv
-Link,Thumbnail,Product Name,Description,SKU,Brand,Designer,Vendor,Collection,Category,W,D,H,Seat H,Unit,Weight,Materials,Colors/Finishes,Selected Color/Finish,List Price,Sale Price,Currency,Lead Time,Warranty,Certifications,COM/COL,Indoor/Outdoor,Clipped At,Image URL,Tags,Notes,Status,Source
+Category,Brand,Vendor,Thumbnail,Product Name,Designer,Indoor/Outdoor,Description,SKU,Link,Collection,W,D,H,Seat H,Unit,Weight,Materials,Colors/Finishes,Selected Color/Finish,List Price,Sale Price,Currency,Lead Time,Warranty,Certifications,COM/COL,Clipped At,Image URL,Tags,Notes,Status,Source
 ```
 
 ## Empty Cells

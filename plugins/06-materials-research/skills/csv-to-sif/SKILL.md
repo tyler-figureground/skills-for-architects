@@ -188,19 +188,21 @@ Auto-detect column mappings from header names:
 
 If using the master 33-column schema (defined in `../../schema/product-schema.md`):
 
+See `../../schema/sif-crosswalk.md` for the full column-to-SIF mapping. Key fields:
+
 | Column | SIF Field |
 |--------|-----------|
-| A (Link) | ProductURL |
-| C (Product Name) | PD |
-| E (SKU) | PN |
-| F (Brand) | MC + MN |
-| J (Category) | GC |
-| K-O (W, D, H, Seat H, Unit) | AD (with AN=DIM) |
-| P (Weight) | WT |
-| Q (Materials) | AD (with AN=MAT) |
-| R (Colors/Finishes) | OD (with ON=FIN) |
-| S (Selected Color/Finish) | OD (primary, replaces R if present) |
-| T (List Price) | PL |
+| A (Category) | GC |
+| B (Brand) | MC + MN |
+| E (Product Name) | PD |
+| I (SKU) | PN |
+| J (Link) | ProductURL |
+| L-P (W, D, H, Seat H, Unit) | AD (with AN=DIM) |
+| Q (Weight) | WT |
+| R (Materials) | AD (with AN=MAT) |
+| S (Colors/Finishes) | OD (with ON=FIN) |
+| T (Selected Color/Finish) | OD (primary, replaces S if present) |
+| U (List Price) | PL |
 | AC (Image URL) | ImageURL |
 | AD (Tags) | TG |
 

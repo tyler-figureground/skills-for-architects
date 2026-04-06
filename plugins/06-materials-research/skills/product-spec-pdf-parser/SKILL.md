@@ -40,10 +40,10 @@ Read `../../schema/product-schema.md` (relative to this SKILL.md) for the full c
 Skill-specific column values:
 - **AG (Source):** `pdf-parser`
 - **AF (Status):** `saved`
-- **A (Link):** Blank (no URL for PDFs)
-- **B (Thumbnail):** Blank (no image URL typically)
-- **H (Vendor):** Blank (source is PDF, not a retailer)
-- **U (Sale Price):** Blank (PDFs don't have sale prices)
+- **J (Link):** Blank (no URL for PDFs)
+- **D (Thumbnail):** Blank (no image URL typically)
+- **C (Vendor):** Blank (source is PDF, not a retailer)
+- **V (Sale Price):** Blank (PDFs don't have sale prices)
 - **AC (Image URL):** Blank (no image from PDF)
 
 ### PDF-specific data in Notes (col AE)
