@@ -6,7 +6,7 @@
 
 **Architecture Studio** teaches Claude architecture-specific workflows — site analysis, zoning, space programming, specifications, materials research, sustainability, and presentations.
 
-**7 agents**, **37 skills**, **7 rules**, and **3 hooks** across **9 plugins**. Built by [ALPA](https://alpa.llc).
+**7 agents**, **36 skills**, **7 rules**, and **3 hooks** across **9 plugins**. Built by [ALPA](https://alpa.llc).
 
 ## Architecture
 
@@ -19,7 +19,7 @@ Architecture Studio
 │   ├── nyc-zoning-expert                9 skills · property records + zoning + 3D
 │   ├── workplace-strategist             2 skills · occupancy + programming
 │   ├── product-and-materials-researcher 5 skills · find, extract, tag
-│   ├── ffe-designer                     6 skills · schedule, QA, export
+│   ├── ffe-designer                     7 skills · schedule, QA, export
 │   ├── sustainability-specialist        4 skills · EPDs, GWP, LEED
 │   └── brand-manager                    2 skills · decks + palettes
 │
@@ -30,7 +30,7 @@ Architecture Studio
 │   ├── 03-programming                   2 skills
 │   ├── 04-specifications                1 skill
 │   ├── 05-sustainability                4 skills
-│   ├── 06-materials-research           11 skills
+│   ├── 06-materials-research           12 skills
 │   ├── 07-presentations                 3 skills
 │   └── 08-dispatcher                    2 skills
 │
@@ -40,7 +40,8 @@ Architecture Studio
 │   ├── professional-disclaimer
 │   ├── csi-formatting
 │   ├── terminology
-│   └── output-formatting
+│   ├── output-formatting
+│   └── transparency
 │
 └── hooks/
     ├── post-write-disclaimer-check
@@ -103,12 +104,12 @@ Organized by project lifecycle — from due diligence through delivery.
 | 3 | [Programming](./plugins/03-programming) | 2 | Workplace strategy: space programs, occupancy loads, IBC compliance. |
 | 4 | [Specifications](./plugins/04-specifications) | 1 | CSI outline specifications from a materials list. |
 | 5 | [Sustainability](./plugins/05-sustainability) | 4 | EPD parsing, research, comparison, and GWP thresholds. |
-| 6 | [Materials Research](./plugins/06-materials-research) | 11 | FF&E product research, spec extraction, cleanup, and image processing. |
+| 6 | [Materials Research](./plugins/06-materials-research) | 12 | FF&E product research, spec extraction, cleanup, and image processing. |
 | 7 | [Presentations](./plugins/07-presentations) | 3 | Slide deck generation, color palette creation, and image resizing for web, social, slides, and print. |
 | 8 | [Dispatcher](./plugins/08-dispatcher) | 2 | Studio router (`/studio`) and help menu (`/skills`). |
 
 <details>
-<summary><strong>All 37 skills</strong></summary>
+<summary><strong>All 36 skills</strong></summary>
 
 ### Due Diligence
 

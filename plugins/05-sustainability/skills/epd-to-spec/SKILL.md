@@ -9,8 +9,8 @@ allowed-tools:
   - Glob
   - Grep
   - AskUserQuestion
-  - mcp__google__sheets_values_get
-  - mcp__google__sheets_spreadsheet_get
+  - mcp__google-sheets__get_sheet_data
+  - mcp__google-sheets__list_sheets
 ---
 
 # /epd-to-spec — EPD Specification Writer

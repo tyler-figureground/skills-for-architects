@@ -19,7 +19,7 @@ Print the following menu. Do not read any files — the menu is static.
 ```
 # Architecture Studio
 
-**36 skills, 7 agents** — type /studio [your task] to get routed, or call any skill directly.
+**36 skills, 7 agents** (includes master-schedule) — type /studio [your task] to get routed, or call any skill directly.
 
 ## Agents — describe your task, they figure out the rest
 
@@ -83,6 +83,7 @@ Print the following menu. Do not read any files — the menu is static.
 ### Presentations
 /slide-deck-generator [topic] — HTML slide deck with editorial layout
 /color-palette-generator — color palettes from descriptions or images
+/resize-images — batch-resize photos for web, social, slides, and print
 ```
 
 That's it. Do not add commentary, suggestions, or follow-up questions. Just print the menu.

@@ -12,7 +12,7 @@ Agents are autonomous specialists that orchestrate multiple skills to complete a
 | [product-and-materials-researcher](./product-and-materials-researcher.md) | Materials Research | product-research, product-spec-bulk-fetch, product-spec-pdf-parser, product-match, product-enrich |
 | [ffe-designer](./ffe-designer.md) | FF&E Design | product-pair, product-data-cleanup, product-data-import, product-enrich, product-image-processor, csv-to-sif, sif-to-csv |
 | [sustainability-specialist](./sustainability-specialist.md) | Sustainability | epd-research, epd-compare, epd-parser, epd-to-spec |
-| [brand-manager](./brand-manager.md) | Presentations | slide-deck-generator, color-palette-generator |
+| [brand-manager](./brand-manager.md) | Presentations | slide-deck-generator, color-palette-generator, resize-images |
 
 ## How Agents Differ from Skills
 
