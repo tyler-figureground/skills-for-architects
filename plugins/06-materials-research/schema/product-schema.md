@@ -113,7 +113,7 @@ If a category is ambiguous, use the closest match and add `[?]` for the user to 
 
 ## Item Number Prefixes
 
-Used by `/ffe-schedule` to number items within a schedule. Each category maps to a prefix:
+Used by `/product-data-import` to number items within a schedule. Each category maps to a prefix:
 
 | Category | Prefix |
 |----------|--------|
@@ -158,7 +158,7 @@ Numbered sequentially within each prefix: S-01, S-02, T-01, L-01, etc.
 | `research` | `/product-research` |
 | `bulk-fetch` | `/product-spec-bulk-fetch` |
 | `pdf-parser` | `/product-spec-pdf-parser` |
-| `ffe-schedule` | `/ffe-schedule` |
+| `product-data-import` | `/product-data-import` |
 | `product-match` | `/product-match` |
 | `product-pair` | `/product-pair` |
 | `product-enrich` | `/product-enrich` |
@@ -171,7 +171,7 @@ Column AE (Notes) holds skill-specific metadata. Each skill appends structured d
 | Skill | Notes format |
 |-------|-------------|
 | `/product-research` | The "Why" reasoning for each candidate |
-| `/ffe-schedule` | `Qty: 3 · Ext: $17,085` (quantity and extended price) |
+| `/product-data-import` | `Qty: 3 · Ext: $17,085` (quantity and extended price) |
 | `/product-spec-pdf-parser` | `Variant: Diamond, Black \| Origin: Sweden \| Source: filename.pdf` |
 | `/product-match` | Similarity reasoning |
 | `/product-pair` | Design pairing reasoning |
@@ -183,7 +183,7 @@ Column AD (Tags) holds comma-separated identifiers. Skills append to existing ta
 
 | Skill | Tags format |
 |-------|------------|
-| `/ffe-schedule` | Item number: `S-01` |
+| `/product-data-import` | Item number: `S-01` |
 | `/product-match` | `match:{source-product-name}` |
 | `/product-pair` | `pair:{source-product-name}` |
 | `/product-enrich` | Style tags: `Mid-Century Modern, Iconic` |

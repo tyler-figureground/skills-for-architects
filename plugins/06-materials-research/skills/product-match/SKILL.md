@@ -167,4 +167,4 @@ If the designer picks matches ("save 1 and 3"), write to the master Google Sheet
 - `/product-research` — research finds products from a brief, match finds alternatives to a specific product
 - `/product-enrich` — enrich the matched products with categories and tags
 - `/product-pair` — after matching, find complementary products
-- `/ffe-schedule` — include matched products in a formatted schedule
+- `/product-data-import` — import matched products into the master schedule

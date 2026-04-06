@@ -39,7 +39,7 @@ Category, use context, style, materials, dimensions, budget, sustainability cert
 
 | Tool | How |
 |------|-----|
-| `/product-spec-bulk-cleanup` | Normalize the sheet after adding products |
+| `/product-data-cleanup` | Normalize the sheet after adding products |
 | `/product-spec-bulk-fetch` | Batch-add from URLs |
 | `/product-spec-pdf-parser` | Extract from PDF catalogs |
 | `/product-image-processor` | Process images from the sheet |

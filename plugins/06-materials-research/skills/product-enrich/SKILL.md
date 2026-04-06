@@ -141,6 +141,6 @@ Output the enriched table in markdown.
 ## Pairs With
 
 - `/product-spec-bulk-fetch` — fetch specs first, then enrich the results
-- `/product-spec-bulk-cleanup` — cleanup normalizes formatting, enrich adds metadata
-- `/ffe-schedule` — enriched products make better formatted schedules
+- `/product-data-cleanup` — cleanup normalizes formatting, enrich adds metadata
+- `/product-data-import` — enriched products make better formatted schedules
 - `/product-match` — enriched tags help find better matches

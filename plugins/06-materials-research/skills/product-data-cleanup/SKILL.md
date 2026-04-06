@@ -1,5 +1,5 @@
 ---
-name: product-spec-bulk-cleanup
+name: product-data-cleanup
 description: Clean up an FF&E schedule — normalize casing, dimensions, units, language, materials, and formatting for consistency.
 allowed-tools:
   - Read
@@ -14,7 +14,7 @@ allowed-tools:
   - mcp__google__sheets_spreadsheet_get
 ---
 
-# /product-spec-bulk-cleanup — FF&E Schedule Normalizer
+# /product-data-cleanup — Product Data Normalizer
 
 Takes a messy FF&E schedule and normalizes everything: casing, dimensions, units, language, materials vocabulary, currency formatting, and duplicates. Outputs a clean, consistent, spec-ready schedule.
 

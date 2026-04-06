@@ -87,7 +87,7 @@ After every batch: `Parsed: X products from Y PDF(s)`
 | Skill | Relationship |
 |-------|-------------|
 | `/product-research` | Designer drops a PDF during research, this extracts the data |
-| `/product-spec-bulk-cleanup` | Run after parsing to normalize the sheet |
+| `/product-data-cleanup` | Run after parsing to normalize the sheet |
 | `/product-image-processor` | Run after parsing to process product images |
 
 ## License

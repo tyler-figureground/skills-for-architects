@@ -158,4 +158,4 @@ If the designer picks pairings, write to the master Google Sheet using the 33-co
 - `/product-match` — match finds alternatives to the source, pair finds complements
 - `/product-research` — research finds products from a brief, pair builds around an anchor piece
 - `/product-enrich` — enrich paired products with full metadata
-- `/ffe-schedule` — the source + pairings become a room schedule
+- `/product-data-import` — import the source + pairings into the master schedule

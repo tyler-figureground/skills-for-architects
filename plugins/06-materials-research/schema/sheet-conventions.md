@@ -161,7 +161,7 @@ mcp__google-sheets__batch_update_cells
 
 ### Write: Overwrite entire sheet (cleanup)
 
-When `/product-spec-bulk-cleanup` rewrites normalized data:
+When `/product-data-cleanup` rewrites normalized data:
 
 ```
 mcp__google-sheets__update_cells

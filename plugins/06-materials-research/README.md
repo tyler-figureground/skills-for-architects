@@ -50,7 +50,7 @@ One master Google Sheet. Multiple ways to get products in. Every entry structure
                   ┌─────────┴─────────┐
                   ▼                   ▼
        ┌────────────────┐  ┌────────────────────┐
-       │ /bulk-cleanup  │  │ /image-processor   │
+       │ /data-cleanup  │  │ /image-processor   │
        │                │  │                    │
        │ Normalize the  │  │ Download, resize,  │
        │ entire sheet   │  │ remove backgrounds │
@@ -71,17 +71,17 @@ One master Google Sheet. Multiple ways to get products in. Every entry structure
 
 | Skill | What it does | When to use |
 |-------|-------------|-------------|
-| `/product-spec-bulk-cleanup` | Normalizes casing, maps categories to unified vocabulary, splits combined dimensions, translates Spanish→English, standardizes material terms, detects duplicates | After any batch import, or periodically on the whole sheet |
+| `/product-data-cleanup` | Normalizes casing, maps categories to unified vocabulary, splits combined dimensions, translates Spanish→English, standardizes material terms, detects duplicates | After any batch import, or periodically on the whole sheet |
 | `/product-image-processor` | Downloads images from Image URL column, resizes to max 2000px, removes backgrounds via AI | When you need clean product images for presentations or deliverables |
 
 ### Data flows through, not around
 
-Every skill reads from and writes back to the same Google Sheet. Data from any source can be cleaned by `/bulk-cleanup`, then its images processed by `/image-processor`. A `/product-research` result can be re-fetched by `/bulk-fetch` to pull fuller specs. The `Source` column tracks where each row came from, but once in the sheet, all rows are equal.
+Every skill reads from and writes back to the same Google Sheet. Data from any source can be cleaned by `/data-cleanup`, then its images processed by `/image-processor`. A `/product-research` result can be re-fetched by `/bulk-fetch` to pull fuller specs. The `Source` column tracks where each row came from, but once in the sheet, all rows are equal.
 
 ```
 /product-research ──┐
                     │
-/bulk-fetch ────────┼──→ Master Sheet ──→ /bulk-cleanup ──→ Master Sheet
+/bulk-fetch ────────┼──→ Master Sheet ──→ /data-cleanup ──→ Master Sheet
                     │         │
 /pdf-parser ────────┘         └──→ /image-processor ──→ local image files
 ```
@@ -93,10 +93,10 @@ Every skill reads from and writes back to the same Google Sheet. Data from any s
 | [master-schedule](skills/master-schedule/) | Setup | Connect a product library sheet to the project (auto-runs before other skills) |
 | [product-research](skills/product-research/) | Workflow | Give a brief, get curated candidates with specs and reasoning |
 | [product-spec-bulk-fetch](skills/product-spec-bulk-fetch/) | Utility | Batch-extract specs from product page URLs |
-| [product-spec-bulk-cleanup](skills/product-spec-bulk-cleanup/) | Utility | Normalize casing, categories, dimensions, materials, language |
+| [product-data-cleanup](skills/product-data-cleanup/) | Utility | Normalize casing, categories, dimensions, materials, language |
 | [product-spec-pdf-parser](skills/product-spec-pdf-parser/) | Utility | Extract specs from PDF catalogs, price books, and spec sheets |
 | [product-image-processor](skills/product-image-processor/) | Utility | Download, resize, and remove backgrounds from product images |
-| [ffe-schedule](skills/ffe-schedule/) | Workflow | Turn raw product lists into formatted FF&E specification schedules |
+| [product-data-import](skills/product-data-import/) | Workflow | Turn raw product lists into formatted FF&E specification schedules |
 | [product-enrich](skills/product-enrich/) | Utility | Auto-tag products with categories, colors, materials, and style tags |
 | [product-match](skills/product-match/) | Workflow | Find similar products from an image, name, or description |
 | [product-pair](skills/product-pair/) | Workflow | Suggest complementary products that pair well with a given item |

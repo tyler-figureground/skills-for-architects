@@ -132,7 +132,7 @@ AD=54dia x 28.5H in
 
 **CSV file:**
 ```
-/csv-to-sif ~/Documents/project/ffe-schedule.csv
+/csv-to-sif ~/Documents/project/product-data-import.csv
 ```
 
 **Google Sheet:**
@@ -268,16 +268,16 @@ Write the `.sif` file with CRLF line endings:
 ## Step 6: Summary
 
 ```
-✓ Generated ffe-schedule.sif
+✓ Generated product-data-import.sif
   Target: Standard (Hedberg/CAP/ProjectMatrix)
   12 records · 8 fields per record avg
   Manufacturers: HMI (5), KNL (3), STC (2), BLU (2)
   Total list value: $47,830.00
-  Saved to: ~/Documents/project/ffe-schedule.sif
+  Saved to: ~/Documents/project/product-data-import.sif
 ```
 
 ## Pairs With
 
-- `/ffe-schedule` — generate a schedule first, then convert to SIF
+- `/product-data-import` — generate a schedule first, then convert to SIF
 - `/sif-to-csv` — round-trip: CSV → SIF → send to dealer → receive updated SIF → back to CSV
-- `/product-spec-bulk-cleanup` — clean up the CSV before converting
+- `/product-data-cleanup` — clean up the CSV before converting

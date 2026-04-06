@@ -1,5 +1,5 @@
 ---
-name: ffe-schedule
+name: product-data-import
 description: Generate a formatted FF&E specification schedule from raw product data — notes, CSV, or pasted lists. Outputs a structured schedule compatible with the 33-column master schema.
 allowed-tools:
   - Read
@@ -14,7 +14,7 @@ allowed-tools:
   - mcp__google__sheets_spreadsheet_get
 ---
 
-# /ffe-schedule — FF&E Schedule Generator
+# /product-data-import — Product Data Importer
 
 Takes raw, unstructured product data and formats it into a proper FF&E specification schedule. Input can be notes, a CSV, a pasted spreadsheet, or a conversation. Output is a formatted schedule as markdown, CSV, or written to a Google Sheet — using the same 33-column schema as `/product-research`, `/product-spec-bulk-fetch`, and other product skills.
 
@@ -46,7 +46,7 @@ Nelson Bench 48, Herman Miller, 2, $2195
 
 **A file path:**
 ```
-/ffe-schedule ~/Documents/project/product-list.csv
+/product-data-import ~/Documents/project/product-list.csv
 ```
 
 **Conversational:**
@@ -118,7 +118,7 @@ If the designer doesn't specify, default to saving a CSV file.
 
 ### CSV output
 
-Save as `ffe-schedule-[date].csv` with these columns:
+Save as `product-data-import-[date].csv` with these columns:
 
 ```
 Item #, Product Name, Brand, Category, Qty, W, D, H, Unit, Materials, Finish, Unit Price, Extended Price, Lead Time, Notes
@@ -129,7 +129,7 @@ Item #, Product Name, Brand, Category, Qty, W, D, H, Unit, Materials, Finish, Un
 If the designer provides a Sheet ID or says "save to my sheet", write to the 33-column master schema. Read `../../schema/product-schema.md` (relative to this SKILL.md) for the full column reference, field formats, and category vocabulary. Read `../../schema/sheet-conventions.md` for CRUD patterns with MCP tools.
 
 Skill-specific column values:
-- **AG (Source):** `ffe-schedule`
+- **AG (Source):** `product-data-import`
 - **AF (Status):** `specified`
 - **AD (Tags):** Item number (e.g. "S-01") + any project tags
 - **AE (Notes):** `Qty: 3 · Ext: $17,085` (quantity and extended price, since the schema has no dedicated Qty column)
@@ -159,6 +159,6 @@ Want me to research the TBD items? I can use /product-research to find specific 
 
 - `/product-research` — research specific products to fill TBD slots
 - `/product-spec-bulk-fetch` — pull full specs from product URLs
-- `/product-spec-bulk-cleanup` — normalize the schedule after assembly
+- `/product-data-cleanup` — normalize the schedule after assembly
 - `/product-enrich` — auto-tag categories, colors, and materials
 - `/csv-to-sif` — convert the schedule to SIF for dealer procurement

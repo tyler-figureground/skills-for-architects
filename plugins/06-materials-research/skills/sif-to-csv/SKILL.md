@@ -208,6 +208,6 @@ Output the table in conversation.
 ## Pairs With
 
 - `/csv-to-sif` — round-trip: create SIF, send to dealer, parse their quote back
-- `/product-spec-bulk-cleanup` — normalize the parsed data
-- `/ffe-schedule` — reformulate dealer data into a formatted schedule
+- `/product-data-cleanup` — normalize the parsed data
+- `/product-data-import` — reformulate dealer data into a formatted schedule
 - `/product-enrich` — add categories and tags to imported products

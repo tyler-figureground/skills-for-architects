@@ -73,7 +73,7 @@ After every batch: success/failure counts per stage.
 |-------|-------------|
 | `/product-research` | Processes images from research results |
 | `/product-spec-bulk-fetch` | Processes images from fetched products |
-| `/product-spec-bulk-cleanup` | Run cleanup first, then process images |
+| `/product-data-cleanup` | Run cleanup first, then process images |
 
 ## License
 

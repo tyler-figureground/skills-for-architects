@@ -72,7 +72,7 @@ After every batch: `Fetched: X/Y successful, Z partial, W failed`
 | Skill | Relationship |
 |-------|-------------|
 | `/product-research` | Research finds candidates, this pulls full specs |
-| `/product-spec-bulk-cleanup` | Run after fetching to normalize the sheet |
+| `/product-data-cleanup` | Run after fetching to normalize the sheet |
 | `/product-image-processor` | Run after fetching to process product images |
 
 ## License

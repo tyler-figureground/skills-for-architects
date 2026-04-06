@@ -19,7 +19,7 @@ ln -s $(pwd)/skills-for-architects/plugins/06-materials-research/skills/csv-to-s
 ## Usage
 
 ```
-/csv-to-sif ~/Documents/project/ffe-schedule.csv
+/csv-to-sif ~/Documents/project/product-schedule.csv
 ```
 
 Supports Standard (Hedberg, CAP, ProjectMatrix), CET/Configura, Cyncly Worksheet, and Design Manager target systems.

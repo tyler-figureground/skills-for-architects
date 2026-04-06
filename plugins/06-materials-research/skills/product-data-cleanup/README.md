@@ -1,4 +1,4 @@
-# /product-spec-bulk-cleanup
+# /product-data-cleanup
 
 FF&E schedule normalizer for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Takes a messy furniture schedule — mixed casing, combined dimensions, Spanish material names, inconsistent categories — and cleans it into consistent, procurement-ready data.
 
@@ -7,13 +7,13 @@ FF&E schedule normalizer for [Claude Code](https://docs.anthropic.com/en/docs/cl
 ## Usage
 
 ```
-/product-spec-bulk-cleanup 1FMScYW9guezOWc_m4ClTQxxFIpS6TNRr373R-MJGzgE
+/product-data-cleanup 1FMScYW9guezOWc_m4ClTQxxFIpS6TNRr373R-MJGzgE
 ```
 
 Or point to a file:
 
 ```
-/product-spec-bulk-cleanup ~/Documents/ffe-schedule.csv
+/product-data-cleanup ~/Documents/product-data-import.csv
 ```
 
 Or paste a markdown table directly in the conversation.
