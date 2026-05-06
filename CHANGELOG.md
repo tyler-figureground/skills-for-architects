@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `.gitignore` covering macOS, editor, and local-env artifacts.
+- `scripts/lint.sh` — repo lint script with six structural checks: no tracked `.DS_Store`, JSON validity, SKILL.md frontmatter (`name` + `description` required), count consistency (plugins, per-plugin skill counts, marketplace.json), internal markdown link resolution, and shellcheck on `hooks/*.sh`.
+- `.github/workflows/lint.yml` — runs `scripts/lint.sh` on push to `main` and on every PR.
+
+### Removed
+
+- 11 tracked `.DS_Store` files. Now ignored repo-wide via `.gitignore`.
+
 ## [1.0.0] - 2026-05-06
 
 First public release.
