@@ -94,14 +94,17 @@ On EVERY shipped change:
 
 1. Bump the relevant `version` (patch for fixes/docs, minor for new skills / behavior / non-breaking enhancements, major for breaking layout).
 2. Add a `CHANGELOG.md` entry under `## [X.Y.Z] - YYYY-MM-DD` describing what changed.
-3. Stage both alongside the actual change in a single commit.
-4. Push.
+3. Stage version bump + CHANGELOG + actual change in a single commit and push.
+4. **Tag the commit:** `git tag -a vX.Y.Z <sha> -m "vX.Y.Z — short description"` and `git push origin vX.Y.Z`.
+5. **Cut the GitHub release:** `gh release create vX.Y.Z --title "vX.Y.Z — …" --notes-file <changelog-section>` (extract the CHANGELOG section for that version into a temp file with `sed -n '/^## \[X\.Y\.Z\]/,/^## \[/p' CHANGELOG.md | sed '$d'`).
 
-If a single change touches both plugin behavior and marketplace-level state, bump both versions in the same commit.
+If a single change touches both plugin behavior and marketplace-level state, bump both versions in the same commit (one tag, one release — pick the higher-scope version for the tag name).
 
-**Why:** Cowork and Claude Code pin to `plugin.json` `version` for plugin updates — without a bump, `/plugin marketplace update` reports "already up to date" even when new commits exist (canoa 2026-05-08: three commits, no bump, Cowork served `0.1.0` indefinitely). The marketplace `metadata.version` is more of a documentation pin than a functional one (`/plugin marketplace update` re-fetches regardless), but bumping it gives every shipped change a clear version trail in CHANGELOG. We hit this on skills-for-architects 2026-05-08: pushed `PATTERNS.md` while `[Unreleased]` had been silently accumulating other changes since `[1.0.0] - 2026-05-06` — no version label, no roll-up. Bump discipline = every push leaves a trail.
+**Three artifacts must move together:** JSON `version` field, git tag, GitHub release. Bumping JSON without tagging leaves discoverability holes (no `git checkout v1.1.0`, no shareable release URL). Tagging without bumping JSON breaks Cowork's update mechanism. Cutting a release without a CHANGELOG entry leaves the release notes empty.
 
-If you ever need auto-publish on every commit (during very heavy iteration), drop the `version` field entirely — Cowork/Code falls through to commit SHAs for plugin updates. But default is the pin + bump.
+**Why:** Cowork and Claude Code pin to `plugin.json` `version` for plugin updates — without a bump, `/plugin marketplace update` reports "already up to date" even when new commits exist (canoa 2026-05-08: three commits, no bump, Cowork served `0.1.0` indefinitely). The marketplace `metadata.version` is more of a documentation pin than a functional one (`/plugin marketplace update` re-fetches regardless), but bumping it gives every shipped change a clear version trail in CHANGELOG. Git tags + GitHub releases give the same change a discoverable surface for humans — release URLs link from PRs, CHANGELOGs, and external docs; tags let `git checkout` against a known release point. We hit the gap three times on 2026-05-08: canoa shipped without a plugin.json bump; skills-for-architects shipped PATTERNS.md without a marketplace bump; both repos accumulated commits without git tags or GitHub releases. Bump discipline = every push leaves a trail across all three artifacts.
+
+If you ever need auto-publish on every commit (during very heavy iteration), drop the `version` field entirely — Cowork/Code falls through to commit SHAs for plugin updates, and you can also skip per-commit tags. But default is the pin + bump + tag + release.
 
 ## 7. Layout pattern selection
 
