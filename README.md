@@ -12,6 +12,7 @@
 **Architecture Studio**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/AlpacaLabsLLC/skills-for-architects)](https://github.com/AlpacaLabsLLC/skills-for-architects/releases)
 
 </div>
 
@@ -117,7 +118,7 @@ Organized by project lifecycle — from due diligence through delivery.
 | 3 | [Programming](./plugins/03-programming) | 2 | Workplace strategy: space programs, occupancy loads, IBC compliance. |
 | 4 | [Specifications](./plugins/04-specifications) | 1 | CSI outline specifications from a materials list. |
 | 5 | [Sustainability](./plugins/05-sustainability) | 4 | EPD parsing, research, comparison, and GWP thresholds. |
-| 6 | [Materials Research](./plugins/06-materials-research) | 12 | FF&E product research, spec extraction, cleanup, and image processing. |
+| 6 | [Materials Research](./plugins/06-materials-research) | 12 | FF&E product research, spec extraction, cleanup, and image processing. Exports to SIF dealer formats and [Norma](https://norma.llc). |
 | 7 | [Presentations](./plugins/07-presentations) | 3 | Slide deck generation, color palette creation, and image resizing for web, social, slides, and print. |
 | 8 | [Dispatcher](./plugins/08-dispatcher) | 2 | Studio router (`/studio`) and help menu (`/skills`). |
 
@@ -243,7 +244,7 @@ Want to add a skill for the built environment?
 3. Each skill needs a `SKILL.md` with instructions and domain knowledge, a `README.md`, and any supporting data files
 4. Open a **pull request** — describe what the skill does, how you tested it, and sample output
 
-For the full conventions we apply across all our plugins (naming, layout, dispatcher pattern, versioning, hard rules from real bugs), read [PATTERNS.md](./PATTERNS.md).
+For the full conventions we apply across all our plugins (naming, layout, dispatcher pattern, versioning, hard rules from real bugs), read [PATTERNS.md](./PATTERNS.md). Release history lives in the [CHANGELOG](./CHANGELOG.md).
 
 For guidance on organizing skills across a team, read [Distributing Skills to Teams](https://alpa.llc/articles/distributing-skills-to-teams).
 
