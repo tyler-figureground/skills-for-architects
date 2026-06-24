@@ -5,8 +5,8 @@
     "email": "hello@alpa.llc"
   },
   "metadata": {
-    "description": "Skills, commands, and plugins for architects, designers, and AEC professionals — site research, zoning, programming, specifications, materials research, and presentations.",
-    "version": "1.3.0"
+    "description": "Skills, commands, and plugins for architects, designers, and AEC professionals — site research, zoning, programming, specifications, materials research, presentations, and building-code analysis.",
+    "version": "1.4.0"
   },
   "plugins": [
     {
@@ -58,6 +58,11 @@
       "name": "09-project-dossier",
       "source": "./plugins/09-project-dossier",
       "description": "Project dossier and decision records — persistent per-project facts (PROJECT.md, with a YAML front-matter machine contract read by Norma and other skills) and ADR-style decision capture (decisions/)."
+    },
+    {
+      "name": "10-norma",
+      "source": "./plugins/10-norma",
+      "description": "Norma building-code analysis — code Q&A, occupant load & egress, allowable height/area, cross-jurisdiction compare, and life-safety drawing review, grounded in a local code corpus and cited verbatim via the editable-install `norma` engine."
     }
   ]
 }
