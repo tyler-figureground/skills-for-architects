@@ -20,7 +20,7 @@
 
 **Architecture Studio** teaches Claude architecture-specific workflows — site analysis, zoning, space programming, specifications, materials research, sustainability, and presentations.
 
-**7 agents**, **39 skills**, **7 rules**, and **3 hooks** across **10 plugins**. Built by [ALPA](https://alpa.llc).
+**7 agents**, **45 skills**, **7 rules**, and **3 hooks** across **11 plugins**. Built by [ALPA](https://alpa.llc).
 
 ## What's New in 1.2
 
@@ -46,7 +46,8 @@ Architecture Studio
 │   ├── 06-materials-research           12 skills · agents: researcher + ffe-designer
 │   ├── 07-presentations                 3 skills · agent: brand-manager
 │   ├── 08-dispatcher                    2 skills · hooks ship here
-│   └── 09-project-dossier               2 skills · PROJECT.md + decisions/
+│   ├── 09-project-dossier               2 skills · PROJECT.md + decisions/
+│   └── 10-norma                         6 skills · building-code analysis (norma engine)
 │
 └── rules/                               7 rules · 2 hook-enforced, 5 advisory
 ```
@@ -110,9 +111,10 @@ Organized by project lifecycle — from due diligence through delivery.
 | 7 | [Presentations](./plugins/07-presentations) | 3 | Slide deck generation, color palette creation, and image resizing for web, social, slides, and print. |
 | 8 | [Dispatcher](./plugins/08-dispatcher) | 2 | Studio router (`/studio`), help menu (`/skills`), and the three hooks. |
 | 9 | [Project Dossier](./plugins/09-project-dossier) | 2 | Persistent project facts (`PROJECT.md`) and ADR-style decision records. |
+| 10 | [Norma](./plugins/10-norma) | 6 | Building-code analysis — code Q&A, egress, allowable area, compare, drawing review. Cited verbatim via the `norma` engine. |
 
 <details>
-<summary><strong>All 39 skills</strong></summary>
+<summary><strong>All 45 skills</strong></summary>
 
 ### Due Diligence
 
@@ -202,6 +204,17 @@ Organized by project lifecycle — from due diligence through delivery.
 |-------|-------------|
 | [`/project-dossier`](./plugins/09-project-dossier/skills/project-dossier) | Create or update `PROJECT.md` — sourced, dated project facts |
 | [`/decision`](./plugins/09-project-dossier/skills/decision) | ADR-style decision records — context, options, the call, consequences |
+
+### Norma (Building Code)
+
+| Skill | Description |
+|-------|-------------|
+| [`/ibc`](./plugins/10-norma/skills/ibc) | Building-code Q&A — any provision, grounded in the local corpus and cited verbatim |
+| [`/egress`](./plugins/10-norma/skills/egress) | Occupant load, required exits, egress width, travel distance, common path / dead-end |
+| [`/allowable-area`](./plugins/10-norma/skills/allowable-area) | Allowable height / stories / area by occupancy + construction type + sprinkler |
+| [`/code-analysis`](./plugins/10-norma/skills/code-analysis) | Full code-analysis cover sheet — occupancy + egress + allowable + ratings, all cited |
+| [`/compare`](./plugins/10-norma/skills/compare) | Cross-jurisdiction provision diff — IBC 2009 vs NYC 2022 vs CA 2025 |
+| [`/drawing-analysis`](./plugins/10-norma/skills/drawing-analysis) | Vision-grounded life-safety / egress review of a floor-plan PDF or image |
 
 </details>
 

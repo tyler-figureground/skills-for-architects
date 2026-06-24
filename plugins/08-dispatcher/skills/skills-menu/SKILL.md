@@ -18,7 +18,7 @@ Print the following menu. Do not read any files — the menu is static.
 ```
 # Architecture Studio
 
-**39 skills, 7 agents** — type /studio [your task] to get routed, or call any skill directly.
+**45 skills, 7 agents** — type /studio [your task] to get routed, or call any skill directly.
 
 ## Agents — describe your task, they figure out the rest
 
@@ -86,6 +86,14 @@ Print the following menu. Do not read any files — the menu is static.
 ### Project Dossier
 /project-dossier — create or update PROJECT.md, the project facts file
 /decision — record a project decision (ADR-style, numbered, statused)
+
+### Building Code (Norma)
+/ibc — building-code Q&A, grounded in the local corpus and cited verbatim
+/egress — occupant load, exits, egress width, travel distance, common path
+/allowable-area — allowable height / stories / area by construction type
+/code-analysis — full cited code-analysis cover sheet for a project
+/compare — cross-jurisdiction provision diff (IBC vs NYC vs CA)
+/drawing-analysis — life-safety / egress review of a floor-plan PDF or image
 ```
 
 That's it. Do not add commentary, suggestions, or follow-up questions. Just print the menu.

@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-06-24
+
+### Added
+
+- **`10-norma` plugin** (`1.0.0`) — [Norma](https://norma.llc) building-code analysis joins the studio: six skills — `/ibc` (code Q&A), `/egress` (occupant load, exits, egress width, travel distance, common path / dead-end), `/allowable-area` (allowable height / stories / area), `/code-analysis` (full cited cover sheet), `/compare` (cross-jurisdiction provision diff), and `/drawing-analysis` (vision-grounded life-safety review of a floor-plan PDF). Every answer is grounded in a local code corpus (IBC 2009, NYC 2022, CA 2025) and cited verbatim — no code answers from memory. The skills are a thin **surface**: calculators, corpus, and data live in the editable-install **`norma` engine** and are called as `norma <verb>`, so engine edits go live everywhere with no re-publish. Norma scopes from the workspace `PROJECT.md` front-matter (the contract added in 1.3.0) via `norma project active`, guards the active project against the drawing under review (`norma project scope-check`), and writes cited sheets into `06 Research & Existing Conditions/Code/`. Plugin-level [`agents.md`](./plugins/10-norma/agents.md) carries the persona, source types, corpus routing, tool stack, and known per-edition pitfalls. Norma answers the architect of record as a peer and deliberately does **not** emit the professional-disclaimer marker. Part of PRD-0004 (project-agnostic Norma).
+
+### Changed
+
+- **`scripts/lint.sh`** gains a Norma drift-guard check: fails CI if any `10-norma` skill or its `agents.md` calls `python tools/…` directly or greps a raw corpus path (`rg … <juris>/20NN/`) instead of the `norma` CLI — the surface must shell out to the engine, never reach into a working directory.
+- **README** + **`/skills` menu** — counts move to 45 skills / 11 plugins; Norma plugin row, catalog section, and architecture-diagram line added.
+
 ## [1.3.0] - 2026-06-24
 
 ### Changed
@@ -97,7 +108,8 @@ First public release.
 - **3 hooks** — post-write disclaimer check, post-output metadata, pre-commit spec lint.
 - Marketplace install: `claude plugin marketplace add AlpacaLabsLLC/skills-for-architects`.
 
-[Unreleased]: https://github.com/AlpacaLabsLLC/skills-for-architects/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/AlpacaLabsLLC/skills-for-architects/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/AlpacaLabsLLC/skills-for-architects/releases/tag/v1.4.0
 [1.3.0]: https://github.com/AlpacaLabsLLC/skills-for-architects/releases/tag/v1.3.0
 [1.2.1]: https://github.com/AlpacaLabsLLC/skills-for-architects/releases/tag/v1.2.1
 [1.2.0]: https://github.com/AlpacaLabsLLC/skills-for-architects/releases/tag/v1.2.0

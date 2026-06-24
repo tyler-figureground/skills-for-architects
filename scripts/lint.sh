@@ -194,6 +194,32 @@ else
   echo "  ! shellcheck not installed; skipping locally — CI will run it"
 fi
 
+# 7. Norma surface drift — 10-norma skills must shell out to the `norma` CLI,
+#    never reach into the engine source (`python tools/…`) or grep a raw corpus
+#    path (`rg … <juris>/20NN/`). The surface is prose; the engine is editable.
+echo "→ norma surface (10-norma shells out to the norma CLI)"
+NORMA_FILES=$(ls plugins/10-norma/agents.md plugins/10-norma/skills/*/SKILL.md 2>/dev/null)
+if [ -z "$NORMA_FILES" ]; then
+  pass_check "no 10-norma skills to check"
+else
+  NORMA_DRIFT=0
+  # shellcheck disable=SC2086
+  DIRECT=$(grep -nE 'python tools/' $NORMA_FILES 2>/dev/null || true)
+  if [ -n "$DIRECT" ]; then
+    fail_check "10-norma calls 'python tools/…' directly — use 'norma <verb>':"
+    echo "$DIRECT" | sed 's/^/      /'
+    NORMA_DRIFT=1
+  fi
+  # shellcheck disable=SC2086
+  RAWRG=$(grep -nE 'rg .*/20[0-9][0-9]/' $NORMA_FILES 2>/dev/null || true)
+  if [ -n "$RAWRG" ]; then
+    fail_check "10-norma greps a raw corpus path — use 'norma grep \"…\" -j <j>':"
+    echo "$RAWRG" | sed 's/^/      /'
+    NORMA_DRIFT=1
+  fi
+  [ "$NORMA_DRIFT" -eq 0 ] && pass_check "clean (norma CLI only)"
+fi
+
 echo
 if [ "$FAIL" -ne 0 ]; then
   echo "lint failed"
