@@ -15,6 +15,8 @@ You maintain `PROJECT.md`: a single file at the project root that holds the dura
 
 The dossier is the **facts layer**. The **reasoning layer** — why a choice was made — lives in `decisions/` via `/decision`. Don't mix them: PROJECT.md says *what is*; a decision record says *why it is*.
 
+`PROJECT.md` has two parts that must agree: a **YAML front-matter machine contract** at the very top (tools read this) and **human-readable tables** below (people read these). The front-matter is the shared header every architect skill keys off — most importantly Norma, which scopes code answers from `jurisdiction`, `occupancy_group`, `construction_type`, and `sprinklered`. Your job includes keeping the two in sync.
+
 ## Usage
 
 ```
@@ -29,28 +31,81 @@ The dossier is the **facts layer**. The **reasoning layer** — why a choice was
 2. **Update in place, never duplicate.** If a fact changes (re-run analysis, corrected input), replace the value and refresh the source/date. The dossier holds current state, not history — history is git's job.
 3. **Facts only.** "Zoning district: R7A" belongs here. "We chose the UAP bonus over the contextual envelope" is a decision — propose `/decision` instead.
 4. **Project facts only.** User preferences, workflow habits, and firm conventions do NOT belong in the dossier — Claude Code's own memory (CLAUDE.md, auto memory) handles those.
+5. **Front-matter and tables stay in sync.** Every code/identity fact you write to a human table also updates the matching front-matter key, and vice-versa — they are one fact in two places. The front-matter holds the bare current value (no source/date — YAML keys can't); the table row carries that value plus its Source + Date. If they ever disagree, the table (with its provenance) is the source of truth — reconcile the front-matter to it.
+
+## The machine contract (front-matter)
+
+The YAML block at the top of `PROJECT.md` is the contract every architect skill reads. Use exactly these keys — tools look them up by name:
+
+| Key | Type / values | Mirrors (human table) | Notes |
+|-----|---------------|-----------------------|-------|
+| `project` | free text | Identity → Project | display name; `name` is an accepted alias |
+| `address` | free text | Identity → Address / BBL | |
+| `jurisdiction` | `nyc` \| `california` \| `other` | Identity → Jurisdiction | **drives Norma's corpus + edition** |
+| `edition` | string | Code → Building code edition | blank → derived from `jurisdiction` |
+| `occupancy_group` | `B`, `"A-2"`, or list `[B, "S-1"]` | Code → Occupancy group | IBC use group(s) |
+| `construction_type` | `I-A`, `II-B`, `V-B`, … | Code → Construction type | IBC Ch.6 |
+| `sprinklered` | `true` \| `false` \| `"NFPA 13"` … | Code → Sprinklered | bool or system string |
+| `stories` | integer | Code → Stories | above grade plane |
+| `building_area_sf` | number | Code → Building area (SF) | whole-building vs fit-out → note in table |
+| `frontage_ft` | number | Code → Frontage (ft) | Ch.5 area-increase input |
+| `existing_co_occupant_load` | number | Code → Existing C-of-O occupant load | from the existing Certificate of Occupancy |
+| `existing_exits` | integer | Code → Existing exits | exits serving the space today |
+| `place_of_assembly_strategy` | free text | Code → Place-of-assembly strategy | e.g. "stay under 75 occ" |
+| `tenancy` | `single` \| `multi` | Code → Tenancy | tenant configuration |
+
+Rules for the block:
+- **Blank means unknown, not a default.** Norma ignores blank fields and falls back to its own examples; it never assumes a value you didn't write. (So don't pre-fill `jurisdiction: other` on a project you haven't scoped — leave it blank.)
+- `jurisdiction` is canonical — write `nyc`, `california`, or `other`. Free-form forms ("New York City", "ca") are tolerated but normalize to those three.
+- This block carries **values only** — no source/date. Provenance lives in the matching table row.
+
+**Round-trip check:** from a folder holding a filled `PROJECT.md`, `norma project active` returns that project's jurisdiction / occupancy / construction / sprinklered. That is the contract working.
 
 ## On `init`
 
 1. If `PROJECT.md` already exists, say so and switch to `update` mode.
 2. Ask for whatever basics aren't already evident from the conversation (one question, grouped): project name, address, client, jurisdiction.
-3. Write `PROJECT.md` from the template below, filling what you know, leaving the rest blank.
+3. Write `PROJECT.md` from the template below, filling what you know, leaving the rest blank. **Write the front-matter and the human tables together** — every fact you fill goes in both the machine contract (top) and its mirror row, with source + date on the table side.
 4. If the working directory is a git repo, suggest committing it: the dossier is meant to be shared with the team.
 
 ## On `update`
 
-1. Read `PROJECT.md`.
+1. Read `PROJECT.md` — both the front-matter and the tables.
 2. Collect new facts from the current conversation (analysis results, corrected values, user statements).
-3. Apply rule 2 — replace stale values in place, append genuinely new ones to the right section, each with source + date.
+3. Apply rule 2 — replace stale values in place, append genuinely new ones to the right section, each with source + date. When a fact maps to a front-matter key, **update the key and its mirror row in the same pass** (rule 5). If the file has no front-matter yet (an older dossier), add the block from the template while you're there.
 4. Show a short diff-style summary of what changed.
 
 ## Template
 
 ```markdown
+---
+# ── Machine contract ──────────────────────────────────────────────────────
+# Tool-authoritative project facts. Norma and other architect skills read THIS
+# YAML block, not the prose below. Keep it in sync with the Identity + Code
+# tables (the human mirror). Provenance — source + date — lives in those tables;
+# this block carries only the current value each tool reads. Leave a field blank
+# when unknown (a blank field is ignored, not assumed).
+project:                     # display name (free text)
+address:                     # street address / BBL (free text)
+jurisdiction:                # nyc | california | other  → drives the governing corpus + edition
+edition:                     # blank → derived from jurisdiction; pin a string only to override
+occupancy_group:             # IBC use group(s): B, "A-2", or a list [B, "S-1"]
+construction_type:           # IBC Ch.6 type: I-A, II-B, III-A, IV, V-B …
+sprinklered:                 # true | false | system string ("NFPA 13", "NFPA 13R", "none")
+stories:                     # stories above grade plane (integer)
+building_area_sf:            # area in SF (note whole-building vs fit-out in the Code table)
+frontage_ft:                 # public-way / open-space frontage in feet (Ch.5 area increase)
+existing_co_occupant_load:   # occupant load on the existing Certificate of Occupancy, if any
+existing_exits:              # number of existing exits serving the space, if known
+place_of_assembly_strategy:  # PA approach, e.g. "stay under 75 occ" or "file PA permit"
+tenancy:                     # single | multi  (tenant configuration)
+---
+
 # Project Dossier — {project name}
 
 > Maintained by Architecture Studio skills and the project team.
 > Every entry carries a source and a date. Facts only — rationale lives in the decisions/ directory.
+> The YAML front-matter above is the machine mirror of the Identity + Code tables — keep them in agreement.
 
 ## Identity
 
@@ -75,9 +130,21 @@ The dossier is the **facts layer**. The **reasoning layer** — why a choice was
 
 ## Code
 
+<!-- Mirrors the machine contract in the front-matter. Change a value here → change it there too. -->
+
 | Item | Value | Source | Date |
 |------|-------|--------|------|
 | Building code edition | | | |
+| Occupancy group | | | |
+| Construction type | | | |
+| Sprinklered | | | |
+| Stories | | | |
+| Building area (SF) | | | |
+| Frontage (ft) | | | |
+| Existing C-of-O occupant load | | | |
+| Existing exits | | | |
+| Place-of-assembly strategy | | | |
+| Tenancy | | | |
 
 ## Decisions
 
@@ -91,11 +158,15 @@ The dossier is the **facts layer**. The **reasoning layer** — why a choice was
 
 Analysis skills in this marketplace check for `PROJECT.md` before fetching (don't re-derive what's on file) and append their key findings after completing. That behavior lives in each skill — your job here is only init, update, and keeping the file well-formed.
 
+**Norma reads the front-matter, not the tables.** The `10-norma` code skills (`/ibc`, `/egress`, `/code-analysis`, …) call `norma project active`, which parses the YAML front-matter into the active project profile and auto-scopes every code answer to it. That is the whole reason the machine contract exists and the whole reason it must stay in sync — a stale front-matter key silently scopes a code analysis to the wrong jurisdiction or occupancy. When a Norma analysis hands back a corrected fact (e.g. it determined the construction type), fold it back in via `update` so the contract and the cited sheet agree.
+
 ## Edge cases
 
 | Situation | Handling |
 |-----------|----------|
 | `PROJECT.md` exists but malformed / hand-edited | Preserve all content; reorganize into template sections; say what moved |
+| `PROJECT.md` predates the front-matter (no YAML block) | Add the machine-contract block from the template, populated from the existing tables; don't disturb the prose |
+| Front-matter and a table disagree | The table (sourced + dated) wins — reconcile the front-matter to it; note the fix |
 | Facts conflict (dossier says X, user says Y) | Ask once; the answer wins; update with new source + date |
 | No project context at all, user just ran `/project-dossier` | Show usage and ask if they want `init` |
 | Multiple projects in one directory | One dossier per directory — suggest separate working directories |

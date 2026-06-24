@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-06-24
+
+### Changed
+
+- **`09-project-dossier` plugin** (`1.1.0`) — `PROJECT.md` gains a **YAML front-matter machine contract** at the top of the file: the tool-authoritative project facts that [Norma](https://norma.llc) and other architect skills read to auto-scope code answers. Keys: `project`, `address`, `jurisdiction`, `edition`, `occupancy_group`, `construction_type`, `sprinklered`, `stories`, `building_area_sf`, `frontage_ft`, `existing_co_occupant_load`, `existing_exits`, `place_of_assembly_strategy`, `tenancy`. The human Code table expands to mirror the contract (occupancy, construction type, sprinklered, stories, area, frontage, existing C-of-O load, existing exits, PA strategy, tenancy), and the front-matter is the machine mirror of the sourced/dated table rows. `/project-dossier init`/`update` now writes and maintains the front-matter, keeping it in sync with the tables (new hard rule 5); older dossiers without a front-matter block get one backfilled on `update`. Verified by round-trip: a dossier-produced `PROJECT.md` resolves through `norma project active` to the right jurisdiction / occupancy / construction / sprinklered. Part of PRD-0004 (project-agnostic Norma).
+
 ## [1.2.1] - 2026-06-10
 
 ### Changed
@@ -91,7 +97,8 @@ First public release.
 - **3 hooks** — post-write disclaimer check, post-output metadata, pre-commit spec lint.
 - Marketplace install: `claude plugin marketplace add AlpacaLabsLLC/skills-for-architects`.
 
-[Unreleased]: https://github.com/AlpacaLabsLLC/skills-for-architects/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/AlpacaLabsLLC/skills-for-architects/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/AlpacaLabsLLC/skills-for-architects/releases/tag/v1.3.0
 [1.2.1]: https://github.com/AlpacaLabsLLC/skills-for-architects/releases/tag/v1.2.1
 [1.2.0]: https://github.com/AlpacaLabsLLC/skills-for-architects/releases/tag/v1.2.0
 [1.1.3]: https://github.com/AlpacaLabsLLC/skills-for-architects/releases/tag/v1.1.3
