@@ -137,20 +137,20 @@ Quick reference:
 **Claude Desktop:**
 
 1. Open the **+** menu → **Add marketplace from GitHub**
-2. Enter `AlpacaLabsLLC/skills-for-architects`
+2. Enter `tyler-figureground/skills-for-architects`
 3. Install the **Materials Research** plugin
 
 **Claude Code (terminal):**
 
 ```bash
-claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin marketplace add tyler-figureground/skills-for-architects
 claude plugin install 06-materials-research@skills-for-architects
 ```
 
 **Manual:**
 
 ```bash
-git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+git clone https://github.com/tyler-figureground/skills-for-architects.git
 ln -s $(pwd)/skills-for-architects/plugins/06-materials-research/skills/product-research ~/.claude/skills/product-research
 ```
 

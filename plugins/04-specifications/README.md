@@ -72,20 +72,20 @@ Covers 11 CSI MasterFormat 2020 divisions (03 Concrete through 26 Electrical). U
 **Claude Desktop:**
 
 1. Open the **+** menu → **Add marketplace from GitHub**
-2. Enter `AlpacaLabsLLC/skills-for-architects`
+2. Enter `tyler-figureground/skills-for-architects`
 3. Install the **Specifications** plugin
 
 **Claude Code (terminal):**
 
 ```bash
-claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin marketplace add tyler-figureground/skills-for-architects
 claude plugin install 04-specifications@skills-for-architects
 ```
 
 **Manual:**
 
 ```bash
-git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+git clone https://github.com/tyler-figureground/skills-for-architects.git
 ln -s $(pwd)/skills-for-architects/plugins/04-specifications/skills/spec-writer ~/.claude/skills/spec-writer
 ```
 

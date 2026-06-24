@@ -16,13 +16,13 @@ The repo has 34 skills and 7 agents. New users shouldn't need to memorize them. 
 **Claude Desktop:**
 
 1. Open the **+** menu → **Add marketplace from GitHub**
-2. Enter `AlpacaLabsLLC/skills-for-architects`
+2. Enter `tyler-figureground/skills-for-architects`
 3. Install the **Dispatcher** plugin
 
 **Claude Code (terminal):**
 
 ```bash
-claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin marketplace add tyler-figureground/skills-for-architects
 claude plugin install 08-dispatcher@skills-for-architects
 ```
 

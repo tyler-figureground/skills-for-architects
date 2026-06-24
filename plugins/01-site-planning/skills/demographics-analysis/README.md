@@ -8,11 +8,11 @@ Demographics and market site analysis for [Claude Code](https://docs.anthropic.c
 
 ```bash
 # Via plugin system
-claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin marketplace add tyler-figureground/skills-for-architects
 claude plugin install 01-site-planning@skills-for-architects
 
 # Or symlink just this skill
-git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+git clone https://github.com/tyler-figureground/skills-for-architects.git
 ln -s $(pwd)/skills-for-architects/plugins/01-site-planning/skills/demographics-analysis ~/.claude/skills/demographics-analysis
 ```
 

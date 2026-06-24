@@ -15,11 +15,11 @@ Every report cites the code edition, table, and a public link to the source.
 
 ```bash
 # Via plugin system
-claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin marketplace add tyler-figureground/skills-for-architects
 claude plugin install 03-programming@skills-for-architects
 
 # Or symlink just this skill
-git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+git clone https://github.com/tyler-figureground/skills-for-architects.git
 ln -s $(pwd)/skills-for-architects/plugins/03-programming/skills/occupancy-calculator ~/.claude/skills/occupancy-calculator
 ```
 

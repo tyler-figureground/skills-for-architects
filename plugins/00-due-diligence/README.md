@@ -59,20 +59,20 @@ For full NYC property + zoning analysis (due diligence, zoning envelope, 3D visu
 **Claude Desktop:**
 
 1. Open the **+** menu → **Add marketplace from GitHub**
-2. Enter `AlpacaLabsLLC/skills-for-architects`
+2. Enter `tyler-figureground/skills-for-architects`
 3. Install the **Due Diligence** plugin
 
 **Claude Code (terminal):**
 
 ```bash
-claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin marketplace add tyler-figureground/skills-for-architects
 claude plugin install 00-due-diligence@skills-for-architects
 ```
 
 **Manual:**
 
 ```bash
-git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+git clone https://github.com/tyler-figureground/skills-for-architects.git
 ln -s $(pwd)/skills-for-architects/plugins/00-due-diligence/skills/nyc-landmarks ~/.claude/skills/nyc-landmarks
 ```
 

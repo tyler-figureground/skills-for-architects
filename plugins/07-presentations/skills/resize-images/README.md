@@ -8,11 +8,11 @@ Batch-resizes project photos and renders for web, social, slides, and print — 
 
 ```bash
 # Via plugin system
-claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin marketplace add tyler-figureground/skills-for-architects
 claude plugin install 07-presentations@skills-for-architects
 
 # Or symlink just this skill
-git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+git clone https://github.com/tyler-figureground/skills-for-architects.git
 ln -s $(pwd)/skills-for-architects/plugins/07-presentations/skills/resize-images ~/.claude/skills/resize-images
 ```
 
