@@ -8,11 +8,11 @@ DOB permit and job filing history for any NYC building as a [Claude Code](https:
 
 ```bash
 # Via plugin system
-claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin marketplace add tyler-figureground/skills-for-architects
 claude plugin install 00-due-diligence@skills-for-architects
 
 # Or symlink just this skill
-git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+git clone https://github.com/tyler-figureground/skills-for-architects.git
 ln -s $(pwd)/skills-for-architects/plugins/00-due-diligence/skills/nyc-dob-permits ~/.claude/skills/nyc-dob-permits
 ```
 

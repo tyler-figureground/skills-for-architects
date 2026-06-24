@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to **Architecture Studio** (`AlpacaLabsLLC/skills-for-architects`) are documented in this file.
+All notable changes to **Architecture Studio** (`tyler-figureground/skills-for-architects`) are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - **`scripts/lint.sh`** gains a Norma drift-guard check: fails CI if any `10-norma` skill or its `agents.md` calls `python tools/…` directly or greps a raw corpus path (`rg … <juris>/20NN/`) instead of the `norma` CLI — the surface must shell out to the engine, never reach into a working directory.
 - **README** + **`/skills` menu** — counts move to 45 skills / 11 plugins; Norma plugin row, catalog section, and architecture-diagram line added.
+- **Canonical marketplace install moves to the `tyler-figureground/skills-for-architects` fork.** Install commands, Desktop "add marketplace from GitHub" instructions, `git clone` URLs, and the release badge across the README and every per-plugin/skill doc now point at the fork, which is where this and future releases are published. Historical release links (v1.2.1 and earlier) still point at the original repo where those release pages live.
 
 ## [1.3.0] - 2026-06-24
 
@@ -108,9 +109,9 @@ First public release.
 - **3 hooks** — post-write disclaimer check, post-output metadata, pre-commit spec lint.
 - Marketplace install: `claude plugin marketplace add AlpacaLabsLLC/skills-for-architects`.
 
-[Unreleased]: https://github.com/AlpacaLabsLLC/skills-for-architects/compare/v1.4.0...HEAD
-[1.4.0]: https://github.com/AlpacaLabsLLC/skills-for-architects/releases/tag/v1.4.0
-[1.3.0]: https://github.com/AlpacaLabsLLC/skills-for-architects/releases/tag/v1.3.0
+[Unreleased]: https://github.com/tyler-figureground/skills-for-architects/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/tyler-figureground/skills-for-architects/releases/tag/v1.4.0
+[1.3.0]: https://github.com/tyler-figureground/skills-for-architects/releases/tag/v1.3.0
 [1.2.1]: https://github.com/AlpacaLabsLLC/skills-for-architects/releases/tag/v1.2.1
 [1.2.0]: https://github.com/AlpacaLabsLLC/skills-for-architects/releases/tag/v1.2.0
 [1.1.3]: https://github.com/AlpacaLabsLLC/skills-for-architects/releases/tag/v1.1.3

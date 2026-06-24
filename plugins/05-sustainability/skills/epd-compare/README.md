@@ -8,11 +8,11 @@ Compare 2+ products side-by-side on environmental impact metrics for [Claude Cod
 
 ```bash
 # Via plugin system
-claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin marketplace add tyler-figureground/skills-for-architects
 claude plugin install 05-sustainability@skills-for-architects
 
 # Or symlink just this skill
-git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+git clone https://github.com/tyler-figureground/skills-for-architects.git
 ln -s $(pwd)/skills-for-architects/plugins/05-sustainability/skills/epd-compare ~/.claude/skills/epd-compare
 ```
 

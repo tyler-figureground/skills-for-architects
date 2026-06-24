@@ -23,20 +23,20 @@ Three skills that handle visual production. The slide deck generator builds comp
 **Claude Desktop:**
 
 1. Open the **+** menu → **Add marketplace from GitHub**
-2. Enter `AlpacaLabsLLC/skills-for-architects`
+2. Enter `tyler-figureground/skills-for-architects`
 3. Install the **Presentations** plugin
 
 **Claude Code (terminal):**
 
 ```bash
-claude plugin marketplace add AlpacaLabsLLC/skills-for-architects
+claude plugin marketplace add tyler-figureground/skills-for-architects
 claude plugin install 07-presentations@skills-for-architects
 ```
 
 **Manual:**
 
 ```bash
-git clone https://github.com/AlpacaLabsLLC/skills-for-architects.git
+git clone https://github.com/tyler-figureground/skills-for-architects.git
 ln -s $(pwd)/skills-for-architects/plugins/07-presentations/skills/slide-deck-generator ~/.claude/skills/slide-deck-generator
 ln -s $(pwd)/skills-for-architects/plugins/07-presentations/skills/color-palette-generator ~/.claude/skills/color-palette-generator
 ln -s $(pwd)/skills-for-architects/plugins/07-presentations/skills/resize-images ~/.claude/skills/resize-images
