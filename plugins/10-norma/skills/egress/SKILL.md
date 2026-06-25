@@ -17,7 +17,7 @@ description: Means-of-egress calculator for a space or story. Activate when the 
 - **Sprinklered?** - drives egress width, travel distance, common path.
 - **Component** for width - `stairways` vs `other` (doors/corridors/ramps).
 
-If the active project supplies any of these, default to it and say so. If the space comes from a PDF/drawing, extract its areas, scale, and title block first with `norma drawing` (see the drawing-analysis skill), then feed the extracted areas here rather than retyping them.
+If the active project supplies any of these, default to it and say so. If the space comes from a PDF/drawing, extract its areas, scale, and title block first with `norma drawing` (see the drawing-analysis skill), then feed the extracted areas here rather than retyping them. **Better still, if the architect has the CAD/BIM source** (DWG/DXF/IFC), run `norma ingest <file>`: an IFC returns each `spaces[].area` semantically and a DXF/DWG returns exact `geometry` - feed those straight into `--area` instead of measuring or retyping. Fidelity order: IFC > DXF/DWG > vector-PDF > vision.
 
 ## Calculators
 

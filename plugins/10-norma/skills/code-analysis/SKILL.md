@@ -46,6 +46,8 @@ Offer to capture the answers via **`/project-dossier`** - it writes the `PROJECT
 
 When the project arrives as a PDF/drawing rather than a profile, ingest it first with `norma drawing` (full workflow in the drawing-analysis skill): `norma drawing info` triages each page (vector vs scanned), `sheets` rosters them, `text --region br` pulls the title block (address → jurisdiction, scale), and `render --for-vision` yields legible tiles. Feed extracted space areas into `occupant-load` - do not retype numbers the tool already extracted.
 
+When the architect has the **CAD/BIM source** (DWG/DXF/IFC) rather than only a plot, prefer `norma ingest <file>` - it returns one structured `extract` (IFC: `spaces[].area` + `doors[].width` semantically; DXF/DWG: exact `geometry`). Feed `spaces[].area` into `occupant-load` and `geometry` into `plancheck` with no eyeballing. Fidelity order: IFC > DXF/DWG > vector-PDF > vision.
+
 ## Calculators
 
 ```bash
