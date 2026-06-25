@@ -38,6 +38,10 @@ norma drawing sheets plans.pdf                       # sheet numbers/titles + dr
 norma drawing text   plans.pdf --page 3 --region br  # title block / tags as TEXT, with coords
 norma drawing render plans.pdf --page 3 --for-vision # legible PNG tiles -> Read each one
 
+# Exact source - a DWG/DXF/IFC beats eyeballing a PDF (use it whenever the architect has it)
+norma ingest existing-conditions.dxf   # DXF/DWG: exact model-space extents -> plancheck, layers, placed text
+norma ingest "Montez Radio.ifc"        # IFC: IfcSpace name/number/area + IfcDoor widths, semantic (no vision)
+
 # Geometry
 norma plancheck scale    --measured 3.5 --scale "1/8\"=1'-0\""
 norma plancheck diagonal --width 120 --length 90
@@ -55,6 +59,8 @@ norma search "emergency lighting in corridors" -j nyc
 ```
 
 Add `--json` for the raw result dict. Both tools return `section`, `edition`, and any `note`/`verify`.
+
+**Prefer the source file over the plot.** A PDF is flattened; the exact data lives one layer down. Fidelity order is **IFC > DXF/DWG > vector-PDF text > rendered tiles > whole-sheet vision**. If the architect has the CAD/BIM file, `norma ingest <file>` returns one structured `extract` (it routes by extension): DXF/DWG give exact overall dimensions and stair/exit coordinates - feed `geometry.width`/`height` straight into `norma plancheck` for a *measured* exit-separation result instead of "by inspection"; IFC gives each `IfcSpace` area and `IfcDoor` width semantically - feed `spaces[].area` into `norma codecalc occupant-load` and `doors[].width` into the egress-width check, no tagging by eye. Only fall back to vision when no source file exists.
 
 **Establish the scale before measuring anything.** Read it from the title block / scale bar. If illegible or absent, ask the architect for the scale or one known dimension to calibrate - do not guess a scale. All paper measurements go through `norma plancheck scale`.
 
