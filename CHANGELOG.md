@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-07-18
+
+### Changed
+
+- **`10-norma` plugin** (`1.1.0`) — CAD/BIM source files now flow through
+  `norma ingest` in `/drawing-analysis`, `/egress`, and `/code-analysis`, with
+  the fidelity order IFC → DXF/DWG → vector PDF → vision. California `/ibc`
+  guidance now routes across the full 2025 Title 24 family and carries the
+  instrument-scoped citation and amendment-sidecar cautions required by
+  PRD-0008.
+
 ## [1.4.0] - 2026-06-24
 
 ### Added
@@ -109,7 +120,8 @@ First public release.
 - **3 hooks** — post-write disclaimer check, post-output metadata, pre-commit spec lint.
 - Marketplace install: `claude plugin marketplace add AlpacaLabsLLC/skills-for-architects`.
 
-[Unreleased]: https://github.com/tyler-figureground/skills-for-architects/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/tyler-figureground/skills-for-architects/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/tyler-figureground/skills-for-architects/releases/tag/v1.5.0
 [1.4.0]: https://github.com/tyler-figureground/skills-for-architects/releases/tag/v1.4.0
 [1.3.0]: https://github.com/tyler-figureground/skills-for-architects/releases/tag/v1.3.0
 [1.2.1]: https://github.com/AlpacaLabsLLC/skills-for-architects/releases/tag/v1.2.1
