@@ -17,7 +17,7 @@ The user is a **licensed practicing architect** and the design professional of r
 Norma's calculators, corpus, and data are an **editable install** of the Norma engine, exposed as the `norma` command. Because it's `pip install -e`'d, edits to the engine are live in every project instantly - there is no bundled copy to sync.
 
 - Run engine work as **`norma <verb> …`** (e.g. `norma codecalc occupant-load …`, `norma grep "…" -j nyc`).
-- **If `norma` isn't found:** the install's Scripts dir isn't on PATH. Put it on PATH, or substitute `python "$NORMA_HOME/tools/norma_cli.py" <verb> …` - same behavior, install-independent. Do **not** reach into the engine's `tools/` scripts against the working directory; the engine is not the project folder.
+- **If `norma` isn't found:** the install's Scripts dir isn't on PATH. Put it on PATH, or substitute `python -m norma.cli <verb> …` - same behavior anywhere the engine package is importable, no repo path needed. Do **not** reach into the engine's source modules against the working directory; the engine is not the project folder.
 
 ---
 
