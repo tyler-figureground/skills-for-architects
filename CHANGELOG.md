@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-07-23
+
+### Changed
+
+- **`10-norma` plugin** (`1.2.0`) - the PATH-repair fallback moves from
+  `python "$NORMA_HOME/tools/norma_cli.py" <verb>` to `python -m norma.cli <verb>`
+  across `agents.md`, the plugin README, and all six skill headers. Same repair
+  (missing Scripts dir on PATH), no `NORMA_HOME` coupling, and it survives the
+  Norma engine's v0.3 removal of the `tools/*.py` compatibility adapters.
+- **`scripts/lint.sh`** Norma drift-guard tightened: it now also fails on the
+  `$NORMA_HOME/tools/` and `tools/norma_cli.py` fallback forms, not just
+  `python tools/…`, so a stale fallback cannot rot silently after v0.3.
+
 ## [1.5.0] - 2026-07-18
 
 ### Changed

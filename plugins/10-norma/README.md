@@ -13,7 +13,7 @@ These skills shell out to `norma`. Install the engine once (editable, so it stay
 pip install -e .
 ```
 
-If `norma` isn't found at runtime, put the Python Scripts dir on PATH, or the skills fall back to `python "$NORMA_HOME/tools/norma_cli.py" <verb>`.
+If `norma` isn't found at runtime, put the Python Scripts dir on PATH, or the skills fall back to `python -m norma.cli <verb>`.
 
 ## Scoping — the project's `PROJECT.md`
 

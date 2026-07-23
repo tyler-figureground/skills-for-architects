@@ -195,8 +195,9 @@ else
 fi
 
 # 7. Norma surface drift — 10-norma skills must shell out to the `norma` CLI,
-#    never reach into the engine source (`python tools/…`) or grep a raw corpus
-#    path (`rg … <juris>/20NN/`). The surface is prose; the engine is editable.
+#    never reach into the engine's tools/ adapters (`python tools/…`, the removed
+#    `$NORMA_HOME/tools/norma_cli.py` fallback) or grep a raw corpus path
+#    (`rg … <juris>/20NN/`). The surface is prose; the engine is editable.
 echo "→ norma surface (10-norma shells out to the norma CLI)"
 NORMA_FILES=$(ls plugins/10-norma/agents.md plugins/10-norma/skills/*/SKILL.md 2>/dev/null)
 if [ -z "$NORMA_FILES" ]; then
@@ -204,9 +205,9 @@ if [ -z "$NORMA_FILES" ]; then
 else
   NORMA_DRIFT=0
   # shellcheck disable=SC2086
-  DIRECT=$(grep -nE 'python tools/' $NORMA_FILES 2>/dev/null || true)
+  DIRECT=$(grep -nE 'python tools/|\$NORMA_HOME/tools/|tools/norma_cli\.py' $NORMA_FILES 2>/dev/null || true)
   if [ -n "$DIRECT" ]; then
-    fail_check "10-norma calls 'python tools/…' directly — use 'norma <verb>':"
+    fail_check "10-norma reaches into the engine's tools/ (removed in v0.3) — use 'norma <verb>' or 'python -m norma.cli <verb>':"
     echo "$DIRECT" | sed 's/^/      /'
     NORMA_DRIFT=1
   fi
