@@ -17,6 +17,8 @@ This is the *generator* sibling of `/ibc`. `/ibc` answers one question; `/code-a
 
 - **State the governing edition + jurisdiction up front and on every line.** Every value-bearing line cites `<edition> <section>`, e.g. `2022 NYC Building Code Table 1004.1.3`. A line with a number and no citation is a bug.
 - **Flag every table-derived number** with a trailing ` — verify against published code`.
+- **A cover sheet for a locality must carry the local layer.** In a California locality (`-j napa`, `napa-city`, `sonoma`, `calistoga`, `yountville`, `american-canyon`) the ordinance overrides the state base, and under `-j napa` the **adopted regulatory instruments** - Napa County Road & Street Standards (2023), Napa County Defensible Space Guidelines (May 2021) - are governing, citable law incorporated by county ordinance. A sheet built from `-j ca` for a Napa County project is wrong on its face. Values taken from an instrument carry a trailing ` — verify tables, charts, and plates against the published instrument`.
+- **Never cite the advisory layers.** The DGS `dgs` block (state Title 24 guidance) and the AHPP `advisory` block inform the work; neither governs and neither belongs in the Code References list.
 - **Run `norma guard` on the finished draft before presenting.** If any citation comes back UNVERIFIED, the document is not done - locate the real section in the corpus and fix it, then re-run until it passes.
 
 ## Inputs: the project profile
@@ -82,6 +84,20 @@ norma search "accessible route entrance"                    -j ca
 ```
 
 Read the matched chapter file around the hit (include exceptions). Resolve cross-references before citing.
+
+### The local and adopted layers
+
+For a project in one of the six California localities, run the dossier and read every governing block, not just the code candidates:
+
+```bash
+norma answer --q "fire apparatus access road width" -j napa
+```
+
+- `candidates` - code and local-ordinance hits. Governing.
+- `adopted` - the county-adopted instruments. **Governing and citable**, with `publication`, `edition` and `adopted_by` on every entry. Cite as `Napa County Road & Street Standards 2023 § 15 "Design Criteria"`.
+- `dgs` / `advisory` - context only, never cited.
+
+Read the three verdicts alongside them. `confidence` scores the code candidates and is the only one that drives `abstain`; `standards_confidence` and `adopted_confidence` score their own blocks and move nothing else. A LOW on a block means thin retrieval evidence, not that the block is wrong, and `null` means no verdict was possible rather than LOW. When a sheet line rests on a LOW block, say so on the line instead of presenting it as settled.
 
 ## Output document
 

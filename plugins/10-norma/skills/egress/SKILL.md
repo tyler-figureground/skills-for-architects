@@ -32,6 +32,14 @@ Add `--json` for the raw result dict. Every result names the `section` it was de
 
 For a space **above the first story**, pass `--story N` to `min-exits` (1 = first story above grade plane). The single-exit allowance is first-story-only, so without `--story` the result carries a `verify` caveat and can understate required exits on an upper floor. E.g. `norma codecalc min-exits --load 36 --occupancy B --story 5 -j nyc` → 2 exits (single exit not permitted on story 5).
 
+## Localities: check the layer above the state code
+
+In a California locality (`-j napa`, `napa-city`, `sonoma`, `calistoga`, `yountville`, `american-canyon`) the ordinance amends the state base, so pass the locality key rather than `-j ca` - `-j ca` returns the unamended state text.
+
+Egress rarely stops at the building line, and **site access is where the adopted instruments bite**. For unincorporated Napa County, fire apparatus access road width, dead-end road length, turnaround geometry and driveway grade are governed by the **Napa County Road & Street Standards (2023)**, incorporated by Napa County Code § 15.32.070; defensible space by the **Napa County Defensible Space Guidelines (May 2021)** via § 8.36.030. Both are governing, citable law. Run `norma answer --q "<question>" -j napa`, read the `adopted` block, and cite as `Napa County Road & Street Standards 2023 § 15 "Design Criteria"` with `verify tables, charts, and plates against the published instrument` on any value read from a chart or plate.
+
+`adopted_confidence` scores that block alone and never moves the code answer's `abstain`. A LOW there means thin retrieval evidence, not that the instrument is wrong, and `null` means no verdict was possible rather than LOW.
+
 ## Exit separation & dead-end (deterministic)
 
 `norma plancheck` handles geometry, reading the same per-jurisdiction corpora:

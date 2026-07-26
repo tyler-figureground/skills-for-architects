@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-07-25
+
+### Added
+
+- **`10-norma` plugin** (`1.3.0`) - the skills now name the governing and
+  non-governing layers the Norma engine has been returning for some time. The
+  engine and the architect-facing surface had drifted apart: no skill file
+  mentioned `adopted`, `dgs`, `standards_confidence` or `adopted_confidence`, so
+  an agent following the installed skill on a Napa County road-width or
+  defensible-space question had no instruction to look at the controlling
+  instrument, and none to read either parallel verdict.
+  - `agents.md` gains **the dossier's five blocks and their authority**
+    (`candidates` and `adopted` govern and are citable; `standards` is
+    edition-routed; `dgs` and `advisory` never govern), **the three confidence
+    verdicts** with the invariant that only the code verdict drives `abstain`,
+    and the **six California local overlays** with their `-j` keys. The source
+    types table gains local-ordinance, adopted-instrument and state-advisory
+    rows, and `norma answer` joins the tool stack.
+  - `/ibc`, `/code-analysis`, `/egress` and `/drawing-analysis` each route the
+    reader to the `adopted` block where it bites - site access, road width,
+    dead-end length, turnaround geometry, driveway grade, defensible space -
+    and state that a locality question answered from `-j ca` is wrong.
+
+### Fixed
+
+- **`10-norma` A117.1 routing was stale.** The known-divergences table said
+  "adopted (edition pending - verify Ch 35)" for both IBC and NYC; the engine
+  now holds both editions and resolves `matched` for each. Corrected to IBC
+  adopts **2003**, NYC adopts **2009**, California adopts neither.
+
 ## [1.6.0] - 2026-07-23
 
 ### Changed
