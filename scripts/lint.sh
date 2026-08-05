@@ -4,6 +4,11 @@
 
 set -uo pipefail
 
+# Repo content is UTF-8. Force Python's UTF-8 mode so the embedded checks below
+# read files consistently on platforms whose default locale encoding is not
+# UTF-8 (notably Windows, where it is cp1252 and read_text() raises).
+export PYTHONUTF8=1
+
 cd "$(dirname "$0")/.."
 
 FAIL=0
