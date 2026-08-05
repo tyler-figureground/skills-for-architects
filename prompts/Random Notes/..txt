@@ -1,0 +1,24 @@
+.
+
+
+
+
+
+Train computer use to go download families from BIMObject and load into project.
+
+
+
+
+2981 Silverado Trail, Napa, CA 94558 (APN 039-600-015-000)
+-------------------------
+
+
+
+The address is a typo, I will fix the folder and the revit name. The client is 
+run /drawing-analysis on the scan plans to count
+
+
+
+
+
+⚠️ The big one: flood — A live FEMA NFHL query puts the address point in Zone AE, regulatory FLOODWAY (special flood hazard area, profile-based BFE). For a renovation this is the controlling constraint: substantial-improvement/50%-rule math and floodway no-rise requirements will shape what scope is feasible. I recommend pulling a FIRMette and an elevation certificate early. Also noted: not in a mapped fire hazard severity zone on the older maps, but the 2024/25 FHSZ rollout should be checked (WUI/R337 trigger), and CEC Climate Zone 2 for energy.
