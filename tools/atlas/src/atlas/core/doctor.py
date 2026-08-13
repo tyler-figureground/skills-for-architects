@@ -108,9 +108,21 @@ def report_project(inv: ProjectInventory, m: DriveMap) -> ProjectReport:
 
     sections_present = sum(1 for e in inv.root_entries if e.is_dir and e.name in section_ids)
 
-    # Control plane: report what Conform would backfill.
+    # Control plane: report what Conform would backfill. PROJECT.md counts as
+    # missing when absent OR present without the YAML machine contract - the
+    # prose-only file is exactly what Conform-Project.ps1 prepends into.
     missing: list[str] = []
-    for label in (m.project_file, m.decisions_dir, m.claude_file):
+    if m.project_file:
+        if m.project_file not in root_names:
+            missing.append(m.project_file)
+        else:
+            try:
+                head = (inv.path / m.project_file).read_text(encoding="utf-8-sig", errors="replace")[:64]
+            except OSError:
+                head = ""
+            if not head.lstrip().startswith("---"):
+                missing.append(m.project_file)
+    for label in (m.decisions_dir, m.claude_file):
         if label and label not in root_names:
             missing.append(label)
     if m.analysis_dir and not (inv.path / m.analysis_dir).exists():
