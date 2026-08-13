@@ -11,7 +11,8 @@ import sys
 from pathlib import Path
 
 from . import __version__
-from .core.doctor import report_drive, report_to_dict
+from .core.conform import apply_plan, build_plan
+from .core.doctor import report_drive, report_project, report_to_dict
 from .core.lintmap import lint_map
 from .core.mapfile import MapError, find_map, load_map
 from .core.ops import OpsError, add_sections, find_empty_dirs, new_project, remove_empty_dirs
@@ -154,6 +155,61 @@ def cmd_clean(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_conform(args: argparse.Namespace) -> int:
+    root = _resolve_drive(args.drive)
+    inventory = scan_drive(root)
+    m = inventory.map
+    if args.all:
+        targets = list(inventory.projects)
+    else:
+        if not args.project:
+            print("error: pass --project <name> or --all", file=sys.stderr)
+            return 2
+        targets = [p for p in inventory.projects if p.name == args.project]
+        if not targets:
+            print(f"error: no project folder '{args.project}' under {root}", file=sys.stderr)
+            return 2
+
+    only = set(args.only) if args.only else None
+    results = []
+    pending = False
+    for inv in targets:
+        plan = build_plan(report_project(inv, m), m)
+        if plan.empty:
+            results.append(plan)
+            continue
+        if args.apply:
+            results.append(apply_plan(root, inv.path, m, plan, only=only))
+        else:
+            results.append(plan)
+            pending = True
+
+    if args.json:
+        print(json.dumps([
+            {"project": plan.project,
+             "actions": [a.__dict__ for a in plan.actions]}
+            for plan in results
+        ], indent=2))
+    else:
+        for plan in results:
+            if plan.empty:
+                print(f"[OK     ] {plan.project}: conforms already")
+                continue
+            print(f"[{'APPLIED' if args.apply else 'PLAN':7}] {plan.project}")
+            for a in plan.actions:
+                status = f" [{a.status}]" if a.status else ""
+                note = f"  ({a.note})" if a.note else ""
+                files = f" ({a.file_count} files)" if a.file_count else ""
+                src = f"{a.src} -> " if a.src else ""
+                print(f"    {a.kind:9} {src}{a.dst}{files}{status}{note}")
+        if not args.apply and pending:
+            print("\n(dry run - pass --apply to perform)")
+    if args.apply:
+        conflicts = any(a.status == "conflict" for plan in results for a in plan.actions)
+        return 1 if conflicts else 0
+    return 1 if pending else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="atlas", description="Map-driven studio drive tooling.")
     parser.add_argument("--version", action="version", version=f"atlas {__version__}")
@@ -165,6 +221,7 @@ def main(argv: list[str] | None = None) -> int:
         ("new", cmd_new, "create a project (seed sections + control plane + index row)"),
         ("add", cmd_add, "add blessed folders to a project"),
         ("clean", cmd_clean, "list/remove file-empty folders (rmdir-only; dry run by default)"),
+        ("conform", cmd_conform, "plan/apply conformance: backfill, renames, relocations, sweeps"),
     ):
         p = sub.add_parser(name, help=help_text)
         p.add_argument("--drive", help="drive root (default: walk up from cwd, else auto-discover)")
@@ -180,6 +237,12 @@ def main(argv: list[str] | None = None) -> int:
     sub.choices["clean"].add_argument("--apply", action="store_true", help="actually remove")
     sub.choices["clean"].add_argument("--include-seeds", action="store_true",
                                       help="allow removing empty seed sections too")
+    sub.choices["conform"].add_argument("--project", help="project folder name")
+    sub.choices["conform"].add_argument("--all", action="store_true", help="every project on the drive")
+    sub.choices["conform"].add_argument("--apply", action="store_true", help="perform the plan")
+    sub.choices["conform"].add_argument("--only", action="append",
+                                        choices=["backfill", "rename", "relocate", "sweep"],
+                                        help="limit apply to an action class (repeatable)")
 
     args = parser.parse_args(argv)
     if args.command is None:

@@ -1,0 +1,157 @@
+from __future__ import annotations
+
+from atlas.core.conform import CONFLICT, DONE, apply_plan, build_plan
+from atlas.core.doctor import report_project
+from atlas.core.mapfile import find_map, load_map
+from atlas.core.scan import scan_drive
+
+from conftest import make_project
+
+
+def plan_for(drive, name):
+    inventory = scan_drive(drive)
+    m = inventory.map
+    inv = next(p for p in inventory.projects if p.name == name)
+    return build_plan(report_project(inv, m), m), inv, m
+
+
+def conform(drive, name, only=None):
+    plan, inv, m = plan_for(drive, name)
+    return apply_plan(drive, inv.path, m, plan, only=only), inv, m
+
+
+def test_backfill_creates_stub_when_missing(fixture_drive):
+    make_project(fixture_drive, "260201_Legacy", sections=["01 Model"])
+    result, inv, m = conform(fixture_drive, "260201_Legacy")
+    assert (inv.path / "PROJECT.md").is_file()
+    assert (inv.path / "decisions" / "README.md").is_file()
+    assert (inv.path / "CLAUDE.md").is_file()
+    assert (inv.path / "06 Research" / "Code").is_dir()
+    raw = (inv.path / "PROJECT.md").read_bytes()
+    assert raw.startswith(b"---\r\n") and not raw.startswith(b"\xef\xbb\xbf")
+    # display name drops the YYMMDD_ prefix, same as Conform-Project.ps1
+    assert b'project: "Legacy"' in raw
+
+
+def test_backfill_prepends_contract_preserving_prose(fixture_drive):
+    make_project(
+        fixture_drive, "260202_Prose", sections=["01 Model"],
+        files={"PROJECT.md": "# My notes\n\nImportant prose.\n"},
+    )
+    result, inv, m = conform(fixture_drive, "260202_Prose")
+    text = (inv.path / "PROJECT.md").read_bytes().decode("utf-8")
+    assert text.startswith("---\r\n")
+    assert "Important prose." in text
+    action = next(a for a in result.actions if a.dst == "PROJECT.md")
+    assert action.status == DONE and "prepended" in action.note
+
+
+def test_backfill_leaves_existing_contract_alone(fixture_drive):
+    original = "---\nproject: x\n---\nbody\n"
+    make_project(
+        fixture_drive, "260203_HasFM", sections=["01 Model"],
+        files={"PROJECT.md": original, "CLAUDE.md": "keep me"},
+    )
+    result, inv, m = conform(fixture_drive, "260203_HasFM")
+    assert (inv.path / "PROJECT.md").read_text(encoding="utf-8") == original
+    assert (inv.path / "CLAUDE.md").read_text(encoding="utf-8") == "keep me"
+
+
+def test_rename_moves_drift_folder(fixture_drive):
+    make_project(
+        fixture_drive, "260204_Drifty", sections=["01 Model", "Meetings"],
+        files={"Meetings/2026-01-01-kickoff.md": "notes"},
+    )
+    result, inv, m = conform(fixture_drive, "260204_Drifty")
+    assert (inv.path / "11 Meetings" / "2026-01-01-kickoff.md").is_file()
+    assert not (inv.path / "Meetings").exists()
+
+
+def test_rename_merges_no_clobber_into_existing_target(fixture_drive):
+    make_project(
+        fixture_drive, "260205_Merge",
+        sections=["01 Model", "Meetings", "11 Meetings"],
+        files={
+            "Meetings/a.md": "old-a",
+            "Meetings/b.md": "old-b",
+            "11 Meetings/a.md": "new-a",   # collision: must survive untouched
+        },
+    )
+    result, inv, m = conform(fixture_drive, "260205_Merge")
+    action = next(a for a in result.actions if a.src == "Meetings")
+    assert action.status == CONFLICT and "1 name collision" in action.note
+    assert (inv.path / "11 Meetings" / "a.md").read_text(encoding="utf-8") == "new-a"
+    assert (inv.path / "11 Meetings" / "b.md").read_text(encoding="utf-8") == "old-b"
+    assert (inv.path / "Meetings" / "a.md").read_text(encoding="utf-8") == "old-a"
+
+
+def test_relocation_moves_and_empty_source_removed(fixture_drive):
+    make_project(
+        fixture_drive, "260206_Reloc",
+        sections=["01 Model", "08 OUT/Invoices", "10 Legal"],
+        files={"08 OUT/Invoices/inv-1.pdf": "x"},
+    )
+    result, inv, m = conform(fixture_drive, "260206_Reloc")
+    assert (inv.path / "10 Legal" / "Invoices" / "inv-1.pdf").is_file()
+    assert not (inv.path / "08 OUT" / "Invoices").exists()
+
+    make_project(fixture_drive, "260207_EmptyDup", sections=["01 Model", "08 OUT/Invoices"])
+    result, inv, m = conform(fixture_drive, "260207_EmptyDup")
+    action = next(a for a in result.actions if a.src == "08 OUT/Invoices")
+    assert action.status == DONE and "file-empty" in action.note
+    assert not (inv.path / "08 OUT" / "Invoices").exists()
+
+
+def test_sweep_moves_handoffs(fixture_drive):
+    make_project(
+        fixture_drive, "260208_Sweepy", sections=["01 Model"],
+        files={"HANDOFF-roof-01.md": "x", "HANDOFF-site-02.md": "y"},
+    )
+    result, inv, m = conform(fixture_drive, "260208_Sweepy")
+    assert (inv.path / ".agent" / "handoff" / "HANDOFF-roof-01.md").is_file()
+    assert (inv.path / ".agent" / "handoff" / "HANDOFF-site-02.md").is_file()
+
+
+def test_only_filter_limits_action_classes(fixture_drive):
+    make_project(
+        fixture_drive, "260209_Filtered", sections=["01 Model", "Meetings"],
+        files={"Meetings/x.md": "x"},
+    )
+    result, inv, m = conform(fixture_drive, "260209_Filtered", only={"rename"})
+    assert (inv.path / "11 Meetings").is_dir()
+    assert not (inv.path / "PROJECT.md").exists()  # backfill filtered out
+    statuses = {a.kind: a.status for a in result.actions}
+    assert statuses["backfill"] == "skipped"
+
+
+def test_v11_replay_full_project_conforms_and_second_plan_is_empty(fixture_drive):
+    """The regression gate from the spec: a project shaped like the real
+    v1.1 drive state (missing control plane + drift folder + stray invoices +
+    root handoffs) conforms in one apply; doctor then reports conform and a
+    second plan is empty (idempotency)."""
+    make_project(
+        fixture_drive, "260210_Replay",
+        sections=["01 Model", "06 Research", "08 OUT/Invoices", "10 Legal/Invoices", "Meetings"],
+        files={
+            "08 OUT/Invoices/inv-feb.pdf": "x",
+            "10 Legal/Invoices/inv-jan.pdf": "y",
+            "Meetings/kickoff.md": "z",
+            "HANDOFF-qaqc-01.md": "h",
+        },
+    )
+    result, inv, m = conform(fixture_drive, "260210_Replay")
+    assert all(a.status == DONE for a in result.actions), result.actions
+
+    # End state: single homes, everything preserved.
+    assert (inv.path / "10 Legal" / "Invoices" / "inv-jan.pdf").is_file()
+    assert (inv.path / "10 Legal" / "Invoices" / "inv-feb.pdf").is_file()
+    assert (inv.path / "11 Meetings" / "kickoff.md").is_file()
+    assert (inv.path / ".agent" / "handoff" / "HANDOFF-qaqc-01.md").is_file()
+    assert not (inv.path / "08 OUT" / "Invoices").exists()
+
+    # Idempotency: nothing left to do, and doctor agrees.
+    plan2, inv2, m2 = plan_for(fixture_drive, "260210_Replay")
+    assert plan2.empty, plan2.actions
+    inventory = scan_drive(fixture_drive)
+    report = report_project(next(p for p in inventory.projects if p.name == "260210_Replay"), m2)
+    assert report.status == "conform", report
