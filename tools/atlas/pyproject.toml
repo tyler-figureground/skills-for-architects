@@ -1,0 +1,26 @@
+[project]
+name = "studio-atlas"
+version = "0.1.0"
+description = "Atlas - map-driven TUI/CLI for studio shared-drive project tooling (spec: LIBRARY - Reference/_House Standard/atlas-tui-spec.md)"
+requires-python = ">=3.12"
+dependencies = [
+    "textual>=0.80",
+]
+
+[project.scripts]
+atlas = "atlas.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/atlas"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
