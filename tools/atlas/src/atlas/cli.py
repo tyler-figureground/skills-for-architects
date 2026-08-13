@@ -14,6 +14,7 @@ from . import __version__
 from .core.doctor import report_drive, report_to_dict
 from .core.lintmap import lint_map
 from .core.mapfile import MapError, find_map, load_map
+from .core.ops import OpsError, add_sections, find_empty_dirs, new_project, remove_empty_dirs
 from .core.scan import DEFAULT_MOUNT_ROOT, discover_drives, scan_drive
 
 
@@ -85,6 +86,74 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     return 1 if pending else 0
 
 
+def _resolve_project(root: Path, name: str) -> Path:
+    project = root / name
+    if not project.is_dir():
+        raise SystemExit(f"error: no project folder '{name}' under {root}")
+    return project
+
+
+def cmd_new(args: argparse.Namespace) -> int:
+    root = _resolve_drive(args.drive)
+    drive_map = load_map(find_map(root))
+    try:
+        result = new_project(root, drive_map, args.name, args.desc or "")
+    except OpsError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
+    if args.json:
+        print(json.dumps({"created": result.folder_name, "path": str(result.path), "seeded": list(result.seeded)}))
+    else:
+        print(f"created: {result.folder_name}")
+        print(f"seed:    {', '.join(result.seeded)}")
+        print(f"control: {drive_map.project_file}, {drive_map.decisions_dir}\\, {drive_map.claude_file}, {drive_map.analysis_dir}\\")
+        print("NEXT: run /project-dossier in the new folder to fill the machine contract.")
+    return 0
+
+
+def cmd_add(args: argparse.Namespace) -> int:
+    root = _resolve_drive(args.drive)
+    drive_map = load_map(find_map(root))
+    project = _resolve_project(root, args.project)
+    try:
+        created = add_sections(root, drive_map, project, args.section)
+    except OpsError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
+    if args.json:
+        print(json.dumps({"created": created}))
+    else:
+        for rel in created:
+            print(f"created: {rel}")
+        if not created:
+            print("nothing to create (all requested folders already exist)")
+    return 0
+
+
+def cmd_clean(args: argparse.Namespace) -> int:
+    root = _resolve_drive(args.drive)
+    drive_map = load_map(find_map(root))
+    project = _resolve_project(root, args.project)
+    empties = find_empty_dirs(project, drive_map, include_seeds=args.include_seeds)
+    if not args.apply:
+        if args.json:
+            print(json.dumps({"empty": empties, "applied": False}))
+        else:
+            print(f"{len(empties)} empty folder(s)" + (":" if empties else ""))
+            for rel in empties:
+                print(f"  {rel}")
+            if empties:
+                print("(dry run - pass --apply to remove)")
+        return 1 if empties else 0
+    removed = remove_empty_dirs(root, project, empties)
+    if args.json:
+        print(json.dumps({"removed": removed, "applied": True}))
+    else:
+        for rel in removed:
+            print(f"removed: {rel}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="atlas", description="Map-driven studio drive tooling.")
     parser.add_argument("--version", action="version", version=f"atlas {__version__}")
@@ -93,11 +162,24 @@ def main(argv: list[str] | None = None) -> int:
     for name, fn, help_text in (
         ("lint", cmd_lint, "validate the drive's map file"),
         ("doctor", cmd_doctor, "read-only drive-wide conformance report"),
+        ("new", cmd_new, "create a project (seed sections + control plane + index row)"),
+        ("add", cmd_add, "add blessed folders to a project"),
+        ("clean", cmd_clean, "list/remove file-empty folders (rmdir-only; dry run by default)"),
     ):
         p = sub.add_parser(name, help=help_text)
         p.add_argument("--drive", help="drive root (default: walk up from cwd, else auto-discover)")
         p.add_argument("--json", action="store_true", help="machine-readable output")
         p.set_defaults(fn=fn)
+
+    sub.choices["new"].add_argument("--name", required=True, help="project name or address")
+    sub.choices["new"].add_argument("--desc", default="", help="short descriptor (e.g. ADU, Renovation)")
+    sub.choices["add"].add_argument("--project", required=True, help="project folder name")
+    sub.choices["add"].add_argument("--section", action="append", required=True,
+                                    help="'NN Section' or 'NN Section/Child' (repeatable)")
+    sub.choices["clean"].add_argument("--project", required=True, help="project folder name")
+    sub.choices["clean"].add_argument("--apply", action="store_true", help="actually remove")
+    sub.choices["clean"].add_argument("--include-seeds", action="store_true",
+                                      help="allow removing empty seed sections too")
 
     args = parser.parse_args(argv)
     if args.command is None:
