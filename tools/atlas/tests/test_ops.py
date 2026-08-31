@@ -84,7 +84,7 @@ def test_project_md_bytes(fixture_drive):
     assert "tenancy:" in lines
     assert lines.index("---", 1) > lines.index('project: "Golden"')
     # Identity mirrors New-Project (Descriptor/Created/Drive/Status rows).
-    for row in ("| Project | Golden |", "| Descriptor | Spec |",
+    for row in ("| Project | Golden |", "| Jurisdiction | |", "| Virtual tour | |", "| Descriptor | Spec |",
                 "| Created | 2026-08-13 |", "| Drive | TESTDRIVE |", "| Status | Active |"):
         assert row in lines, row
     # Canonical map block present, marker-wrapped (sanctioned divergence 2).
@@ -117,6 +117,16 @@ def test_add_sections_rejects_unblessed(fixture_drive):
         add_sections(fixture_drive, m, result.path, ["10 Legal/Random Folder"])
     with pytest.raises(OpsError, match="not a canonical section"):
         add_sections(fixture_drive, m, result.path, ["Random Section"])
+
+
+def test_add_sections_never_recreates_missing_project_root(fixture_drive):
+    m = load(fixture_drive)
+    missing = fixture_drive / "260813_Deleted"
+
+    with pytest.raises(OpsError, match="no longer available"):
+        add_sections(fixture_drive, m, missing, ["10 Legal/Invoices"])
+
+    assert not missing.exists()
 
 
 # ------------------------------------------------------------------ clean

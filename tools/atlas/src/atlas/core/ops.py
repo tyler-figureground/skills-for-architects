@@ -21,14 +21,36 @@ from .mapfile import DriveMap
 from .naming import build_folder_name, clean_name_part
 from .projectmd import (
     claude_md_lines,
+    create_crlf_no_bom,
     decisions_readme_lines,
     project_md_lines,
-    write_crlf_no_bom,
 )
 
 
 class OpsError(Exception):
     """A requested operation is invalid (exists already, unblessed name, ...)."""
+
+
+def mkdir_below(root: Path, relative: str) -> bool:
+    """Create a relative directory without ever recreating a missing root."""
+
+    if not root.is_dir():
+        raise OpsError(f"project folder is no longer available: {root}")
+    parts = tuple(part for part in relative.replace("\\", "/").split("/") if part)
+    current = root
+    final_created = False
+    for index, part in enumerate(parts):
+        current = current / part
+        try:
+            current.mkdir()
+            if index == len(parts) - 1:
+                final_created = True
+        except FileExistsError:
+            if not current.is_dir():
+                raise OpsError(f"cannot create folder; a file exists at {current}") from None
+        except FileNotFoundError:
+            raise OpsError(f"project folder disappeared while creating {relative}") from None
+    return final_created
 
 
 def append_log(drive_root: Path, message: str) -> None:
@@ -60,21 +82,29 @@ def new_project(drive_root: Path, m: DriveMap, raw_name: str, raw_desc: str = ""
     if project.exists():
         raise OpsError(f"a folder named '{folder_name}' already exists")
 
-    project.mkdir()
+    try:
+        project.mkdir()
+    except FileExistsError:
+        raise OpsError(f"a folder named '{folder_name}' appeared while creating it") from None
     seeded = []
     for section in m.sections:
         if not section.seed:
             continue
-        (project / section.id).mkdir()
+        mkdir_below(project, section.id)
         seeded.append(section.id)
 
-    write_crlf_no_bom(project / m.project_file, project_md_lines(m, folder_name, name, desc, created))
-    decisions = project / m.decisions_dir
-    decisions.mkdir()
-    write_crlf_no_bom(decisions / "README.md", decisions_readme_lines())
+    if not create_crlf_no_bom(
+        project / m.project_file,
+        project_md_lines(m, folder_name, name, desc, created),
+    ):
+        raise OpsError(f"{m.project_file} appeared while creating the project; left unchanged")
+    mkdir_below(project, m.decisions_dir)
+    if not create_crlf_no_bom(project / m.decisions_dir / "README.md", decisions_readme_lines()):
+        raise OpsError("decisions/README.md appeared while creating the project; left unchanged")
     if m.analysis_dir:
-        (project / m.analysis_dir).mkdir(parents=True, exist_ok=True)
-    write_crlf_no_bom(project / m.claude_file, claude_md_lines(m))
+        mkdir_below(project, m.analysis_dir)
+    if not create_crlf_no_bom(project / m.claude_file, claude_md_lines(m)):
+        raise OpsError(f"{m.claude_file} appeared while creating the project; left unchanged")
 
     _append_index_row(drive_root, m, folder_name, desc, created)
     append_log(drive_root, f"[{folder_name}] new: seeded {', '.join(seeded)}; control plane written")
@@ -84,7 +114,7 @@ def new_project(drive_root: Path, m: DriveMap, raw_name: str, raw_desc: str = ""
 def _append_index_row(drive_root: Path, m: DriveMap, folder_name: str, desc: str, created: date) -> None:
     index = drive_root / "_Project Index.md"
     if not index.exists():
-        write_crlf_no_bom(index, [
+        index_created = create_crlf_no_bom(index, [
             f"# {m.drive} - Project Index",
             "",
             "Auto-maintained by New-Project. One row per project (searchable table of contents).",
@@ -92,6 +122,8 @@ def _append_index_row(drive_root: Path, m: DriveMap, folder_name: str, desc: str
             "| Project folder | Created | Descriptor | Status |",
             "|---|---|---|---|",
         ])
+        if not index_created:
+            raise OpsError("_Project Index.md appeared while creating it; project remains created")
     with index.open("a", encoding="utf-8", newline="") as fh:
         fh.write(f"| {folder_name} | {created.strftime('%Y-%m-%d')} | {desc} | Active |\r\n")
 
@@ -102,14 +134,13 @@ def add_sections(drive_root: Path, m: DriveMap, project: Path, requests: list[st
     """Create blessed folders. Requests are 'NN Section' or 'NN Section/Child'
     where Child must be a blessed child entry (children may themselves contain
     slashes, e.g. '00 Library/Families'). No free-text names, ever."""
+    if not project.is_dir():
+        raise OpsError(f"project folder is no longer available: {project}")
     created: list[str] = []
     for req in requests:
         rel = _resolve_blessed(m, req)
-        target = project / rel
-        if target.exists():
-            continue
-        target.mkdir(parents=True)
-        created.append(rel)
+        if mkdir_below(project, rel):
+            created.append(rel)
     if created:
         append_log(drive_root, f"[{project.name}] add: {', '.join(created)}")
     return created

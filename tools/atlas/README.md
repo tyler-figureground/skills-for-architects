@@ -6,17 +6,27 @@ generation (`New-Project`, `Add-Section`, `Clean-Empty`, `Conform-Project`) per 
 
 The drive's `_tools\<drive>-map.json` is the only brain - Atlas hard-codes zero folder names.
 
-## Status: P1 (read-only)
+## Status: operations console
+
+Atlas diagnoses and safely repairs mapped project-folder differences. Every mutation uses the
+same core plan as the CLI. Conform previews exact changes, never overwrites destinations, and
+leaves conflicts in place. Clean removes file-empty folders only.
 
 | Command | Does |
 |---|---|
-| `atlas` | TUI: drive picker + project table with conformance badges |
-| `atlas doctor [--drive D] [--json]` | drive-wide read-only conformance report |
-| `atlas lint [--drive D] [--json]` | validate the map file itself |
+| `atlas` | Interactive operations console: inspect, filter, sort, create, clean, and conform |
+| `atlas doctor [--drive D] [--json]` | Drive-wide read-only conformance report |
+| `atlas lint [--drive D] [--json]` | Validate the map file itself |
+| `atlas new --name NAME [--desc DESC]` | Create a mapped project |
+| `atlas add --project NAME --section SECTION` | Add map-approved project folders |
+| `atlas clean --project NAME [--apply]` | Preview or remove empty folders |
+| `atlas conform --project NAME [--apply]` | Preview or apply mapped repairs |
+
+TUI keys: `/` filter, `Enter` inspect, `Space` mark, `x` conform marked,
+`a` add folders, `f` conform, `?` help, `Ctrl+P` command palette. Additional
+actions remain searchable in the palette.
 
 Exit codes: `0` clean, `1` findings/pending work, `2` error. `--json` is the agent interface.
-
-P2 (`new`/`add`/`clean`), P3 (`conform` incl. relocations), P4 (PS1 deprecation) per spec section 11.
 
 ## Dev
 

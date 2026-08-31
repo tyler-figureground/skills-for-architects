@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import pytest
+
 from atlas.core.conform import CONFLICT, DONE, apply_plan, build_plan
 from atlas.core.doctor import report_project
 from atlas.core.mapfile import find_map, load_map
+from atlas.core.ops import OpsError
+from atlas.core.projectmd import create_crlf_no_bom
 from atlas.core.scan import scan_drive
 
 from conftest import make_project
@@ -31,19 +35,20 @@ def test_backfill_creates_stub_when_missing(fixture_drive):
     assert raw.startswith(b"---\r\n") and not raw.startswith(b"\xef\xbb\xbf")
     # display name drops the YYMMDD_ prefix, same as Conform-Project.ps1
     assert b'project: "Legacy"' in raw
+    # Identity slot, parity with Conform-Project.ps1
+    assert b"| Jurisdiction | |\r\n| Virtual tour | |\r\n" in raw
 
 
-def test_backfill_prepends_contract_preserving_prose(fixture_drive):
+def test_backfill_leaves_existing_prose_as_conflict(fixture_drive):
     make_project(
         fixture_drive, "260202_Prose", sections=["01 Model"],
         files={"PROJECT.md": "# My notes\n\nImportant prose.\n"},
     )
     result, inv, m = conform(fixture_drive, "260202_Prose")
-    text = (inv.path / "PROJECT.md").read_bytes().decode("utf-8")
-    assert text.startswith("---\r\n")
-    assert "Important prose." in text
+    text = (inv.path / "PROJECT.md").read_text(encoding="utf-8")
+    assert text == "# My notes\n\nImportant prose.\n"
     action = next(a for a in result.actions if a.dst == "PROJECT.md")
-    assert action.status == DONE and "prepended" in action.note
+    assert action.status == CONFLICT and "left unchanged" in action.note
 
 
 def test_backfill_leaves_existing_contract_alone(fixture_drive):
@@ -110,6 +115,25 @@ def test_sweep_moves_handoffs(fixture_drive):
     result, inv, m = conform(fixture_drive, "260208_Sweepy")
     assert (inv.path / ".agent" / "handoff" / "HANDOFF-roof-01.md").is_file()
     assert (inv.path / ".agent" / "handoff" / "HANDOFF-site-02.md").is_file()
+
+
+def test_conform_never_recreates_missing_project_root(fixture_drive):
+    project = make_project(fixture_drive, "260208_Deleted")
+    plan, _inventory, drive_map = plan_for(fixture_drive, project.name)
+    project.rmdir()
+
+    with pytest.raises(OpsError, match="no longer available"):
+        apply_plan(fixture_drive, project, drive_map, plan)
+
+    assert not project.exists()
+
+
+def test_control_file_creation_never_replaces_concurrent_arrival(tmp_path):
+    target = tmp_path / "CLAUDE.md"
+    target.write_bytes(b"human content\r\n")
+
+    assert not create_crlf_no_bom(target, ["@PROJECT.md"])
+    assert target.read_bytes() == b"human content\r\n"
 
 
 def test_only_filter_limits_action_classes(fixture_drive):

@@ -115,6 +115,9 @@ tenancy:                     # single | multi  (tenant configuration)
 | Address / BBL | |
 | Client | |
 | Jurisdiction | |
+| Virtual tour | |
+
+<!-- Virtual tour: Matterport / iGuide / video walkthrough links. Several → one per line or " · "-separated. Blank until a scan exists. -->
 
 ## Site
 
@@ -155,6 +158,8 @@ tenancy:                     # single | multi  (tenant configuration)
 ```
 
 ## How other skills use the dossier
+
+Identity rows with no front-matter key (Client, Virtual tour, …) are human-only facts; tools that need them parse the table.
 
 Analysis skills in this marketplace check for `PROJECT.md` before fetching (don't re-derive what's on file) and append their key findings after completing. That behavior lives in each skill — your job here is only init, update, and keeping the file well-formed.
 

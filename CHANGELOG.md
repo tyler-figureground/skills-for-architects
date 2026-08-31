@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **Atlas operations console.** Responsive project-health detail, filtering,
+  sorting, contextual help, durable operation results, and marked-project batch
+  conform. Shared-drive scans and mutations run through background workers.
+  Confirmed plans now reject stale project or map state; constructive writes use
+  exclusive file creation and never recreate a missing project root.
+- **`09-project-dossier` (`1.2.0`) - Virtual tour slot.** The Identity table
+  gains a `Virtual tour` row for Matterport / iGuide / video walkthrough links
+  (human-only fact; no front-matter key, like Client). Added in the skill
+  template, both Atlas generators (`new` and the `conform` stub, Atlas
+  `0.1.1`) and the drive's `New-Project.ps1` / `Conform-Project.ps1`, so every
+  writer stays in byte parity.
+
 ## [1.7.0] - 2026-07-25
 
 ### Added

@@ -49,10 +49,24 @@ FRONT_MATTER_KEYS = (
 )
 
 
+def _crlf_bytes(lines: list[str]) -> bytes:
+    return ("\r\n".join(lines) + "\r\n").encode("utf-8")
+
+
 def write_crlf_no_bom(path: Path, lines: list[str]) -> None:
     """The PS1 writer's exact byte behavior: WriteAllLines = line + CRLF each."""
-    data = ("\r\n".join(lines) + "\r\n").encode("utf-8")
-    path.write_bytes(data)
+    path.write_bytes(_crlf_bytes(lines))
+
+
+def create_crlf_no_bom(path: Path, lines: list[str]) -> bool:
+    """Create a control file exclusively; never replace a concurrent arrival."""
+
+    try:
+        with path.open("xb") as stream:
+            stream.write(_crlf_bytes(lines))
+    except FileExistsError:
+        return False
+    return True
 
 
 def project_md_lines(m: DriveMap, folder_name: str, name: str, desc: str, created: date) -> list[str]:
@@ -77,6 +91,7 @@ def project_md_lines(m: DriveMap, folder_name: str, name: str, desc: str, create
         "| Address / BBL | |",
         "| Client | |",
         "| Jurisdiction | |",
+        "| Virtual tour | |",
         f"| Descriptor | {desc} |",
         f"| Created | {created.strftime('%Y-%m-%d')} |",
         f"| Drive | {m.drive} |",

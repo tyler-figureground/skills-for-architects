@@ -7,9 +7,9 @@ deletions are rmdir-shaped (file-empty only), moves never clobber (collisions
 survive in place and are reported), case-only renames go through a temp name,
 every applied action is logged.
 
-Control-plane backfill keeps parity with Conform-Project.ps1: an existing
-PROJECT.md that lacks the YAML machine contract gets it PREPENDED with the
-prose preserved; nothing existing is ever overwritten.
+Control-plane backfill is constructive only. Missing files are created
+exclusively. An existing PROJECT.md without the machine contract is reported
+as a conflict and left unchanged; nothing existing is overwritten.
 """
 
 from __future__ import annotations
@@ -21,13 +21,13 @@ from pathlib import Path
 
 from .doctor import ProjectReport
 from .mapfile import DriveMap
-from .ops import append_log
+from .ops import OpsError, append_log, mkdir_below
 from .projectmd import (
     FRONT_MATTER_HEAD,
     FRONT_MATTER_KEYS,
     claude_md_lines,
+    create_crlf_no_bom,
     decisions_readme_lines,
-    write_crlf_no_bom,
 )
 
 # Action kinds, in apply order.
@@ -80,6 +80,8 @@ def build_plan(report: ProjectReport, m: DriveMap) -> Plan:
 def apply_plan(drive_root: Path, project: Path, m: DriveMap, plan: Plan,
                only: set[str] | None = None) -> Plan:
     """Execute the plan; returns it with per-action statuses filled in."""
+    if not project.is_dir():
+        raise OpsError(f"project folder is no longer available: {project}")
     applied: list[Action] = []
     order = {BACKFILL: 0, RENAME: 1, RELOCATE: 2, SWEEP: 3}
     for action in sorted(plan.actions, key=lambda a: order[a.kind]):
@@ -126,6 +128,7 @@ def _conform_project_md_lines(m: DriveMap, leaf: str) -> list[str]:
         "## Identity", "",
         "| Field | Value |", "|-------|-------|",
         f"| Project | {display} |", "| Address / BBL | |", "| Client | |", "| Jurisdiction | |",
+        "| Virtual tour | |",
         "",
         "## Code", "",
         "<!-- Mirrors the machine contract in the front-matter. Change a value here -> change it there too. -->", "",
@@ -147,32 +150,33 @@ def _apply_backfill(project: Path, m: DriveMap, action: Action) -> Action:
     if target == m.project_file:
         path = project / m.project_file
         if not path.exists():
-            write_crlf_no_bom(path, _conform_project_md_lines(m, project.name))
-            return replace(action, status=DONE, note="created stub")
+            if create_crlf_no_bom(path, _conform_project_md_lines(m, project.name)):
+                return replace(action, status=DONE, note="created stub")
+            return replace(action, status=SKIPPED, note="appeared during apply; rerun")
         raw = path.read_text(encoding="utf-8-sig")
         if _HAS_FRONT_MATTER.match(raw):
             return replace(action, status=SKIPPED, note="machine contract already present")
-        head = list(FRONT_MATTER_HEAD)
-        display = re.sub(r"^\d{6}_", "", project.name)
-        head.append(f'project: "{display}"')
-        head += FRONT_MATTER_KEYS
-        write_crlf_no_bom(path, head + [""] + raw.splitlines())
-        return replace(action, status=DONE, note="prepended machine contract; prose preserved")
+        return replace(
+            action,
+            status=CONFLICT,
+            note="existing PROJECT.md lacks machine contract; left unchanged",
+        )
     if target == m.decisions_dir:
+        mkdir_below(project, m.decisions_dir)
         dec = project / m.decisions_dir
-        dec.mkdir(parents=True, exist_ok=True)
         readme = dec / "README.md"
-        if not readme.exists():
-            write_crlf_no_bom(readme, decisions_readme_lines())
+        if not readme.exists() and not create_crlf_no_bom(readme, decisions_readme_lines()):
+            return replace(action, status=SKIPPED, note="README appeared during apply; rerun")
         return replace(action, status=DONE)
     if target == m.claude_file:
         path = project / m.claude_file
         if path.exists():
             return replace(action, status=SKIPPED, note="exists")
-        write_crlf_no_bom(path, claude_md_lines(m))
+        if not create_crlf_no_bom(path, claude_md_lines(m)):
+            return replace(action, status=SKIPPED, note="appeared during apply; rerun")
         return replace(action, status=DONE)
     if target == m.analysis_dir:
-        (project / m.analysis_dir).mkdir(parents=True, exist_ok=True)
+        mkdir_below(project, m.analysis_dir)
         return replace(action, status=DONE)
     return replace(action, status=SKIPPED, note=f"unknown control-plane item '{target}'")
 

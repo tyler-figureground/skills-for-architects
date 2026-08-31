@@ -1,10 +1,10 @@
 [project]
 name = "studio-atlas"
-version = "0.1.0"
+version = "0.1.1"
 description = "Atlas - map-driven TUI/CLI for studio shared-drive project tooling (spec: LIBRARY - Reference/_House Standard/atlas-tui-spec.md)"
 requires-python = ">=3.12"
 dependencies = [
-    "textual>=0.80",
+    "textual>=8.2,<9",
 ]
 
 [project.scripts]
