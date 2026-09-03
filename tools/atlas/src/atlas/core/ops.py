@@ -14,11 +14,24 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import datetime
 from pathlib import Path
 
+from .contacts import Contact, find_contact, load_contacts
+from .intake import ContactSnapshot, IntakeError, ProjectIntake, ResolvedProjectIntake
 from .mapfile import DriveMap
-from .naming import build_folder_name, clean_name_part
+from .naming import (
+    NamingError,
+    build_folder_name,
+    clean_name_part,
+    validate_project_child_path,
+    validate_project_folder_path,
+)
+from .project_index import (
+    ProjectIndexError,
+    append_project_index_row,
+    preflight_project_index,
+)
 from .projectmd import (
     claude_md_lines,
     create_crlf_no_bom,
@@ -29,6 +42,14 @@ from .projectmd import (
 
 class OpsError(Exception):
     """A requested operation is invalid (exists already, unblessed name, ...)."""
+
+
+class PartialProjectError(OpsError):
+    """Creation stopped after the project directory became visible."""
+
+    def __init__(self, path: Path, detail: str) -> None:
+        self.path = path
+        super().__init__(f"project partially created at {path}: {detail}; inspect before retrying")
 
 
 def mkdir_below(root: Path, relative: str) -> bool:
@@ -69,63 +90,114 @@ class NewProjectResult:
     path: Path
     folder_name: str
     seeded: tuple[str, ...]
+    intake: ResolvedProjectIntake
 
 
-def new_project(drive_root: Path, m: DriveMap, raw_name: str, raw_desc: str = "", created: date | None = None) -> NewProjectResult:
-    name = clean_name_part(raw_name)
-    desc = clean_name_part(raw_desc)
-    if not name:
-        raise OpsError("a project name is required")
-    created = created or date.today()
-    folder_name = build_folder_name(created, name, desc)
-    project = drive_root / folder_name
+def _contact_snapshot(contact: Contact) -> ContactSnapshot:
+    address = ""
+    if contact.address:
+        parts = [contact.address["street"]]
+        if contact.address.get("unit"):
+            parts.append(contact.address["unit"])
+        parts.append(
+            f"{contact.address['city']}, {contact.address['state']} "
+            f"{contact.address['postal_code']}"
+        )
+        address = ", ".join(parts)
+    return ContactSnapshot(
+        id=contact.id,
+        first_name=contact.first_name,
+        last_name=contact.last_name,
+        email=contact.email,
+        phone=contact.phone or "",
+        company=contact.company or "",
+        address=address,
+    )
+
+
+def _resolve_intake(drive_root: Path, request: ProjectIntake) -> ResolvedProjectIntake:
+    directory = load_contacts(drive_root)
+    billing = find_contact(directory, request.billing_contact_id)
+    client = find_contact(directory, request.client_contact_id)
+    if billing is None:
+        raise OpsError("selected Billing Contact is no longer available; review contacts and retry")
+    if client is None:
+        raise OpsError("selected Client Contact is no longer available; review contacts and retry")
+    try:
+        return ResolvedProjectIntake(
+            request=request,
+            billing_contact=_contact_snapshot(billing),
+            client_contact=_contact_snapshot(client),
+        )
+    except IntakeError as error:
+        raise OpsError(str(error)) from error
+
+
+def new_project(drive_root: Path, m: DriveMap, request: ProjectIntake) -> NewProjectResult:
+    resolved = _resolve_intake(drive_root, request)
+    name = clean_name_part(resolved.project_name)
+    desc = clean_name_part(resolved.description)
+    folder_part = clean_name_part(resolved.project_address.short)
+    folder_name = build_folder_name(request.created, folder_part, desc)
+    created = request.created
+    try:
+        project = validate_project_folder_path(drive_root, folder_name)
+    except NamingError as error:
+        raise OpsError(str(error)) from error
     if project.exists():
         raise OpsError(f"a folder named '{folder_name}' already exists")
+    planned_paths = [m.project_file, m.decisions_dir, f"{m.decisions_dir}/README.md", m.claude_file]
+    if m.analysis_dir:
+        planned_paths.append(m.analysis_dir)
+    planned_paths.extend(section.id for section in m.sections if section.seed)
+    try:
+        for relative in planned_paths:
+            validate_project_child_path(project, relative)
+    except NamingError as error:
+        raise OpsError(str(error)) from error
+    try:
+        preflight_project_index(drive_root, m)
+    except ProjectIndexError as error:
+        raise OpsError(str(error)) from error
 
     try:
         project.mkdir()
     except FileExistsError:
         raise OpsError(f"a folder named '{folder_name}' appeared while creating it") from None
+    except OSError as error:
+        raise OpsError(f"cannot create project folder {project}: {error}") from error
     seeded = []
-    for section in m.sections:
-        if not section.seed:
-            continue
-        mkdir_below(project, section.id)
-        seeded.append(section.id)
+    try:
+        for section in m.sections:
+            if not section.seed:
+                continue
+            mkdir_below(project, section.id)
+            seeded.append(section.id)
 
-    if not create_crlf_no_bom(
-        project / m.project_file,
-        project_md_lines(m, folder_name, name, desc, created),
-    ):
-        raise OpsError(f"{m.project_file} appeared while creating the project; left unchanged")
-    mkdir_below(project, m.decisions_dir)
-    if not create_crlf_no_bom(project / m.decisions_dir / "README.md", decisions_readme_lines()):
-        raise OpsError("decisions/README.md appeared while creating the project; left unchanged")
-    if m.analysis_dir:
-        mkdir_below(project, m.analysis_dir)
-    if not create_crlf_no_bom(project / m.claude_file, claude_md_lines(m)):
-        raise OpsError(f"{m.claude_file} appeared while creating the project; left unchanged")
-
-    _append_index_row(drive_root, m, folder_name, desc, created)
-    append_log(drive_root, f"[{folder_name}] new: seeded {', '.join(seeded)}; control plane written")
-    return NewProjectResult(path=project, folder_name=folder_name, seeded=tuple(seeded))
-
-
-def _append_index_row(drive_root: Path, m: DriveMap, folder_name: str, desc: str, created: date) -> None:
-    index = drive_root / "_Project Index.md"
-    if not index.exists():
-        index_created = create_crlf_no_bom(index, [
-            f"# {m.drive} - Project Index",
-            "",
-            "Auto-maintained by New-Project. One row per project (searchable table of contents).",
-            "",
-            "| Project folder | Created | Descriptor | Status |",
-            "|---|---|---|---|",
-        ])
-        if not index_created:
-            raise OpsError("_Project Index.md appeared while creating it; project remains created")
-    with index.open("a", encoding="utf-8", newline="") as fh:
-        fh.write(f"| {folder_name} | {created.strftime('%Y-%m-%d')} | {desc} | Active |\r\n")
+        if not create_crlf_no_bom(
+            project / m.project_file,
+            project_md_lines(m, folder_name, resolved),
+        ):
+            raise OpsError(f"{m.project_file} appeared while creating the project; left unchanged")
+        mkdir_below(project, m.decisions_dir)
+        if not create_crlf_no_bom(project / m.decisions_dir / "README.md", decisions_readme_lines()):
+            raise OpsError("decisions/README.md appeared while creating the project; left unchanged")
+        if m.analysis_dir:
+            mkdir_below(project, m.analysis_dir)
+        if not create_crlf_no_bom(project / m.claude_file, claude_md_lines(m)):
+            raise OpsError(f"{m.claude_file} appeared while creating the project; left unchanged")
+        append_project_index_row(drive_root, m, folder_name, request)
+        append_log(drive_root, f"[{folder_name}] new: seeded {', '.join(seeded)}; control plane written")
+    except PartialProjectError:
+        raise
+    except (OpsError, ProjectIndexError, OSError) as error:
+        raise PartialProjectError(project, str(error)) from error
+    return NewProjectResult(
+        path=project,
+        folder_name=folder_name,
+        seeded=tuple(seeded),
+        intake=resolved,
+    )
 
 
 # ---------------------------------------------------------------- add section

@@ -24,7 +24,8 @@ from .mapfile import DriveMap
 from .ops import OpsError, append_log, mkdir_below
 from .projectmd import (
     FRONT_MATTER_HEAD,
-    FRONT_MATTER_KEYS,
+    blank_intake_front_matter,
+    blank_intake_identity_rows,
     claude_md_lines,
     create_crlf_no_bom,
     decisions_readme_lines,
@@ -114,8 +115,7 @@ def _conform_project_md_lines(m: DriveMap, leaf: str) -> list[str]:
     Zoning/Program sections, no folder map; Conform never invents metadata)."""
     display = re.sub(r"^\d{6}_", "", leaf)
     lines = list(FRONT_MATTER_HEAD)
-    lines.append(f'project: "{display}"')
-    lines += FRONT_MATTER_KEYS
+    lines += blank_intake_front_matter(display)
     lines += [
         "",
         f"# {leaf}",
@@ -127,8 +127,9 @@ def _conform_project_md_lines(m: DriveMap, leaf: str) -> list[str]:
         "",
         "## Identity", "",
         "| Field | Value |", "|-------|-------|",
-        f"| Project | {display} |", "| Address / BBL | |", "| Client | |", "| Jurisdiction | |",
-        "| Virtual tour | |",
+    ]
+    lines += blank_intake_identity_rows(display)
+    lines += [
         "",
         "## Code", "",
         "<!-- Mirrors the machine contract in the front-matter. Change a value here -> change it there too. -->", "",

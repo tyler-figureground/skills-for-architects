@@ -28,15 +28,38 @@ from textual.widgets import (
     Label,
     ListItem,
     ListView,
+    Select,
     SelectionList,
     Static,
 )
 
 from ..core.conform import CONFLICT, DONE, SKIPPED, Plan, apply_plan, build_plan
+from ..core.contacts import (
+    Contact,
+    ContactDraft,
+    ContactError,
+    DuplicateContactError,
+    add_contact,
+    find_contact,
+    load_contacts,
+    update_contact,
+)
 from ..core.doctor import DriveReport, report_project
-from ..core.mapfile import DriveMap
-from ..core.naming import build_folder_name, clean_name_part
+from ..core.intake import IntakeError, ProjectAddress, ProjectIntake, ProjectUseCase, USE_CASES
+from ..core.mapfile import DriveMap, MapError, find_map, load_map
+from ..core.naming import (
+    NamingError,
+    build_folder_name,
+    clean_name_part,
+    validate_project_folder_path,
+)
 from ..core.ops import OpsError, add_sections, find_empty_dirs, new_project, remove_empty_dirs
+from ..core.project_data import (
+    ProjectDataError,
+    apply_project_update,
+    load_project_record,
+    preview_project_update,
+)
 from ..core.scan import DriveInventory, ProjectInventory, discover_drives, scan_drive
 from .model import ProjectRow, project_detail, project_rows, visible_rows
 
@@ -56,6 +79,8 @@ ModalScreen { align: center middle; }
 #dialog .dialog-title { text-style: bold; margin-bottom: 1; }
 #dialog .field-label { color: $text-muted; }
 #dialog Input { margin-bottom: 1; }
+#dialog.intake-dialog Input { margin-bottom: 0; }
+#dialog.intake-dialog .field-label { height: 1; }
 #dialog SelectionList { max-height: 18; margin-bottom: 1; }
 #dialog.selection-dialog { height: 80%; min-height: 12; }
 #dialog.selection-dialog SelectionList { height: 1fr; max-height: 1fr; }
@@ -83,54 +108,541 @@ class OperationOutcome:
     marks_after: tuple[str, ...] | None = None
 
 
-class NewProjectModal(ModalScreen[tuple[str, str] | None]):
-    """Collect a project name and show the exact stamped folder name."""
+@dataclass(frozen=True)
+class ReviewedProjectCreation:
+    intake: ProjectIntake
+    drive_map: DriveMap
+
+
+class AddContactModal(ModalScreen[Contact | None]):
+    """Validate and store one reusable contact without losing entered fields."""
 
     BINDINGS = [Binding("escape", "cancel", "Cancel", show=False)]
 
+    def __init__(self, drive_root: Path) -> None:
+        super().__init__()
+        self._drive_root = drive_root
+
     def compose(self) -> ComposeResult:
-        with Vertical(id="dialog"):
-            yield Label("New project", classes="dialog-title")
-            yield Label("Project name or address", classes="field-label")
-            yield Input(placeholder="Example: 1842 Oak Street", id="name")
-            yield Label("Descriptor (optional)", classes="field-label")
-            yield Input(placeholder="Example: ADU or Renovation", id="desc")
-            yield Static("", id="preview", markup=False)
+        with VerticalScroll(id="dialog"):
+            yield Label("Add contact", classes="dialog-title")
+            for label, field_id, placeholder in (
+                ("First name *", "contact-first", "Ada"),
+                ("Last name *", "contact-last", "Lovelace"),
+                ("Email *", "contact-email", "ada@example.com"),
+                ("Phone", "contact-phone", "+1 510 555 0100"),
+                ("Company", "contact-company", "Company name"),
+                ("Mailing street or PO box", "contact-street", "123 Main Street or PO Box 42"),
+                ("Unit", "contact-unit", "Suite 4"),
+                ("Mailing city", "contact-city", "Oakland"),
+                ("Mailing state", "contact-state", "CA"),
+                ("Mailing ZIP", "contact-zip", "94612"),
+            ):
+                yield Label(label, classes="field-label")
+                yield Input(placeholder=placeholder, id=field_id)
+            yield Static("", id="contact-error", classes="supporting", markup=False)
             with Horizontal(classes="actions"):
-                yield Button("Create project", variant="primary", id="ok", disabled=True)
-                yield Button("Cancel", id="cancel")
+                yield Button("Add contact", variant="primary", id="add-contact-ok")
+                yield Button("Cancel", id="add-contact-cancel")
 
     def on_mount(self) -> None:
-        self._sync_preview()
-        self.query_one("#name", Input).focus()
-
-    def on_input_changed(self, _: Input.Changed) -> None:
-        self._sync_preview()
-
-    def on_input_submitted(self, _: Input.Submitted) -> None:
-        if not self.query_one("#ok", Button).disabled:
-            self._submit()
-
-    def _sync_preview(self) -> None:
-        name = clean_name_part(self.query_one("#name", Input).value)
-        desc = clean_name_part(self.query_one("#desc", Input).value)
-        preview = build_folder_name(date.today(), name or "<project name>", desc)
-        self.query_one("#preview", Static).update(f"Folder name: {preview}")
-        self.query_one("#ok", Button).disabled = not bool(name)
-
-    def _submit(self) -> None:
-        self.dismiss(
-            (
-                self.query_one("#name", Input).value,
-                self.query_one("#desc", Input).value,
-            )
-        )
+        self.query_one("#contact-first", Input).focus()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "ok":
-            self._submit()
-        else:
+        if event.button.id == "add-contact-cancel":
             self.action_cancel()
+            return
+        address_values = {
+            "street": self.query_one("#contact-street", Input).value,
+            "unit": self.query_one("#contact-unit", Input).value,
+            "city": self.query_one("#contact-city", Input).value,
+            "state": self.query_one("#contact-state", Input).value,
+            "postal_code": self.query_one("#contact-zip", Input).value,
+            "country": "US",
+        }
+        address = address_values if any(value.strip() for value in address_values.values() if value != "US") else None
+        draft = ContactDraft(
+            first_name=self.query_one("#contact-first", Input).value,
+            last_name=self.query_one("#contact-last", Input).value,
+            email=self.query_one("#contact-email", Input).value,
+            phone=self.query_one("#contact-phone", Input).value,
+            company=self.query_one("#contact-company", Input).value,
+            address=address,
+        )
+        try:
+            contact = add_contact(self._drive_root, draft)
+        except DuplicateContactError as error:
+            existing = error.existing
+            self.query_one("#contact-error", Static).update(
+                f"Email already belongs to {existing.first_name} {existing.last_name}. "
+                "Cancel and select that contact, or enter a different email."
+            )
+            return
+        except ContactError as error:
+            self.query_one("#contact-error", Static).update(str(error))
+            return
+        self.dismiss(contact)
+
+    def action_cancel(self) -> None:
+        self.dismiss(None)
+
+
+class ContactManagerModal(ModalScreen[Contact | None]):
+    """Edit one shared contact while preserving its stable identity."""
+
+    BINDINGS = [Binding("escape", "cancel", "Cancel", show=False)]
+
+    def __init__(self, drive_root: Path) -> None:
+        super().__init__()
+        self._drive_root = drive_root
+        self._contacts: tuple[Contact, ...] = ()
+
+    def compose(self) -> ComposeResult:
+        with VerticalScroll(id="dialog"):
+            yield Label("Manage contacts", classes="dialog-title")
+            yield Label("Contact", classes="field-label")
+            yield Select([], prompt="Select contact to edit", id="manager-contact")
+            for label, field_id, placeholder in (
+                ("First name *", "manager-first", "Ada"),
+                ("Last name *", "manager-last", "Lovelace"),
+                ("Email *", "manager-email", "ada@example.com"),
+                ("Phone", "manager-phone", "+1 510 555 0100"),
+                ("Company", "manager-company", "Company name"),
+                ("Mailing street or PO box", "manager-street", "PO Box 42"),
+                ("Unit", "manager-unit", "Suite 4"),
+                ("Mailing city", "manager-city", "Oakland"),
+                ("Mailing state", "manager-state", "CA"),
+                ("Mailing ZIP", "manager-zip", "94612"),
+            ):
+                yield Label(label, classes="field-label")
+                yield Input(placeholder=placeholder, id=field_id, disabled=True)
+            yield Static("", id="manager-error", classes="supporting", markup=False)
+            with Horizontal(classes="actions"):
+                yield Button("Save contact", variant="primary", id="manager-save", disabled=True)
+                yield Button("Cancel", id="manager-cancel")
+
+    def on_mount(self) -> None:
+        try:
+            self._contacts = load_contacts(self._drive_root).contacts
+        except ContactError as error:
+            self.query_one("#manager-error", Static).update(str(error))
+            return
+        self.query_one("#manager-contact", Select).set_options([
+            (f"{contact.first_name} {contact.last_name} · {contact.email}", contact.id)
+            for contact in self._contacts
+        ])
+        self.query_one("#manager-contact", Select).focus()
+
+    def on_select_changed(self, event: Select.Changed) -> None:
+        if event.select.id != "manager-contact" or not isinstance(event.value, str):
+            return
+        try:
+            contact = find_contact(load_contacts(self._drive_root), event.value)
+        except ContactError as error:
+            self.query_one("#manager-error", Static).update(str(error))
+            return
+        if contact is None:
+            self.query_one("#manager-error", Static).update("Contact is no longer available.")
+            return
+        address = contact.address or {}
+        values = {
+            "manager-first": contact.first_name,
+            "manager-last": contact.last_name,
+            "manager-email": contact.email,
+            "manager-phone": contact.phone or "",
+            "manager-company": contact.company or "",
+            "manager-street": address.get("street", ""),
+            "manager-unit": address.get("unit", ""),
+            "manager-city": address.get("city", ""),
+            "manager-state": address.get("state", ""),
+            "manager-zip": address.get("postal_code", ""),
+        }
+        for field_id, value in values.items():
+            field = self.query_one(f"#{field_id}", Input)
+            field.disabled = False
+            field.value = value
+        self.query_one("#manager-save", Button).disabled = False
+        self.query_one("#manager-error", Static).update("")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "manager-cancel":
+            self.action_cancel()
+            return
+        selected = self.query_one("#manager-contact", Select).value
+        if not isinstance(selected, str):
+            return
+        address_values = {
+            "street": self.query_one("#manager-street", Input).value,
+            "unit": self.query_one("#manager-unit", Input).value,
+            "city": self.query_one("#manager-city", Input).value,
+            "state": self.query_one("#manager-state", Input).value,
+            "postal_code": self.query_one("#manager-zip", Input).value,
+            "country": "US",
+        }
+        address = address_values if any(
+            value.strip() for key, value in address_values.items() if key != "country"
+        ) else None
+        try:
+            updated = update_contact(
+                self._drive_root,
+                selected,
+                ContactDraft(
+                    first_name=self.query_one("#manager-first", Input).value,
+                    last_name=self.query_one("#manager-last", Input).value,
+                    email=self.query_one("#manager-email", Input).value,
+                    phone=self.query_one("#manager-phone", Input).value,
+                    company=self.query_one("#manager-company", Input).value,
+                    address=address,
+                ),
+            )
+        except ContactError as error:
+            self.query_one("#manager-error", Static).update(str(error))
+            return
+        self.dismiss(updated)
+
+    def action_cancel(self) -> None:
+        self.dismiss(None)
+
+
+class NewProjectModal(ModalScreen[ReviewedProjectCreation | None]):
+    """Three-step project intake: project, contacts, and exact review."""
+
+    ADD_NEW = "__add_new_contact__"
+    BINDINGS = [Binding("escape", "cancel", "Cancel", show=False)]
+
+    def __init__(
+        self,
+        drive_root: Path,
+        drive_map: DriveMap,
+        *,
+        initial: ProjectIntake | None = None,
+        existing_folder: str | None = None,
+    ) -> None:
+        super().__init__()
+        self._drive_root = drive_root
+        self._drive_map = drive_map
+        self._initial = initial
+        self._existing_folder = existing_folder
+        self._created = initial.created if initial else date.today()
+        self._contacts: tuple[Contact, ...] = ()
+        self._step = 1
+        self._client_overridden = False
+        self._setting_client = False
+
+    def compose(self) -> ComposeResult:
+        with VerticalScroll(id="dialog", classes="intake-dialog"):
+            title = "Edit project" if self._initial else "New project"
+            yield Label(f"{title} · 1 of 3", classes="dialog-title", id="intake-title")
+            with Vertical(id="step-project"):
+                for label, field_id, placeholder in (
+                    ("Project name *", "name", "Oak House"),
+                    ("Street address *", "street", "1842 Oak Street"),
+                    ("Unit", "unit", "Apt 4B"),
+                    ("City *", "city", "Oakland"),
+                    ("State *", "state", "CA"),
+                    ("ZIP *", "postal-code", "94612"),
+                    ("Description", "desc", "Kitchen renovation"),
+                ):
+                    yield Label(label, classes="field-label")
+                    yield Input(placeholder=placeholder, id=field_id)
+                yield Label("Project Use Case *", classes="field-label")
+                yield Select([(choice, choice) for choice in USE_CASES], prompt="Select use case", id="use-case")
+                yield Label(
+                    "Custom use case *",
+                    classes="field-label",
+                    id="custom-use-case-label",
+                )
+                yield Input(
+                    placeholder="Describe project use case",
+                    id="custom-use-case",
+                )
+                yield Static("Enter required project details.", id="project-error", classes="supporting", markup=False)
+                yield Static("", id="preview", markup=False)
+                with Horizontal(classes="actions"):
+                    yield Button("Next: contacts", variant="primary", id="next-project", disabled=True)
+                    yield Button("Cancel", id="cancel-project")
+            with Vertical(id="step-contacts"):
+                yield Label("Billing Contact *", classes="field-label")
+                yield Select([], prompt="Select billing contact", id="billing-contact")
+                yield Label("Client Contact *", classes="field-label")
+                yield Static("Defaults to Billing Contact. Override when client and billing contacts differ.", classes="supporting", markup=False)
+                yield Select([], prompt="Select client contact", id="client-contact")
+                yield Static("", id="contact-selection-error", classes="supporting", markup=False)
+                with Horizontal(classes="actions"):
+                    yield Button("Back", id="back-project")
+                    yield Button("Next: review", variant="primary", id="next-contacts", disabled=True)
+                    yield Button("Cancel", id="cancel-contacts")
+            with Vertical(id="step-review"):
+                yield Static("", id="review", markup=False)
+                yield Static("", id="review-error", classes="supporting", markup=False)
+                with Horizontal(classes="actions"):
+                    yield Button("Back", id="back-contacts")
+                    yield Button(
+                        "Save changes" if self._initial else "Create project",
+                        variant="primary",
+                        id="create-project",
+                    )
+                    yield Button("Cancel", id="cancel-review")
+
+    def on_mount(self) -> None:
+        try:
+            self._contacts = load_contacts(self._drive_root).contacts
+        except ContactError as error:
+            self.query_one("#contact-selection-error", Static).update(str(error))
+        self._refresh_contact_selects()
+        if self._initial is not None:
+            initial = self._initial
+            for field, value in (
+                ("#name", initial.project_name),
+                ("#street", initial.project_address.street),
+                ("#unit", initial.project_address.unit),
+                ("#city", initial.project_address.city),
+                ("#state", initial.project_address.state),
+                ("#postal-code", initial.project_address.postal_code),
+                ("#desc", initial.description),
+            ):
+                self.query_one(field, Input).value = value
+            self.query_one("#use-case", Select).value = initial.project_use_case.category
+            if initial.project_use_case.category == "Other":
+                self.query_one("#custom-use-case", Input).value = initial.project_use_case.custom_label
+            contact_ids = {contact.id for contact in self._contacts}
+            if initial.billing_contact_id in contact_ids:
+                self.query_one("#billing-contact", Select).value = initial.billing_contact_id
+            if initial.client_contact_id in contact_ids:
+                self.query_one("#client-contact", Select).value = initial.client_contact_id
+            self._client_overridden = initial.client_contact_id != initial.billing_contact_id
+        self._show_step(1)
+        self._sync_project()
+        self.query_one("#name", Input).focus()
+
+    def _options(self) -> list[tuple[str, str]]:
+        options = [
+            (f"{contact.first_name} {contact.last_name} · {contact.email}", contact.id)
+            for contact in self._contacts
+        ]
+        options.append(("Add new contact…", self.ADD_NEW))
+        return options
+
+    def _refresh_contact_selects(self, selected_role: str | None = None, contact_id: str | None = None) -> None:
+        valid_ids = {contact.id for contact in self._contacts}
+        for role in ("billing", "client"):
+            select = self.query_one(f"#{role}-contact", Select)
+            previous = select.value
+            select.set_options(self._options())
+            value = contact_id if role == selected_role else previous
+            if isinstance(value, str) and value in valid_ids:
+                select.value = value
+
+    def on_input_changed(self, _: Input.Changed) -> None:
+        if self._step == 1:
+            self._sync_project()
+
+    def on_select_changed(self, event: Select.Changed) -> None:
+        select_id = event.select.id or ""
+        if select_id == "use-case":
+            other = event.value == "Other"
+            self.query_one("#custom-use-case", Input).display = other
+            self.query_one("#custom-use-case-label", Label).display = other
+            self._sync_project()
+            return
+        if select_id not in {"billing-contact", "client-contact"}:
+            return
+        role = "billing" if select_id.startswith("billing") else "client"
+        if event.value == self.ADD_NEW:
+            event.select.value = Select.NULL
+            self.app.push_screen(
+                AddContactModal(self._drive_root),
+                lambda contact: self._contact_added(role, contact),
+            )
+            return
+        if role == "billing" and isinstance(event.value, str) and not self._client_overridden:
+            self._setting_client = True
+            self.query_one("#client-contact", Select).value = event.value
+            self._setting_client = False
+        elif role == "client" and not self._setting_client and isinstance(event.value, str):
+            billing_value = self.query_one("#billing-contact", Select).value
+            if event.value != billing_value:
+                self._client_overridden = True
+        self._sync_contacts()
+
+    def _contact_added(self, role: str, contact: Contact | None) -> None:
+        if contact is None:
+            return
+        try:
+            self._contacts = load_contacts(self._drive_root).contacts
+        except ContactError as error:
+            self.query_one("#contact-selection-error", Static).update(str(error))
+            return
+        self._refresh_contact_selects(role, contact.id)
+        if role == "billing" and not self._client_overridden:
+            self._setting_client = True
+            self.query_one("#client-contact", Select).value = contact.id
+            self._setting_client = False
+        self._sync_contacts()
+
+    def _project_values(self) -> tuple[ProjectAddress, ProjectUseCase] | None:
+        try:
+            address = ProjectAddress(
+                street=self.query_one("#street", Input).value,
+                unit=self.query_one("#unit", Input).value,
+                city=self.query_one("#city", Input).value,
+                state=self.query_one("#state", Input).value,
+                postal_code=self.query_one("#postal-code", Input).value,
+            )
+            use_value = self.query_one("#use-case", Select).value
+            if not isinstance(use_value, str):
+                raise IntakeError("Project Use Case is required")
+            use_case = ProjectUseCase(
+                use_value,
+                self.query_one("#custom-use-case", Input).value if use_value == "Other" else "",
+            )
+            if not self.query_one("#name", Input).value.strip():
+                raise IntakeError("Project Name is required")
+            return address, use_case
+        except IntakeError as error:
+            self.query_one("#project-error", Static).update(str(error))
+            return None
+
+    def _sync_project(self) -> None:
+        values = self._project_values()
+        button = self.query_one("#next-project", Button)
+        button.disabled = values is None
+        if values is None:
+            self.query_one("#preview", Static).update("")
+            return
+        address, _ = values
+        folder = build_folder_name(
+            self._created,
+            clean_name_part(address.short),
+            clean_name_part(self.query_one("#desc", Input).value),
+        )
+        try:
+            validate_project_folder_path(self._drive_root, folder)
+        except NamingError as error:
+            button.disabled = True
+            self.query_one("#project-error", Static).update(str(error))
+            self.query_one("#preview", Static).update("")
+            return
+        self.query_one("#project-error", Static).update("")
+        self.query_one("#preview", Static).update(f"Folder name: {folder}")
+
+    def _sync_contacts(self) -> None:
+        billing = self.query_one("#billing-contact", Select).value
+        client = self.query_one("#client-contact", Select).value
+        self.query_one("#next-contacts", Button).disabled = not (
+            isinstance(billing, str) and isinstance(client, str)
+        )
+
+    def _request(self) -> ProjectIntake:
+        values = self._project_values()
+        if values is None:
+            raise IntakeError("project details are incomplete")
+        address, use_case = values
+        billing = self.query_one("#billing-contact", Select).value
+        client = self.query_one("#client-contact", Select).value
+        if not isinstance(billing, str) or not isinstance(client, str):
+            raise IntakeError("Billing Contact and Client Contact are required")
+        return ProjectIntake(
+            project_name=self.query_one("#name", Input).value,
+            project_address=address,
+            project_use_case=use_case,
+            billing_contact_id=billing,
+            client_contact_id=client,
+            description=self.query_one("#desc", Input).value,
+            created=self._created,
+        )
+
+    def _show_step(self, step: int) -> None:
+        self._step = step
+        for number, name in ((1, "project"), (2, "contacts"), (3, "review")):
+            self.query_one(f"#step-{name}", Vertical).display = number == step
+        title = "Edit project" if self._initial else "New project"
+        self.query_one("#intake-title", Label).update(f"{title} · {step} of 3")
+
+    def _show_review(self) -> None:
+        request = self._request()
+        billing = next(item for item in self._contacts if item.id == request.billing_contact_id)
+        client = next(item for item in self._contacts if item.id == request.client_contact_id)
+        folder = build_folder_name(
+            request.created,
+            clean_name_part(request.project_address.short),
+            clean_name_part(request.description),
+        )
+        folder_line = f"Folder: {self._drive_root / folder}"
+        if self._existing_folder and self._existing_folder != folder:
+            folder_line = f"Folder rename: {self._existing_folder} → {folder}"
+        elif self._existing_folder:
+            folder_line = f"Folder unchanged: {folder}"
+        self.query_one("#review", Static).update("\n".join((
+            folder_line,
+            f"Project: {request.project_name}",
+            f"Address: {request.project_address.formatted}",
+            f"Description: {request.description or '(none)'}",
+            f"Use case: {request.project_use_case.display}",
+            f"Billing Contact: {billing.first_name} {billing.last_name} · {billing.email}",
+            f"Client Contact: {client.first_name} {client.last_name} · {client.email}",
+            "Contact details will be copied into PROJECT.md.",
+        )))
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        button_id = event.button.id or ""
+        if button_id.startswith("cancel"):
+            self.action_cancel()
+        elif button_id == "next-project":
+            self._show_step(2)
+            self._sync_contacts()
+        elif button_id == "back-project":
+            self._show_step(1)
+        elif button_id == "next-contacts":
+            self._show_review()
+            self._show_step(3)
+        elif button_id == "back-contacts":
+            self._show_step(2)
+        elif button_id == "create-project":
+            request = self._request()
+            map_path = find_map(self._drive_root)
+            if map_path is None:
+                self.query_one("#review-error", Static).update(
+                    "Drive map is no longer available. Project was not created."
+                )
+                return
+            try:
+                fresh_map = load_map(map_path)
+                directory = load_contacts(self._drive_root)
+            except (ContactError, MapError, OSError) as error:
+                self.query_one("#review-error", Static).update(
+                    f"Could not recheck project data: {error}. Project was not created."
+                )
+                return
+            if fresh_map != self._drive_map:
+                self._drive_map = fresh_map
+                self.query_one("#review-error", Static).update(
+                    "Drive map changed. Your entries are preserved; review and choose Create project again."
+                )
+                return
+            billing = find_contact(directory, request.billing_contact_id)
+            client = find_contact(directory, request.client_contact_id)
+            reviewed_billing = next(
+                (item for item in self._contacts if item.id == request.billing_contact_id), None
+            )
+            reviewed_client = next(
+                (item for item in self._contacts if item.id == request.client_contact_id), None
+            )
+            if (
+                billing is None
+                or client is None
+                or billing != reviewed_billing
+                or client != reviewed_client
+            ):
+                self._contacts = directory.contacts
+                self._refresh_contact_selects()
+                self.query_one("#contact-selection-error", Static).update(
+                    "A selected contact changed or was removed. Your project entries are preserved; review contacts again."
+                )
+                self._show_step(2)
+                self._sync_contacts()
+                return
+            self.dismiss(ReviewedProjectCreation(request, self._drive_map))
 
     def action_cancel(self) -> None:
         self.dismiss(None)
@@ -250,6 +762,7 @@ class AtlasApp(App):
     Screen { layout: vertical; }
     #drives { height: 1fr; padding: 1 2; }
     #filter { display: none; margin: 0 1; }
+    #custom-use-case-label, #custom-use-case { display: none; }
     #workspace { height: 1fr; }
     #projects { width: 3fr; height: 1fr; }
     #detail {
@@ -270,7 +783,9 @@ class AtlasApp(App):
         Binding("r", "refresh", "Refresh", show=False),
         Binding("slash", "filter_projects", "Filter"),
         Binding("enter", "inspect", "Inspect"),
-        Binding("n", "new_project", "New", show=False),
+        Binding("n", "new_project", "New project"),
+        Binding("e", "edit_project", "Edit project"),
+        Binding("m", "manage_contacts", "Contacts"),
         Binding("a", "add_section", "Add folders"),
         Binding("c", "clean", "Clean", show=False),
         Binding("f", "conform", "Conform"),
@@ -342,8 +857,10 @@ class AtlasApp(App):
             yield SystemCommand("Refresh drive", "Rescan project health", self.action_refresh)
             if self._inventory_fresh:
                 yield SystemCommand("New project", "Create a mapped project", self.action_new_project)
+                yield SystemCommand("Manage contacts", "Edit shared contact details", self.action_manage_contacts)
         if self._selected_row() is not None:
             yield SystemCommand("Inspect project", "Show exact findings", self.action_inspect)
+            yield SystemCommand("Edit project", "Correct project intake fields", self.action_edit_project)
             yield SystemCommand("Open project folder", "Open in the default file manager", self.action_open_folder)
             yield SystemCommand("Mark or unmark project", "Build a batch selection", self.action_toggle_mark)
             if self._inventory_fresh:
@@ -366,8 +883,10 @@ class AtlasApp(App):
             return True if not self._busy else None
         if action in {"filter_projects", "cycle_sort"}:
             return True if has_drive and not self._busy else None
-        if action == "new_project":
+        if action in {"new_project", "manage_contacts"}:
             return True if has_drive and self._inventory_fresh and not self._busy else None
+        if action == "edit_project":
+            return True if has_project and self._inventory_fresh and not self._busy else None
         if action in {"add_section", "clean", "conform"}:
             return True if has_project and self._inventory_fresh and not self._busy else None
         if action == "conform_marked":
@@ -918,11 +1437,12 @@ class AtlasApp(App):
         if self._busy or not self._inventory_fresh or self._inventory is None:
             return
 
-        def done(result: tuple[str, str] | None) -> None:
+        def done(result: ReviewedProjectCreation | None) -> None:
             if not result or self._inventory is None:
                 return
             root = self._inventory.root
-            drive_map = self._inventory.map
+            drive_map = result.drive_map
+            request = result.intake
 
             def create() -> OperationOutcome:
                 fresh_map = scan_drive(root).map
@@ -933,7 +1453,7 @@ class AtlasApp(App):
                         lines=("Open New project again to review the current folder rules.",),
                         severity="warning",
                     )
-                created = new_project(root, fresh_map, result[0], result[1])
+                created = new_project(root, fresh_map, request)
                 return OperationOutcome(
                     title="Project created",
                     summary=f"Created {created.folder_name}",
@@ -946,7 +1466,106 @@ class AtlasApp(App):
 
             self._start_operation("Creating project", root, create)
 
-        self.push_screen(NewProjectModal(), done)
+        self.push_screen(NewProjectModal(self._inventory.root, self._inventory.map), done)
+
+    def action_manage_contacts(self) -> None:
+        if self._busy or not self._inventory_fresh or self._inventory is None:
+            return
+
+        def done(contact: Contact | None) -> None:
+            if contact is None:
+                return
+            summary = f"Updated {contact.first_name} {contact.last_name}"
+            self._last_result = OperationOutcome(
+                title="Contact updated",
+                summary=summary,
+                lines=(
+                    summary,
+                    "Existing project snapshots remain unchanged.",
+                    "Edit a project to refresh its assigned contact snapshot.",
+                ),
+            )
+            self._set_operation(f"Last result: {summary} - press l for details")
+            self.notify(summary, title="Contact updated")
+
+        self.push_screen(ContactManagerModal(self._inventory.root), done)
+
+    def action_edit_project(self) -> None:
+        if self._busy or not self._inventory_fresh or self._inventory is None:
+            return
+        selected = self._selected_project()
+        if selected is None:
+            return
+        project_path, folder_name = selected
+        try:
+            record = load_project_record(project_path)
+        except ProjectDataError as error:
+            self.notify(str(error), title="Cannot edit project", severity="error", timeout=10)
+            return
+        root = self._inventory.root
+        drive_map = self._inventory.map
+
+        def reviewed(result: ReviewedProjectCreation | None) -> None:
+            if result is None:
+                return
+            try:
+                plan = preview_project_update(root, project_path, result.intake)
+            except ProjectDataError as error:
+                self.notify(str(error), title="Cannot preview project edit", severity="error", timeout=10)
+                return
+
+            def save(allow_rename: bool) -> None:
+                def apply() -> OperationOutcome:
+                    updated = apply_project_update(
+                        root,
+                        result.drive_map,
+                        plan,
+                        allow_rename=allow_rename,
+                    )
+                    action = "Renamed and updated" if updated.renamed else "Updated"
+                    return OperationOutcome(
+                        title="Project updated",
+                        summary=f"{action} {updated.path.name}",
+                        lines=(
+                            f"Previous folder: {updated.old_path}",
+                            f"Current folder: {updated.path}",
+                            "PROJECT.md and project index updated.",
+                        ),
+                    )
+
+                self._start_operation("Updating project", root, apply)
+
+            if not plan.rename_required:
+                save(False)
+                return
+
+            def confirmed(choice: bool | None) -> None:
+                if choice:
+                    save(True)
+
+            self.push_screen(
+                ConfirmListModal(
+                    "Confirm project-folder rename",
+                    [
+                        f"Old: {plan.old_path}",
+                        f"New: {plan.new_path}",
+                        "PROJECT.md and project index will be updated together.",
+                        "An existing destination blocks the operation.",
+                    ],
+                    "Rename and save",
+                ),
+                confirmed,
+            )
+
+        self.push_screen(
+            NewProjectModal(
+                root,
+                drive_map,
+                initial=record.intake,
+                existing_folder=folder_name,
+            ),
+            reviewed,
+        )
 
     def action_add_section(self) -> None:
         if self._busy or not self._inventory_fresh:

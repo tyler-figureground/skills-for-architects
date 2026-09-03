@@ -12,10 +12,34 @@ from pathlib import Path
 
 from . import __version__
 from .core.conform import apply_plan, build_plan
+from .core.contacts import (
+    Contact,
+    ContactDraft,
+    ContactError,
+    add_contact,
+    find_contact,
+    load_contacts,
+    update_contact,
+)
 from .core.doctor import report_drive, report_project, report_to_dict
+from .core.intake import (
+    IntakeError,
+    ProjectAddress,
+    ProjectIntake,
+    ProjectUseCase,
+    USE_CASES,
+)
 from .core.lintmap import lint_map
 from .core.mapfile import MapError, find_map, load_map
 from .core.ops import OpsError, add_sections, find_empty_dirs, new_project, remove_empty_dirs
+from .core.project_data import (
+    ProjectDataError,
+    ProjectUpdatePlan,
+    ProjectUpdateResult,
+    apply_project_update,
+    load_project_record,
+    preview_project_update,
+)
 from .core.scan import DEFAULT_MOUNT_ROOT, discover_drives, scan_drive
 
 
@@ -94,21 +118,527 @@ def _resolve_project(root: Path, name: str) -> Path:
     return project
 
 
+def _contact_to_dict(contact: Contact) -> dict[str, object]:
+    return {
+        "id": contact.id,
+        "first_name": contact.first_name,
+        "last_name": contact.last_name,
+        "email": contact.email,
+        "phone": contact.phone,
+        "company": contact.company,
+        "address": contact.address,
+        "created_at": contact.created_at,
+        "updated_at": contact.updated_at,
+    }
+
+
+def _contact_address(contact: Contact) -> str:
+    if not contact.address:
+        return ""
+    parts = [contact.address["street"]]
+    if contact.address.get("unit"):
+        parts.append(contact.address["unit"])
+    parts.append(
+        f"{contact.address['city']}, {contact.address['state']} "
+        f"{contact.address['postal_code']}"
+    )
+    return ", ".join(parts)
+
+
+def _print_contact(contact: Contact, prefix: str = "") -> None:
+    print(
+        f"{prefix}{contact.first_name} {contact.last_name} "
+        f"<{contact.email}> ({contact.id})"
+    )
+    if contact.company:
+        print(f"  company: {contact.company}")
+    if contact.phone:
+        print(f"  phone: {contact.phone}")
+    if address := _contact_address(contact):
+        print(f"  address: {address}")
+
+
+def _prompt_retain(label: str, current: str, *, clearable: bool = False) -> str:
+    instruction = "Enter keeps current"
+    if clearable:
+        instruction += "; '-' clears"
+    value = input(f"{label} [{current}] ({instruction}): ")
+    if not value:
+        return current
+    if clearable and value == "-":
+        return ""
+    return value
+
+
+def _prompt_choice_retain(
+    label: str, current: str, choices: tuple[str, ...]
+) -> str:
+    allowed = ", ".join(choices)
+    while True:
+        value = input(
+            f"{label} [{current}] (choices: {allowed}; Enter keeps current): "
+        )
+        if not value:
+            return current
+        if value in choices:
+            return value
+        print(f"Invalid choice. Choose one of: {allowed}")
+
+
+def cmd_contacts_add(args: argparse.Namespace) -> int:
+    root = _resolve_drive(args.drive)
+    address = None
+    if any(
+        (
+            args.address_street,
+            args.address_unit,
+            args.address_city,
+            args.address_state,
+            args.address_zip,
+        )
+    ):
+        address = {
+            "street": args.address_street or "",
+            "unit": args.address_unit or "",
+            "city": args.address_city or "",
+            "state": args.address_state or "",
+            "postal_code": args.address_zip or "",
+            "country": "US",
+        }
+    try:
+        contact = add_contact(
+            root,
+            ContactDraft(
+                first_name=args.first_name,
+                last_name=args.last_name,
+                email=args.email,
+                phone=args.phone,
+                company=args.company,
+                address=address,
+            ),
+        )
+    except ContactError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+    if args.json:
+        print(json.dumps(_contact_to_dict(contact), ensure_ascii=False))
+    else:
+        _print_contact(contact, "added: ")
+    return 0
+
+
+def cmd_contacts_list(args: argparse.Namespace) -> int:
+    root = _resolve_drive(args.drive)
+    try:
+        contacts = load_contacts(root).contacts
+    except ContactError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+    if args.json:
+        print(
+            json.dumps(
+                [_contact_to_dict(contact) for contact in contacts],
+                ensure_ascii=False,
+            )
+        )
+    else:
+        for contact in contacts:
+            _print_contact(contact)
+        if not contacts:
+            print("no contacts")
+    return 0
+
+
+def cmd_contacts_edit(args: argparse.Namespace) -> int:
+    root = _resolve_drive(args.drive)
+    directory = load_contacts(root)
+    current = find_contact(directory, args.contact)
+    if current is None:
+        print(
+            f"error: contact not found: {args.contact!r}. Run 'atlas contacts list' "
+            "and retry with an existing contact ID or email.",
+            file=sys.stderr,
+        )
+        return 2
+    editable_values = (
+        args.first_name,
+        args.last_name,
+        args.email,
+        args.phone,
+        args.company,
+        args.address_street,
+        args.address_unit,
+        args.address_city,
+        args.address_state,
+        args.address_zip,
+    )
+    scripted = (
+        args.json
+        or args.yes
+        or args.clear_address
+        or any(value is not None for value in editable_values)
+        or not sys.stdin.isatty()
+    )
+    if scripted and not args.yes:
+        print(
+            "error: contact edit requires --yes in non-interactive mode; no changes made",
+            file=sys.stderr,
+        )
+        return 2
+    if not scripted:
+        previous = current.address or {}
+        args.first_name = _prompt_retain("First name", current.first_name)
+        args.last_name = _prompt_retain("Last name", current.last_name)
+        args.email = _prompt_retain("Email", current.email)
+        args.phone = _prompt_retain("Phone", current.phone or "", clearable=True)
+        args.company = _prompt_retain("Company", current.company or "", clearable=True)
+        args.address_street = _prompt_retain(
+            "Mailing street or PO box", previous.get("street", ""), clearable=True
+        )
+        args.address_unit = _prompt_retain(
+            "Mailing unit", previous.get("unit", ""), clearable=True
+        )
+        args.address_city = _prompt_retain(
+            "Mailing city", previous.get("city", ""), clearable=True
+        )
+        args.address_state = _prompt_retain(
+            "Mailing state", previous.get("state", ""), clearable=True
+        )
+        args.address_zip = _prompt_retain(
+            "Mailing ZIP", previous.get("postal_code", ""), clearable=True
+        )
+
+    address_flags = (
+        args.address_street,
+        args.address_unit,
+        args.address_city,
+        args.address_state,
+        args.address_zip,
+    )
+    if args.clear_address and any(value is not None for value in address_flags):
+        print(
+            "error: --clear-address cannot be combined with mailing address flags; "
+            "no changes made",
+            file=sys.stderr,
+        )
+        return 2
+    if args.clear_address:
+        address = None
+    elif any(value is not None for value in address_flags):
+        previous = current.address or {}
+        address = {
+            "street": (
+                args.address_street
+                if args.address_street is not None
+                else previous.get("street", "")
+            ),
+            "unit": (
+                args.address_unit
+                if args.address_unit is not None
+                else previous.get("unit", "")
+            ),
+            "city": (
+                args.address_city
+                if args.address_city is not None
+                else previous.get("city", "")
+            ),
+            "state": (
+                args.address_state
+                if args.address_state is not None
+                else previous.get("state", "")
+            ),
+            "postal_code": (
+                args.address_zip
+                if args.address_zip is not None
+                else previous.get("postal_code", "")
+            ),
+            "country": "US",
+        }
+    else:
+        address = current.address
+
+    updated = update_contact(
+        root,
+        current.id,
+        ContactDraft(
+            first_name=(
+                args.first_name if args.first_name is not None else current.first_name
+            ),
+            last_name=(
+                args.last_name if args.last_name is not None else current.last_name
+            ),
+            email=args.email if args.email is not None else current.email,
+            phone=args.phone if args.phone is not None else current.phone,
+            company=args.company if args.company is not None else current.company,
+            address=address,
+        ),
+    )
+    if args.json:
+        print(json.dumps(_contact_to_dict(updated), ensure_ascii=False))
+    else:
+        _print_contact(updated, "updated: ")
+    return 0
+
+
 def cmd_new(args: argparse.Namespace) -> int:
     root = _resolve_drive(args.drive)
     drive_map = load_map(find_map(root))
     try:
-        result = new_project(root, drive_map, args.name, args.desc or "")
-    except OpsError as e:
+        directory = load_contacts(root)
+        billing = find_contact(directory, args.billing_contact)
+        if billing is None:
+            raise OpsError(f"Billing Contact not found: {args.billing_contact}")
+        client_reference = args.client_contact or args.billing_contact
+        client = find_contact(directory, client_reference)
+        if client is None:
+            raise OpsError(f"Client Contact not found: {client_reference}")
+        intake = ProjectIntake(
+            project_name=args.name,
+            project_address=ProjectAddress(
+                street=args.street,
+                unit=args.unit or "",
+                city=args.city,
+                state=args.state,
+                postal_code=args.zip,
+            ),
+            project_use_case=ProjectUseCase(args.use_case, args.other_use_case or ""),
+            billing_contact_id=billing.id,
+            client_contact_id=client.id,
+            description=args.desc or "",
+        )
+        result = new_project(root, drive_map, intake)
+    except (ContactError, IntakeError, OpsError) as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
     if args.json:
-        print(json.dumps({"created": result.folder_name, "path": str(result.path), "seeded": list(result.seeded)}))
+        print(
+            json.dumps(
+                {
+                    "created": result.folder_name,
+                    "path": str(result.path),
+                    "seeded": list(result.seeded),
+                    "project_name": result.intake.project_name,
+                    "address": result.intake.project_address.formatted,
+                    "description": result.intake.description,
+                    "use_case": result.intake.project_use_case.display,
+                    "use_case_category": result.intake.project_use_case.category,
+                    "billing_contact_id": result.intake.billing_contact.id,
+                    "client_contact_id": result.intake.client_contact.id,
+                }
+            )
+        )
     else:
         print(f"created: {result.folder_name}")
+        print(f"project: {result.intake.project_name}")
+        print(f"address: {result.intake.project_address.formatted}")
+        print(f"use case: {result.intake.project_use_case.display}")
+        print(f"billing: {result.intake.billing_contact.full_name}")
+        print(f"client:  {result.intake.client_contact.full_name}")
         print(f"seed:    {', '.join(result.seeded)}")
         print(f"control: {drive_map.project_file}, {drive_map.decisions_dir}\\, {drive_map.claude_file}, {drive_map.analysis_dir}\\")
-        print("NEXT: run /project-dossier in the new folder to fill the machine contract.")
+    return 0
+
+
+def _project_update_to_dict(result: ProjectUpdateResult) -> dict[str, object]:
+    intake = result.record.intake
+    return {
+        "old_folder": result.old_path.name,
+        "folder": result.path.name,
+        "path": str(result.path),
+        "renamed": result.renamed,
+        "project_name": intake.project_name,
+        "address": intake.project_address.formatted,
+        "description": intake.description,
+        "use_case": intake.project_use_case.display,
+        "use_case_category": intake.project_use_case.category,
+        "billing_contact_id": intake.billing_contact_id,
+        "client_contact_id": intake.client_contact_id,
+    }
+
+
+def _project_update_plan_to_dict(plan: ProjectUpdatePlan) -> dict[str, object]:
+    intake = plan.intake
+    return {
+        "applied": False,
+        "rename_required": plan.rename_required,
+        "old_folder": plan.old_path.name,
+        "folder": plan.old_path.name,
+        "path": str(plan.old_path),
+        "planned_folder": plan.new_path.name,
+        "planned_path": str(plan.new_path),
+        "project_name": intake.project_name,
+        "address": intake.project_address.formatted,
+        "description": intake.description,
+        "use_case": intake.project_use_case.display,
+        "use_case_category": intake.project_use_case.category,
+        "billing_contact_id": intake.billing_contact_id,
+        "client_contact_id": intake.client_contact_id,
+    }
+
+
+def cmd_project_edit(args: argparse.Namespace) -> int:
+    root = _resolve_drive(args.drive)
+    drive_map = load_map(find_map(root))
+    project = _resolve_project(root, args.folder)
+    record = load_project_record(project)
+    editable_values = (
+        args.name,
+        args.street,
+        args.unit,
+        args.city,
+        args.state,
+        args.zip,
+        args.use_case,
+        args.other_use_case,
+        args.billing_contact,
+        args.client_contact,
+        args.desc,
+    )
+    scripted = (
+        args.json
+        or args.yes
+        or args.rename
+        or args.dry_run
+        or any(value is not None for value in editable_values)
+        or not sys.stdin.isatty()
+    )
+    if scripted and not args.yes and not args.dry_run:
+        print(
+            "error: project edit requires --yes in non-interactive mode; no changes made",
+            file=sys.stderr,
+        )
+        return 2
+
+    current = record.intake
+    if not scripted:
+        args.name = _prompt_retain("Project name", current.project_name)
+        args.street = _prompt_retain("Project street", current.project_address.street)
+        args.unit = _prompt_retain(
+            "Project unit", current.project_address.unit, clearable=True
+        )
+        args.city = _prompt_retain("Project city", current.project_address.city)
+        args.state = _prompt_retain("Project state", current.project_address.state)
+        args.zip = _prompt_retain("Project ZIP", current.project_address.postal_code)
+        args.use_case = _prompt_choice_retain(
+            "Project use case", current.project_use_case.category, USE_CASES
+        )
+        if args.use_case == "Other":
+            args.other_use_case = _prompt_retain(
+                "Other Project Use Case", current.project_use_case.custom_label
+            )
+        args.billing_contact = _prompt_retain(
+            "Billing Contact ID or email", record.billing_contact.email
+        )
+        args.client_contact = _prompt_retain(
+            "Client Contact ID or email", record.client_contact.email
+        )
+        args.desc = _prompt_retain(
+            "Description", current.description, clearable=True
+        )
+    category = (
+        args.use_case
+        if args.use_case is not None
+        else current.project_use_case.category
+    )
+    if args.other_use_case is not None:
+        custom_label = args.other_use_case
+    elif category == "Other" and current.project_use_case.category == "Other":
+        custom_label = current.project_use_case.custom_label
+    else:
+        custom_label = ""
+    directory = load_contacts(root)
+    billing_reference = args.billing_contact or current.billing_contact_id
+    client_reference = args.client_contact or current.client_contact_id
+    billing = find_contact(directory, billing_reference)
+    if billing is None:
+        raise ProjectDataError(
+            f"Billing Contact not found: {billing_reference!r}. Run 'atlas contacts list' "
+            "and retry with an existing contact ID or email."
+        )
+    client = find_contact(directory, client_reference)
+    if client is None:
+        raise ProjectDataError(
+            f"Client Contact not found: {client_reference!r}. Run 'atlas contacts list' "
+            "and retry with an existing contact ID or email."
+        )
+    intake = ProjectIntake(
+        project_name=args.name if args.name is not None else current.project_name,
+        project_address=ProjectAddress(
+            street=(
+                args.street
+                if args.street is not None
+                else current.project_address.street
+            ),
+            unit=(
+                args.unit if args.unit is not None else current.project_address.unit
+            ),
+            city=(
+                args.city if args.city is not None else current.project_address.city
+            ),
+            state=(
+                args.state if args.state is not None else current.project_address.state
+            ),
+            postal_code=(
+                args.zip
+                if args.zip is not None
+                else current.project_address.postal_code
+            ),
+        ),
+        project_use_case=ProjectUseCase(category, custom_label),
+        billing_contact_id=billing.id,
+        client_contact_id=client.id,
+        description=args.desc if args.desc is not None else current.description,
+        created=current.created,
+    )
+    plan = preview_project_update(root, project, intake)
+    if args.dry_run:
+        if args.json:
+            print(json.dumps(_project_update_plan_to_dict(plan), ensure_ascii=False))
+        else:
+            print("dry run: no changes made")
+            print(f"folder:  {plan.old_path.name} -> {plan.new_path.name}")
+            print(f"project: {plan.intake.project_name}")
+            print(f"address: {plan.intake.project_address.formatted}")
+            print(f"use case: {plan.intake.project_use_case.display}")
+            print(f"billing: {plan.billing_contact.full_name}")
+            print(f"client:  {plan.client_contact.full_name}")
+        return 0
+    allow_rename = False
+    if plan.rename_required:
+        if not args.json:
+            print(f"folder rename: {plan.old_path.name} -> {plan.new_path.name}")
+        if scripted:
+            if not args.rename:
+                print(
+                    f"error: folder rename planned: {plan.old_path.name} -> "
+                    f"{plan.new_path.name}; pass --rename with --yes to apply; "
+                    "no changes made",
+                    file=sys.stderr,
+                )
+                return 2
+            allow_rename = True
+        else:
+            confirmation = input("Type yes to rename and save (anything else cancels): ")
+            if confirmation.strip().casefold() != "yes":
+                print("cancelled: project folder rename not confirmed; no changes made")
+                return 1
+            allow_rename = True
+    result = apply_project_update(
+        root,
+        drive_map,
+        plan,
+        allow_rename=allow_rename,
+    )
+    if args.json:
+        print(json.dumps(_project_update_to_dict(result), ensure_ascii=False))
+    else:
+        print(f"updated: {result.path.name}")
+        print(f"folder:  {result.old_path.name} -> {result.path.name}")
+        print(f"project: {result.record.intake.project_name}")
+        print(f"address: {result.record.intake.project_address.formatted}")
+        print(f"use case: {result.record.intake.project_use_case.display}")
+        print(f"billing: {result.record.billing_contact.full_name}")
+        print(f"client:  {result.record.client_contact.full_name}")
     return 0
 
 
@@ -228,7 +758,113 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("--json", action="store_true", help="machine-readable output")
         p.set_defaults(fn=fn)
 
-    sub.choices["new"].add_argument("--name", required=True, help="project name or address")
+    contacts = sub.add_parser("contacts", help="list, add, and edit shared contacts")
+    contact_commands = contacts.add_subparsers(dest="contacts_command", required=True)
+    contacts_list = contact_commands.add_parser("list", help="list shared contacts")
+    contacts_list.add_argument(
+        "--drive", help="drive root (default: walk up from cwd, else auto-discover)"
+    )
+    contacts_list.add_argument("--json", action="store_true", help="machine-readable output")
+    contacts_list.set_defaults(fn=cmd_contacts_list)
+    contacts_add = contact_commands.add_parser("add", help="add a shared contact")
+    contacts_add.add_argument(
+        "--drive", help="drive root (default: walk up from cwd, else auto-discover)"
+    )
+    contacts_add.add_argument("--json", action="store_true", help="machine-readable output")
+    contacts_add.add_argument("--first-name", required=True)
+    contacts_add.add_argument("--last-name", required=True)
+    contacts_add.add_argument("--email", required=True)
+    contacts_add.add_argument("--phone")
+    contacts_add.add_argument("--company")
+    contacts_add.add_argument("--address-street")
+    contacts_add.add_argument("--address-unit")
+    contacts_add.add_argument("--address-city")
+    contacts_add.add_argument("--address-state")
+    contacts_add.add_argument("--address-zip")
+    contacts_add.set_defaults(fn=cmd_contacts_add)
+    contacts_edit = contact_commands.add_parser("edit", help="edit a shared contact")
+    contacts_edit.add_argument("contact", help="contact ID or email")
+    contacts_edit.add_argument(
+        "--drive", help="drive root (default: walk up from cwd, else auto-discover)"
+    )
+    contacts_edit.add_argument(
+        "--json", action="store_true", help="machine-readable output; never prompts"
+    )
+    contacts_edit.add_argument(
+        "--yes", action="store_true", help="confirm a non-interactive edit"
+    )
+    contacts_edit.add_argument("--first-name")
+    contacts_edit.add_argument("--last-name")
+    contacts_edit.add_argument("--email")
+    contacts_edit.add_argument("--phone", help="use an empty value to clear")
+    contacts_edit.add_argument("--company", help="use an empty value to clear")
+    contacts_edit.add_argument("--address-street", help="physical street or PO box")
+    contacts_edit.add_argument("--address-unit")
+    contacts_edit.add_argument("--address-city")
+    contacts_edit.add_argument("--address-state")
+    contacts_edit.add_argument("--address-zip")
+    contacts_edit.add_argument("--clear-address", action="store_true")
+    contacts_edit.set_defaults(fn=cmd_contacts_edit)
+
+    project = sub.add_parser("project", help="manage an existing project")
+    project_commands = project.add_subparsers(dest="project_command", required=True)
+    project_edit = project_commands.add_parser("edit", help="edit existing project intake")
+    project_edit.add_argument("folder", help="project folder name")
+    project_edit.add_argument(
+        "--drive", help="drive root (default: walk up from cwd, else auto-discover)"
+    )
+    project_edit.add_argument(
+        "--json", action="store_true", help="machine-readable output; never prompts"
+    )
+    project_edit.add_argument(
+        "--yes",
+        action="store_true",
+        help="confirm a non-interactive edit",
+    )
+    project_edit.add_argument(
+        "--rename",
+        action="store_true",
+        help="allow a confirmed non-interactive edit to rename the project folder",
+    )
+    project_edit.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="preview a non-interactive edit without changing files",
+    )
+    project_edit.add_argument("--name", help="project name")
+    project_edit.add_argument("--street", help="project street address")
+    project_edit.add_argument(
+        "--unit", help="project address unit; use an empty value to clear"
+    )
+    project_edit.add_argument("--city", help="project address city")
+    project_edit.add_argument("--state", help="two-letter US state")
+    project_edit.add_argument("--zip", help="ZIP or ZIP+4")
+    project_edit.add_argument("--use-case", choices=USE_CASES)
+    project_edit.add_argument("--other-use-case")
+    project_edit.add_argument("--billing-contact", help="contact ID or email")
+    project_edit.add_argument("--client-contact", help="contact ID or email")
+    project_edit.add_argument(
+        "--desc",
+        "--description",
+        dest="desc",
+        help="short descriptor; use an empty value to clear",
+    )
+    project_edit.set_defaults(fn=cmd_project_edit)
+
+    sub.choices["new"].add_argument("--name", required=True, help="project name")
+    sub.choices["new"].add_argument("--street", required=True, help="project street address")
+    sub.choices["new"].add_argument("--unit", default="", help="project address unit")
+    sub.choices["new"].add_argument("--city", required=True, help="project address city")
+    sub.choices["new"].add_argument("--state", required=True, help="two-letter US state")
+    sub.choices["new"].add_argument("--zip", required=True, help="ZIP or ZIP+4")
+    sub.choices["new"].add_argument("--use-case", required=True, choices=USE_CASES)
+    sub.choices["new"].add_argument("--other-use-case", default="")
+    sub.choices["new"].add_argument(
+        "--billing-contact", required=True, help="contact ID or email"
+    )
+    sub.choices["new"].add_argument(
+        "--client-contact", help="contact ID or email (default: billing contact)"
+    )
     sub.choices["new"].add_argument("--desc", default="", help="short descriptor (e.g. ADU, Renovation)")
     sub.choices["add"].add_argument("--project", required=True, help="project folder name")
     sub.choices["add"].add_argument("--section", action="append", required=True,
@@ -248,7 +884,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.command is None:
         from .tui.app import run_tui  # lazy: textual import only when needed
         return run_tui()
-    return args.fn(args)
+    try:
+        return args.fn(args)
+    except (ContactError, IntakeError, OpsError, ProjectDataError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":

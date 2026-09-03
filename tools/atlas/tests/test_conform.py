@@ -35,8 +35,18 @@ def test_backfill_creates_stub_when_missing(fixture_drive):
     assert raw.startswith(b"---\r\n") and not raw.startswith(b"\xef\xbb\xbf")
     # display name drops the YYMMDD_ prefix, same as Conform-Project.ps1
     assert b'project: "Legacy"' in raw
+    for key in (
+        b"address_street:",
+        b"address_unit:",
+        b"address_city:",
+        b"address_state:",
+        b"address_postal_code:",
+    ):
+        assert raw.count(key + b"\r\n") == 1
     # Identity slot, parity with Conform-Project.ps1
     assert b"| Jurisdiction | |\r\n| Virtual tour | |\r\n" in raw
+    assert raw.count(b"| Descriptor | |\r\n") == 1
+    assert raw.count(b"| Created | |\r\n") == 1
 
 
 def test_backfill_leaves_existing_prose_as_conflict(fixture_drive):

@@ -10,13 +10,21 @@ from threading import Event
 
 import atlas.tui.app as tui_app
 from atlas.core.conform import SKIPPED, Plan
+from atlas.core.contacts import ContactDraft, add_contact, load_contacts
 from atlas.core.mapfile import find_map, load_map
 from atlas.core.ops import new_project
-from textual.widgets import Button, DataTable, Input, ListView, SelectionList, Static
+from textual.widgets import Button, DataTable, Input, ListView, Select, SelectionList, Static
 
-from atlas.tui.app import AddSectionModal, AtlasApp, NewProjectModal, ResultModal
+from atlas.tui.app import (
+    AddSectionModal,
+    AtlasApp,
+    ConfirmListModal,
+    ContactManagerModal,
+    NewProjectModal,
+    ResultModal,
+)
 
-from conftest import FIXTURE_MAP, make_project, write_map
+from conftest import FIXTURE_MAP, make_intake, make_project, write_map
 
 
 async def settle(app: AtlasApp, pilot) -> None:
@@ -29,7 +37,7 @@ async def settle(app: AtlasApp, pilot) -> None:
 
 async def test_tui_boots_and_lists_projects(fixture_drive):
     m = load_map(find_map(fixture_drive))
-    new_project(fixture_drive, m, "Alpha", created=date(2026, 8, 13))
+    new_project(fixture_drive, m, make_intake(fixture_drive, "Alpha", created=date(2026, 8, 13)))
     make_project(fixture_drive, "260813_Beta", sections=["01 Model"])
 
     app = AtlasApp(fixture_drive)
@@ -40,24 +48,188 @@ async def test_tui_boots_and_lists_projects(fixture_drive):
         assert "TESTDRIVE" in app.sub_title
 
 
-async def test_new_project_wizard_creates_on_disk(fixture_drive):
+def test_new_project_action_is_visible_in_footer():
+    binding = next(binding for binding in AtlasApp.BINDINGS if binding.action == "new_project")
+
+    assert binding.description == "New project"
+    assert binding.show
+
+
+async def test_new_project_wizard_creates_complete_project(fixture_drive):
+    contact = add_contact(
+        fixture_drive,
+        ContactDraft(first_name="Ada", last_name="Lovelace", email="ada@example.com"),
+    )
     app = AtlasApp(fixture_drive)
     async with app.run_test() as pilot:
         await settle(app, pilot)
         await pilot.press("n")
         await pilot.pause()
         assert isinstance(app.screen, NewProjectModal)
-        app.screen.query_one("#name").value = "Wizard House"
-        app.screen.query_one("#desc").value = "ADU"
+        for field, value in (
+            ("#name", "Wizard House"),
+            ("#street", "1842 Oak Street"),
+            ("#city", "Oakland"),
+            ("#state", "CA"),
+            ("#postal-code", "94612"),
+            ("#desc", "ADU"),
+        ):
+            app.screen.query_one(field, Input).value = value
+        app.screen.query_one("#use-case", Select).value = "Renovation"
         await pilot.pause()
-        await pilot.click("#ok")
+        app.screen.query_one("#next-project", Button).press()
+        await pilot.pause()
+        app.screen.query_one("#billing-contact", Select).value = contact.id
+        await pilot.pause()
+        assert app.screen.query_one("#client-contact", Select).value == contact.id
+        app.screen.query_one("#next-contacts", Button).press()
+        await pilot.pause()
+        assert "260" in str(app.screen.query_one("#review", Static).render())
+        app.screen.query_one("#create-project", Button).press()
         await settle(app, pilot)
 
     stamp = date.today().strftime("%y%m%d")
-    created = fixture_drive / f"{stamp}_Wizard House-ADU"
+    created = fixture_drive / f"{stamp}_1842 Oak Street-ADU"
     assert created.is_dir()
-    assert (created / "PROJECT.md").is_file()
+    dossier = (created / "PROJECT.md").read_text(encoding="utf-8")
+    assert 'address: "1842 Oak Street, Oakland, CA 94612"' in dossier
+    assert "| Billing Contact | Ada Lovelace |" in dossier
     assert (created / "11 Meetings").is_dir()
+
+
+async def test_edit_project_prepopulates_and_confirms_folder_rename(fixture_drive):
+    intake = make_intake(
+        fixture_drive,
+        "Typo House",
+        street="1842 Oka Street",
+        created=date(2026, 9, 2),
+    )
+    created = new_project(fixture_drive, load_map(find_map(fixture_drive)), intake)
+    app = AtlasApp(fixture_drive)
+
+    async with app.run_test() as pilot:
+        await settle(app, pilot)
+        await pilot.press("e")
+        await pilot.pause()
+        assert isinstance(app.screen, NewProjectModal)
+        assert app.screen.query_one("#name", Input).value == "Typo House"
+        assert app.screen.query_one("#street", Input).value == "1842 Oka Street"
+        app.screen.query_one("#street", Input).value = "1842 Oak Street"
+        app.screen.query_one("#next-project", Button).press()
+        await pilot.pause()
+        app.screen.query_one("#next-contacts", Button).press()
+        await pilot.pause()
+        assert "Folder rename:" in str(app.screen.query_one("#review", Static).render())
+        app.screen.query_one("#create-project", Button).press()
+        await pilot.pause()
+        assert isinstance(app.screen, ConfirmListModal)
+        app.screen.query_one("#ok", Button).press()
+        await settle(app, pilot)
+
+    renamed = fixture_drive / "260902_1842 Oak Street"
+    assert renamed.is_dir()
+    assert not created.path.exists()
+    assert 'address_street: "1842 Oak Street"' in (renamed / "PROJECT.md").read_text(
+        encoding="utf-8"
+    )
+
+
+async def test_manage_contacts_edits_po_box_without_rewriting_projects(fixture_drive):
+    contact = add_contact(
+        fixture_drive,
+        ContactDraft(first_name="Ada", last_name="Lovelace", email="ada@example.com"),
+    )
+    app = AtlasApp(fixture_drive)
+    async with app.run_test() as pilot:
+        await settle(app, pilot)
+        await pilot.press("m")
+        await pilot.pause()
+        assert isinstance(app.screen, ContactManagerModal)
+        app.screen.query_one("#manager-contact", Select).value = contact.id
+        await pilot.pause()
+        for field, value in (
+            ("#manager-street", "PO Box 42"),
+            ("#manager-city", "Oakland"),
+            ("#manager-state", "CA"),
+            ("#manager-zip", "94612"),
+        ):
+            app.screen.query_one(field, Input).value = value
+        app.screen.query_one("#manager-save", Button).press()
+        await pilot.pause()
+
+    updated = load_contacts(fixture_drive).contacts[0]
+    assert updated.id == contact.id
+    assert updated.address["street"] == "PO Box 42"
+
+
+async def test_new_project_hides_custom_use_case_until_other_selected(fixture_drive):
+    app = AtlasApp(fixture_drive)
+    async with app.run_test() as pilot:
+        await settle(app, pilot)
+        await pilot.press("n")
+        await pilot.pause()
+        assert not app.screen.query_one("#custom-use-case", Input).display
+        app.screen.query_one("#use-case", Select).value = "Other"
+        await pilot.pause()
+        assert app.screen.query_one("#custom-use-case", Input).display
+
+
+async def test_add_contact_duplicate_email_requires_explicit_choice(fixture_drive):
+    existing = add_contact(
+        fixture_drive,
+        ContactDraft(first_name="Ada", last_name="Lovelace", email="ada@example.com"),
+    )
+    app = AtlasApp(fixture_drive)
+    async with app.run_test() as pilot:
+        await settle(app, pilot)
+        await pilot.press("n")
+        app.screen.query_one("#use-case", Select).value = "Renovation"
+        app.screen.query_one("#billing-contact", Select).value = NewProjectModal.ADD_NEW
+        await pilot.pause()
+        for field, value in (
+            ("#contact-first", "Wrong"),
+            ("#contact-last", "Person"),
+            ("#contact-email", existing.email.upper()),
+        ):
+            app.screen.query_one(field, Input).value = value
+        app.screen.query_one("#add-contact-ok", Button).press()
+        await pilot.pause()
+        error = str(app.screen.query_one("#contact-error", Static).content)
+        assert "already belongs to Ada Lovelace" in error
+        assert app.screen.query_one("#contact-first", Input).value == "Wrong"
+
+
+async def test_wizard_adds_shared_contact_and_defaults_client(fixture_drive):
+    app = AtlasApp(fixture_drive)
+    async with app.run_test() as pilot:
+        await settle(app, pilot)
+        await pilot.press("n")
+        for field, value in (
+            ("#name", "Contact Test"),
+            ("#street", "100 Main Street"),
+            ("#city", "Oakland"),
+            ("#state", "CA"),
+            ("#postal-code", "94612"),
+        ):
+            app.screen.query_one(field, Input).value = value
+        app.screen.query_one("#use-case", Select).value = "Feasibility"
+        await pilot.pause()
+        app.screen.query_one("#next-project", Button).press()
+        await pilot.pause()
+        app.screen.query_one("#billing-contact", Select).value = NewProjectModal.ADD_NEW
+        await pilot.pause()
+        app.screen.query_one("#contact-first", Input).value = "Grace"
+        app.screen.query_one("#contact-last", Input).value = "Hopper"
+        app.screen.query_one("#contact-email", Input).value = "grace@example.com"
+        app.screen.query_one("#add-contact-ok", Button).press()
+        await pilot.pause()
+
+        wizard = app.screen
+        assert isinstance(wizard, NewProjectModal)
+        billing = wizard.query_one("#billing-contact", Select).value
+        assert isinstance(billing, str)
+        assert wizard.query_one("#client-contact", Select).value == billing
+        assert load_contacts(fixture_drive).contacts[0].email == "grace@example.com"
 
 
 async def test_conform_modal_applies_plan(fixture_drive):
@@ -262,22 +434,45 @@ async def test_add_folders_does_not_recreate_deleted_project(fixture_drive):
 
 
 async def test_new_project_refuses_changed_drive_map(fixture_drive):
+    contact = add_contact(
+        fixture_drive,
+        ContactDraft(first_name="Ada", last_name="Lovelace", email="ada@example.com"),
+    )
     app = AtlasApp(fixture_drive)
 
     async with app.run_test() as pilot:
         await settle(app, pilot)
         await pilot.press("n")
-        app.screen.query_one("#name", Input).value = "Changed Map"
+        for field, value in (
+            ("#name", "Changed Map"),
+            ("#street", "100 Changed Street"),
+            ("#city", "Oakland"),
+            ("#state", "CA"),
+            ("#postal-code", "94612"),
+        ):
+            app.screen.query_one(field, Input).value = value
+        app.screen.query_one("#use-case", Select).value = "Renovation"
+        await pilot.pause()
+        app.screen.query_one("#next-project", Button).press()
+        await pilot.pause()
+        app.screen.query_one("#billing-contact", Select).value = contact.id
+        await pilot.pause()
+        app.screen.query_one("#next-contacts", Button).press()
         await pilot.pause()
         changed_map = copy.deepcopy(FIXTURE_MAP)
         changed_map["version"] = "2.1"
         write_map(fixture_drive, changed_map)
-        await pilot.click("#ok")
+        app.screen.query_one("#create-project", Button).press()
         await settle(app, pilot)
 
-        assert app._last_result is not None
-        assert app._last_result.title == "Project plan changed"
-        assert not any(path.name.endswith("_Changed Map") for path in fixture_drive.iterdir())
+        assert isinstance(app.screen, NewProjectModal)
+        assert "Drive map changed" in str(app.screen.query_one("#review-error", Static).render())
+        assert app.screen.query_one("#name", Input).value == "Changed Map"
+        assert not any("100 Changed Street" in path.name for path in fixture_drive.iterdir())
+
+        app.screen.query_one("#create-project", Button).press()
+        await settle(app, pilot)
+        assert any("100 Changed Street" in path.name for path in fixture_drive.iterdir())
 
 
 async def test_marked_projects_share_one_safe_conform_plan(fixture_drive):
