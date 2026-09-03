@@ -6,7 +6,7 @@ generated_by: skills-for-architects
 
 # Atlas console redesign - wayfinder continuity
 
-Status: visual direction fully resolved; ready for domain modelling then build
+Status: design settled, drive measured, domain model landed; ready to build
 Date: 2026-09-02
 Effort: `atlas-console`
 
@@ -69,19 +69,38 @@ went from 9 rows to 6 with a finer gradient, not a coarser one. Three-step
 collapse rule by terminal width. Retro register stops at the wordmark and the
 cursor. Tickets 17 (header as Atlas code) and 18 (token layer) graduated.
 
+## Session 4
+
+- Ticket 12 resolved by measurement. The user authorised reading the studio drive,
+  read-only, nothing created. **The whole drive is 7,956 folders and 18,536 files
+  and walks in 4.24 seconds.** Throughput is a non-issue at this size; the cost is
+  all in the tail, cold p99 91 ms and worst 314 ms.
+- That walk found **two live MAX_PATH failures**, one of which Atlas reports as an
+  empty folder that contains an entry. Ticket 16 confirmed on production data;
+  ticket 19 opened for the extended-length prefix decision. `find_empty_dirs` is
+  verified not at risk - `os.walk` omits the failing directory, so neither it nor
+  its parent is ever marked empty. False reporting, not destruction.
+- Ticket 14 resolved. Two orthogonal axes - Filing State and Load State - rather
+  than one flat enum. Unmet map Expectations are not nodes. Terms in `CONTEXT.md`,
+  decision in `docs/adr/0004`.
+
+## Known contradiction to fix
+
+The published prototype renders draw missing folders **inline** in the tree as dim
+hatched rows *and* list them under NOT ON DISK. That is the same fact twice and it
+violates the filesystem-mirror model chosen at charting. Ticket 14 rules the inline
+rows out. Whoever builds the renderer drops them; the NOT ON DISK list stays. The
+sheet has not been re-rendered to match.
+
 ## Frontier
 
-Unblocked and unclaimed: 03, 04, 08, 10, 11, 12, 13, 14, 16.
-Blocked: 07 (on 04, 13, 14, 16), 09 (on 03), 15 (on 04), 17 (on 14), 18 (on 14).
-Resolved: 01, 02, 05, 06.
+Unblocked and unclaimed: 03, 04, 08, 10, 11, 13, 16, 17, 18, 19.
+Blocked: 07 (on 04, 13, 16), 09 (on 03), 15 (on 04).
+Resolved: 01, 02, 05, 06, 12, 14.
 
-**14 is the keystone.** Nothing blocks it, it is pure `/domain-modeling`, and
-three tickets wait on it - the tree seam, the header code, and the token layer.
-Start there.
-
-Only **12** still wants the user specifically: provision a synthetic Workspace
-shared drive, or authorise a one-off read of the studio drive, so the tree can be
-given a latency budget.
+**17 and 18 are now open** - the header as real Atlas code, and the token layer.
+Both were waiting on 14 and both are buildable. 16 is the highest-value decision
+left: it is a core seam change with confirmed live evidence behind it.
 
 ## Notes for the next session
 
