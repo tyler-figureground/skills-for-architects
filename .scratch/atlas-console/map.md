@@ -50,8 +50,12 @@ Standing constraints:
   are silently mangled. Selection is re-resolved from Atlas's own key after every
   refresh, because Textual restores the cursor by line number. Per-node load
   workers are never `exclusive`. All four are measured findings from ticket 05.
-- Verification per session: `cd tools/atlas && uv run pytest`, plus a headless
-  Textual render at 132x38 and 80x24. State which ran.
+- Verification per session: `cd tools/atlas && uv run pytest`, plus headless
+  Textual renders at the **measured** terminal widths - 179, 153, 120, 87, 77, 46
+  - and at 51, 30 and 24 rows. State which ran. The old 132x38 and 80x24 were
+  assumed, never measured, and ticket 03 found them wrong on both axes: rows are
+  abundant and near-constant at 51, columns are scarce and trimodal, and the most
+  common single width is 46.
 - Google Drive File Stream latency is the performance reality, not local disk.
   Local timings are not a latency claim.
 
@@ -124,6 +128,21 @@ Continuity: `.agent/handoff/` per this repo's checkpoint rule.
   count cap 500, cache TTL 60 s. Found two live `MAX_PATH` failures, one of which
   Atlas reports as an empty folder that is not empty. Report:
   `docs/research/atlas-drive-latency-measurement.md`.
+- [Console layout and navigation model](issues/03-console-layout-and-navigation.md)
+  - **the console is three Regions in two Compositions.** Project List opposite a
+  Workspace that stacks the Tree Region over a Companion Region - rows spent to
+  save columns. Split Composition at >= 100 columns, Single-Region below, refusal
+  under 40 columns or 16 rows. Settled by measuring Herdr's PTY resize log rather
+  than assuming: rows are near-constant at 51, columns trimodal at ~179/153,
+  ~87/77 and 46, and **eight of twelve measured widths are Single-Region** - the
+  narrow arrangement is the common case, not the degraded one. Navigation is
+  identical in both: Enter drills, Escape unwinds, Tab is next-Region, `/` filters
+  the focused Region. Explicit collapse outranks the breakpoint default. The
+  Workspace follows the list cursor, debounced 150 ms, cache hits exempt, so the
+  tree is populated at first paint. `#detail` and the health modal are both
+  replaced by Companion Modes; unmet Expectations is the privileged default
+  because it is the only one that must be simultaneous with the tree. Vocabulary
+  in `/CONTEXT.md`, decision in `docs/adr/0005`.
 - [Textual 8.2.8 tree widgets and lazy loading](issues/05-research-textual-tree-widgets.md)
   - build on plain `Tree`; `DirectoryTree` destroys injected nodes on reload, can
   only subtract paths, and costs ~2 stats per entry. Copy its lazy-load machinery,
@@ -147,7 +166,10 @@ Fog toward the destination. Graduates into tickets as the frontier clears it.
 - **Selection and focus rendering everywhere else.** Ticket 02 settled the cursor
   for the project list and the tree. Modals, the filter input, the command palette,
   and the search overlay all still show default Textual focus, which no longer
-  matches. Small, and easy to forget until it looks wrong.
+  matches. Ticket 03 adds one to the list: with three Regions and a Tab that
+  cycles them, **which Region has focus has to be legible without moving the
+  cursor**, and in Single-Region Composition it has to be legible when only one is
+  drawn. Small, and easy to forget until it looks wrong.
 - **Long paths on the write side.** Reads are fixed; `conform` and `ops` are not.
   A move can push a path past MAX_PATH even when both endpoints were fine, and
   Atlas must not create a path Explorer, Revit and the PowerShell tools cannot
@@ -163,7 +185,6 @@ Fog toward the destination. Graduates into tickets as the frontier clears it.
   **truncated or partial**, because a count cap can be hit and because CPython
   issue 102993 shows `os.listdir` returning a partial result on a synced mount
   while Explorer reads it fine.
-- **80x24 composition.** What the console becomes when neither pane fits.
 - **Test strategy for the new surface.** The current three-happy-path TUI coverage
   will not hold a tree, a search overlay, and a dossier panel. Ticket 05 shows the
   shape that works: probe scripts driving real widgets through `App.run_test()`

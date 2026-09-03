@@ -113,3 +113,53 @@ Free, because it is the length of the enumeration already held. Never recursive:
 a recursive count is a walk of the whole subtree, and Atlas does not spend that to
 draw a label.
 
+---
+title: "context-append.md"
+date: 2026-09-03
+generated_by: skills-for-architects
+---
+
+
+## Atlas Console Layout
+
+**Region**
+A named area of the console that can take focus, be collapsed, and be maximized.
+Exactly three exist: the Project List, the Tree Region, and the Companion Region.
+_Avoid_: pane, panel, sidebar.
+
+**Project List**
+The Region listing every Project on the mapped drive. The console's landing
+surface: focus starts here, and the Selected Project is whichever row its cursor
+rests on.
+
+**Workspace**
+The container holding one Project's Tree Region and Companion Region, under a
+title carrying the Project Name. Not itself a Region - it takes no focus and
+collapses only by collapsing what it holds.
+
+**Tree Region**
+The Region drawing the Tree Nodes of the Selected Project.
+
+**Companion Region**
+The Region under the Tree Region, showing one Companion Mode at a time. Under,
+not beside: the console has rows to spend and columns it does not.
+
+**Companion Mode**
+One of the three things the Companion Region can show - unmet Expectations,
+project health, or the dossier. Unmet Expectations is the default, because it is
+the only one that has to be readable at the same time as the tree.
+
+**Selected Project**
+The Project the Project List cursor rests on, and therefore the Project the
+Workspace draws. Distinct from a marked Project, which is a batch selection and
+does not move the cursor.
+
+**Split Composition**
+The console arrangement showing the Project List and the Workspace side by side.
+The arrangement at wide terminal widths.
+
+**Single-Region Composition**
+The console arrangement showing exactly one Region at a time, the others hidden
+rather than shrunk. The arrangement at narrow terminal widths, and the common one
+rather than the degraded one. The navigation model is identical in both
+Compositions; only what is on screen differs.

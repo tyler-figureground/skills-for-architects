@@ -1,13 +1,13 @@
 ---
 title: "Atlas console redesign - wayfinder continuity"
-date: 2026-09-02
+date: 2026-09-03
 generated_by: skills-for-architects
 ---
 
 # Atlas console redesign - wayfinder continuity
 
-Status: header and token layer shipped; the tree is what remains
-Date: 2026-09-02
+Status: header, token layer and console layout settled; the tree is what remains
+Date: 2026-09-03
 Effort: `atlas-console`
 
 ## Where the work lives
@@ -131,36 +131,80 @@ designing:
   one word, and one of them deletes. Now named **Fileless** and **Empty Folder** in
   `CONTEXT.md`.
 
+---
+title: "handoff-tail.md"
+date: 2026-09-03
+generated_by: skills-for-architects
+---
+
+## Session 7 - the console has a shape
+
+Ticket 03 resolved. No code this session: 03 is a grilling ticket and Wayfinder
+allows one ticket per session. 261 tests still pass, lint green, nothing in
+`tools/atlas` changed.
+
+**The session's real find was a measurement, not a decision.** The effort had been
+designing against 132x38 with 80x24 as the floor. Both were assumed and both are
+wrong. Herdr - the agent runtime now in daily use - logs every PTY resize to
+`~/AppData/Roaming/herdr/herdr-server.log`. Forty events on this machine:
+
+- Columns: 46 (9), 77 (8), 153 (7), 179 (3), 87/88 (3), 120 (2), then 80, 57, 48, 39.
+- Rows: 51 in 33 of 40 events, 52 in 3, then 40, 30, 24 once each.
+
+Rows are abundant and near-constant. Columns are scarce and trimodal. **Eight of
+the twelve distinct widths cannot hold two columns of content**, so the narrow
+arrangement is the common case, not the fallback. The map's verification-sizes
+constraint has been rewritten to the measured widths.
+
+The decision that follows from it: three **Regions** - Project List, Tree Region,
+Companion Region - in two **Compositions**. The Companion sits *under* the Tree,
+not beside it, spending rows to save columns. Split Composition at >= 100 columns,
+Single-Region below, refusal under 40 columns or 16 rows. Navigation is identical
+in both. Explicit collapse outranks the breakpoint default. The Workspace follows
+the list cursor, debounced 150 ms with cache hits exempt, so the tree is populated
+at first paint rather than on a keystroke.
+
+Two things get absorbed rather than added: `#detail` and `action_inspect`'s health
+modal both become Companion Modes. That reclaims Enter, which the tree needs.
+
+Recorded in `docs/adr/0005`, vocabulary in `CONTEXT.md` under Atlas Console
+Layout. Ticket 20 graduated - the console shell as Atlas code, the frame without
+the tree in it.
+
 ## Frontier
 
-Unblocked and unclaimed: 03, 04, 08, 10, 11, 15.
-Blocked: 07 (on 04), 09 (on 03).
-Resolved: 01, 02, 05, 06, 12, 13, 14, 16, 17, 18, 19.
+Unblocked and unclaimed: 04, 08, 09, 10, 11, 15, 20.
+Blocked: 07 (on 04).
+Resolved: 01, 02, 03, 05, 06, 12, 13, 14, 16, 17, 18, 19.
 
-**Everything left is the tree itself, plus three side questions.**
+**Take 04 next.** It is the tree write contract - does a tree action mutate, and
+does every one build a core plan and confirm. It is the last thing blocking 07,
+the seam, which is the biggest remaining piece; it also feeds 15.
 
-The build path is **04 then 07**. 04 is the tree write contract - does a tree action
-mutate, and does every one build a core plan and confirm. 07 is the seam, and it is
-blocked on nothing else now. After those, the tree is implementable.
+**20 is the alternative if a session wants code rather than a decision.** It
+builds the shell with placeholders in the Tree and Companion Regions, so the tree
+later lands into a layout that already works at every width instead of into one
+being invented around it. It is independent of 04 and 07.
 
-03 (layout and navigation) should be settled before 07 lands, because it decides
-whether the tree sits beside the project list or drills. 09 waits on it.
-
-Side questions that do not block the tree: 08 search, 10 CLI parity and the
-accessibility claim, 11 whether an authenticated Drive API path is acceptable,
-15 what the tree does when conform moves things.
-
-**10 is worth doing sooner than its position suggests.** The wordmark shipped
-without deciding what a screen reader gets, and every surface added after this
-inherits the same gap.
+**10 is now more overdue, not less.** Ticket 03 added five keybindings, three
+Regions, and two Compositions, and settled none of what a screen reader gets from
+any of it. Every surface built after this inherits a wider gap than the one the
+wordmark left.
 
 ## Notes for the next session
 
-The working tree is clean and `main` is ahead of `origin/main` and unpushed. That
-was ticket 01, and it is resolved - the warning that used to live here no longer
-applies. `git fetch` before surveying anyway.
+The working tree is clean and `main` is ahead of `origin/main` and unpushed -
+now by 20 commits. Pushing has never been asked for. `git fetch` before surveying
+anyway; session 7 did, and confirmed ahead 19 / behind 0 before starting.
 
 Prototype renderers for the wordmark and the three visual worlds live only in the
 session scratchpad and are deliberately throwaway. They are not Atlas code. When
 the wordmark ships, its glyph table, extrusion compositor and ramp sampler get
 written fresh into `tools/atlas` under test - do not lift the prototype.
+
+The published design sheet at
+https://claude.ai/code/artifact/4a9756ec-d166-44d0-b76d-ddd9979fbbc6 is now out of
+date in **two** ways, not one. It still draws missing folders inline in the tree,
+which ticket 14 ruled out. And its renders are all 132x38, a width that ticket 03
+established is not one you actually use. It has not been re-rendered and the user
+has not said whether to.
