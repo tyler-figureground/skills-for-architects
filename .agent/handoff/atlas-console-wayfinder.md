@@ -6,7 +6,7 @@ generated_by: skills-for-architects
 
 # Atlas console redesign - wayfinder continuity
 
-Status: design settled, drive measured, domain model landed; ready to build
+Status: first code shipped; header and token layer are next
 Date: 2026-09-02
 Effort: `atlas-console`
 
@@ -92,15 +92,31 @@ violates the filesystem-mirror model chosen at charting. Ticket 14 rules the inl
 rows out. Whoever builds the renderer drops them; the NOT ON DISK list stays. The
 sheet has not been re-rendered to match.
 
+## Session 5 - first code
+
+Tickets 16 and 19 built, not just decided. `list_entries` returns a `Listing`
+carrying Load State; `long_path()` applies the `\?\` prefix on demand at the
+three read chokepoints. 211 tests pass, up from 201. Both live over-MAX_PATH
+folders verified fixed on the real drive; the one holding an item no longer
+reports as empty.
+
+Writes were deliberately left alone - a move can push a path past the limit, and
+Atlas must not create paths Explorer and Revit cannot open. That check is in the
+fog, owned by the conform work.
+
 ## Frontier
 
-Unblocked and unclaimed: 03, 04, 08, 10, 11, 13, 16, 17, 18, 19.
-Blocked: 07 (on 04, 13, 16), 09 (on 03), 15 (on 04).
-Resolved: 01, 02, 05, 06, 12, 14.
+Unblocked and unclaimed: 03, 04, 08, 10, 11, 13, 17, 18.
+Blocked: 07 (on 04, 13), 09 (on 03), 15 (on 04).
+Resolved: 01, 02, 05, 06, 12, 14, 16, 19.
 
-**17 and 18 are now open** - the header as real Atlas code, and the token layer.
-Both were waiting on 14 and both are buildable. 16 is the highest-value decision
-left: it is a core seam change with confirmed live evidence behind it.
+**17 and 18 are the build path.** 18 first - the token layer decides where the
+ember palette and the node glyph table live, and 17 wants those colours. Both were
+waiting on 14, which is done.
+
+**07 is close.** It needs 04 and 13, both small decisions and both unblocked. 04 is
+the tree write contract, 13 is whether folders show a count at all - and 13 may
+delete a whole class of cost before the seam is designed.
 
 ## Notes for the next session
 
