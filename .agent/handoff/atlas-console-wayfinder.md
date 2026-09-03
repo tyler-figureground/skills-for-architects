@@ -78,9 +78,13 @@ Good first ticket for a fresh session with no user present: **14**, the node kin
 vocabulary. Nothing blocks it, it is pure `/domain-modeling`, and it unblocks both
 the token layer and the tree seam.
 
-## Warning for the next session
+## Notes for the next session
 
-The working tree carries roughly thirty modified and untracked files from the intake,
-contacts, and editing work, and `main` is ahead of `origin/main` by one. Ticket 01
-exists to land it. Do not start implementation tickets on top of that tree - the
-diffs will be unreadable. `git fetch` before surveying, as always.
+The working tree is clean and `main` is ahead of `origin/main` and unpushed. That
+was ticket 01, and it is resolved - the warning that used to live here no longer
+applies. `git fetch` before surveying anyway.
+
+Prototype renderers for the wordmark and the three visual worlds live only in the
+session scratchpad and are deliberately throwaway. They are not Atlas code. When
+the wordmark ships, its glyph table, extrusion compositor and ramp sampler get
+written fresh into `tools/atlas` under test - do not lift the prototype.
