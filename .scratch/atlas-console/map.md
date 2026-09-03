@@ -80,6 +80,12 @@ Fog toward the destination. Graduates into tickets as the frontier clears it.
   the existing modal CSS migrates onto it.
 - **ASCII header implementation.** The wordmark itself plus the responsive collapse
   rule, the narrow-terminal fallback, and where drive identity sits relative to it.
+  Direction is now 3D extruded gradient lettering - see ticket 02 - so this also
+  owns the glyph table, the extrusion compositor, and the per-cell ramp sampler as
+  real Atlas code rather than throwaway prototype code.
+- **How far the retro register travels.** If it stops at the wordmark, nothing else
+  changes. If it does not, scanline dimming on table rows, selection glow, and neon
+  pane rules all become design work. Ticket 02 question 3 decides which.
 - **File-level action set.** Which actions the tree offers, what core plan each
   builds, and how each previews. Depends on the write contract.
 - **Tree states.** Loading, empty project, permission error, a folder too large to
