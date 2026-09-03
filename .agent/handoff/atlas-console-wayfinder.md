@@ -6,7 +6,7 @@ generated_by: skills-for-architects
 
 # Atlas console redesign - wayfinder continuity
 
-Status: first code shipped; header and token layer are next
+Status: header and token layer shipped; the tree is what remains
 Date: 2026-09-02
 Effort: `atlas-console`
 
@@ -104,19 +104,55 @@ Writes were deliberately left alone - a move can push a path past the limit, and
 Atlas must not create paths Explorer and Revit cannot open. That check is in the
 fog, owned by the conform work.
 
+## Session 6 - the header is real
+
+Tickets 13, 17 and 18 done. 261 tests pass, up from 211 at the start of the day.
+
+- **Token layer** (`tui/tokens.py`). Python owns the palette and glyph table and
+  generates the Textual CSS; `MODAL_CSS` and `STATUS_STYLES` migrated. Colour is
+  tested by contrast and structure, never hex. That test failed on four of the
+  prototype's tokens and they were lightened until it passed. It also flips ACTION
+  to vermilion and REVIEW to ochre from the old yellow/red.
+- **Wordmark** (`tui/wordmark.py`). Half-block compositor, extrusion, ramp sampler
+  and three compositions, replacing Textual's `Header`. 111 / 78 / 20 columns and
+  4 / 4 / 1 rows.
+- **Counts.** Immediate children only, and only on a folder Atlas has actually
+  read. Recursive counts are out - incompatible with lazy loading regardless of
+  cost.
+
+Two corrections worth carrying forward, both caught by building rather than
+designing:
+
+- The published width rule (115 / 82) is the mark widths (111 / 78) **plus the
+  console's four columns of padding**. A naive "widest that fits" renders the mark
+  flush against both edges. `MARGIN` is now a named constant.
+- `ops.find_empty_dirs` removes folders with no file *anywhere beneath*, while the
+  tree calls a folder empty when it has no children *of its own*. Two predicates,
+  one word, and one of them deletes. Now named **Fileless** and **Empty Folder** in
+  `CONTEXT.md`.
+
 ## Frontier
 
-Unblocked and unclaimed: 03, 04, 08, 10, 11, 13, 17, 18.
-Blocked: 07 (on 04, 13), 09 (on 03), 15 (on 04).
-Resolved: 01, 02, 05, 06, 12, 14, 16, 19.
+Unblocked and unclaimed: 03, 04, 08, 10, 11, 15.
+Blocked: 07 (on 04), 09 (on 03).
+Resolved: 01, 02, 05, 06, 12, 13, 14, 16, 17, 18, 19.
 
-**17 and 18 are the build path.** 18 first - the token layer decides where the
-ember palette and the node glyph table live, and 17 wants those colours. Both were
-waiting on 14, which is done.
+**Everything left is the tree itself, plus three side questions.**
 
-**07 is close.** It needs 04 and 13, both small decisions and both unblocked. 04 is
-the tree write contract, 13 is whether folders show a count at all - and 13 may
-delete a whole class of cost before the seam is designed.
+The build path is **04 then 07**. 04 is the tree write contract - does a tree action
+mutate, and does every one build a core plan and confirm. 07 is the seam, and it is
+blocked on nothing else now. After those, the tree is implementable.
+
+03 (layout and navigation) should be settled before 07 lands, because it decides
+whether the tree sits beside the project list or drills. 09 waits on it.
+
+Side questions that do not block the tree: 08 search, 10 CLI parity and the
+accessibility claim, 11 whether an authenticated Drive API path is acceptable,
+15 what the tree does when conform moves things.
+
+**10 is worth doing sooner than its position suggests.** The wordmark shipped
+without deciding what a screen reader gets, and every surface added after this
+inherits the same gap.
 
 ## Notes for the next session
 
