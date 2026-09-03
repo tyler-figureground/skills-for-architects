@@ -98,6 +98,18 @@ because a cap was reached or because the filesystem returned fewer entries than
 exist. Never presented as complete.
 
 **Empty Folder**
-A folder Tree Node whose Load State is Read and which has no children. Only a Read
-folder can be known to be empty.
+A folder Tree Node whose Load State is Read and which has no children of its own.
+Only a Read folder can be known to be empty. Distinct from Fileless.
+
+**Fileless**
+A folder with no file anywhere beneath it, however deep. This is what Clean
+removes, by rmdir cascade. A Fileless folder is often not an Empty Folder - it may
+contain a chain of subfolders that themselves contain no files - and an Empty
+Folder is always Fileless. The tree reports Empty; Clean acts on Fileless.
+
+**Child Count**
+The number of a folder Tree Node's own children, split into folders and files.
+Free, because it is the length of the enumeration already held. Never recursive:
+a recursive count is a walk of the whole subtree, and Atlas does not spend that to
+draw a label.
 

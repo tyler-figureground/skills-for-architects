@@ -61,34 +61,12 @@ from ..core.project_data import (
     preview_project_update,
 )
 from ..core.scan import DriveInventory, ProjectInventory, discover_drives, scan_drive
+from . import tokens
 from .model import ProjectRow, project_detail, project_rows, visible_rows
 
-STATUS_STYLES = {
-    "READY": "bold green",
-    "ACTION": "bold yellow",
-    "REVIEW": "bold red",
-    "SETUP": "bold cyan",
-}
+STATUS_STYLES = {name: f"bold {hex_}" for name, hex_ in tokens.PALETTE.status.items()}
 
-MODAL_CSS = """
-ModalScreen { align: center middle; }
-#dialog {
-    width: 76; max-width: 94%; max-height: 88%; padding: 1 2;
-    background: $surface; border: thick $primary;
-}
-#dialog .dialog-title { text-style: bold; margin-bottom: 1; }
-#dialog .field-label { color: $text-muted; }
-#dialog Input { margin-bottom: 1; }
-#dialog.intake-dialog Input { margin-bottom: 0; }
-#dialog.intake-dialog .field-label { height: 1; }
-#dialog SelectionList { max-height: 18; margin-bottom: 1; }
-#dialog.selection-dialog { height: 80%; min-height: 12; }
-#dialog.selection-dialog SelectionList { height: 1fr; max-height: 1fr; }
-#dialog #plan { max-height: 22; margin-bottom: 1; }
-#dialog .actions { height: 3; align-horizontal: right; }
-#dialog Button { margin-left: 2; }
-#dialog #preview, #dialog .supporting { color: $text-muted; margin-bottom: 1; }
-"""
+MODAL_CSS = tokens.stylesheet()
 
 
 def _project_token(project: ProjectInventory) -> tuple[tuple[str, bool], ...]:
@@ -758,6 +736,9 @@ class ResultModal(ModalScreen[None]):
 class AtlasApp(App):
     TITLE = "Atlas"
     HORIZONTAL_BREAKPOINTS = [(0, "-narrow"), (100, "-wide")]
+    # Colour lives in tokens.stylesheet(); this block is geometry only. Keeping
+    # them apart is what stops the tree - which takes no CSS at all and must read
+    # its colours from Python - drifting away from everything around it.
     CSS = MODAL_CSS + """
     Screen { layout: vertical; }
     #drives { height: 1fr; padding: 1 2; }
@@ -765,17 +746,12 @@ class AtlasApp(App):
     #custom-use-case-label, #custom-use-case { display: none; }
     #workspace { height: 1fr; }
     #projects { width: 3fr; height: 1fr; }
-    #detail {
-        width: 2fr; min-width: 36; height: 1fr; padding: 1 2;
-        border-left: solid $primary-background;
-    }
-    #detail-title { height: auto; text-style: bold; margin-bottom: 1; }
+    #detail { width: 2fr; min-width: 36; height: 1fr; padding: 1 2; }
+    #detail-title { height: auto; margin-bottom: 1; }
     #detail-body { height: auto; }
     Screen.-narrow #detail { display: none; }
-    #summary { height: 1; padding: 0 2; color: $text-muted; }
-    #operation { height: 1; padding: 0 2; background: $boost; }
-    #operation.-warning { color: $warning; }
-    #operation.-error { color: $error; }
+    #summary { height: 1; padding: 0 2; }
+    #operation { height: 1; padding: 0 2; }
     Footer { dock: bottom; }
     """
     BINDINGS = [

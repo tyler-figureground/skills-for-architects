@@ -75,6 +75,21 @@ Continuity: `.agent/handoff/` per this repo's checkpoint rule.
   wordmark and the cursor - no scanlines on data. Field muted, selected row the
   only full-strength thing on screen. `SETUP` moved from steel blue into the ember
   family. Prototype token values recorded on the ticket.
+- [The token layer](issues/18-token-layer.md) - **built.** A Python module owns
+  the palette and glyph table and generates the Textual CSS from it, because tree
+  nodes take no CSS and `render_label` must read from Python. `MODAL_CSS` and
+  `STATUS_STYLES` migrated; the app's CSS block is geometry only. Colour is tested
+  by structure and contrast, never by hex literal - every text token must clear
+  4.5:1, and the generated CSS is scanned so a hand-edited colour fails the suite.
+  Tuning to pass that floor lightened four tokens. Flips ACTION to vermilion and
+  REVIEW to ochre from the old yellow/red.
+- [Do folders show a count, and of what](issues/13-folder-counts.md) -
+  immediate-child counts only, folders and files counted separately, rendered only
+  on Read folders and never as a zero on an Unread one. Recursive counts are out:
+  they are a walk, and they are incompatible with lazy loading regardless of cost.
+  Uncovered a live collision - `clean` removes folders with no file *anywhere
+  beneath* while the tree calls a folder empty when it has no children *of its
+  own*. Now named separately as **Fileless** and **Empty Folder** in `/CONTEXT.md`.
 - [Enumeration failure as a core fact](issues/16-enumeration-error-as-a-core-fact.md)
   and [Extended-length paths](issues/19-extended-length-paths.md) - **built, not
   just decided.** `list_entries` returns a `Listing` carrying Load State; it
