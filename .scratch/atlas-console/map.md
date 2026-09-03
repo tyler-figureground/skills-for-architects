@@ -75,6 +75,15 @@ Continuity: `.agent/handoff/` per this repo's checkpoint rule.
   wordmark and the cursor - no scanlines on data. Field muted, selected row the
   only full-strength thing on screen. `SETUP` moved from steel blue into the ember
   family. Prototype token values recorded on the ticket.
+- [Enumeration failure as a core fact](issues/16-enumeration-error-as-a-core-fact.md)
+  and [Extended-length paths](issues/19-extended-length-paths.md) - **built, not
+  just decided.** `list_entries` returns a `Listing` carrying Load State; it
+  iterates like the tuple it replaced so all six consumers were untouched, and is
+  unconditionally truthy so `if listing:` cannot silently regress. `long_path()`
+  applies the `\\?\` prefix on demand at the three read chokepoints. An
+  unreadable project root is recorded, reported as REVIEW rather than READY or
+  SETUP, and shown in its own detail block. `--json` gains `unreadable`. 211 tests
+  pass; both live over-MAX_PATH folders verified fixed on the real drive.
 - [Node kind vocabulary](issues/14-node-kind-vocabulary.md) - a node is a thing
   that exists on disk; an unmet map Expectation is not a node and is listed beside
   the tree, which means the prototype renders showing missing folders inline were
@@ -117,6 +126,15 @@ Fog toward the destination. Graduates into tickets as the frontier clears it.
   for the project list and the tree. Modals, the filter input, the command palette,
   and the search overlay all still show default Textual focus, which no longer
   matches. Small, and easy to forget until it looks wrong.
+- **Long paths on the write side.** Reads are fixed; `conform` and `ops` are not.
+  A move can push a path past MAX_PATH even when both endpoints were fine, and
+  Atlas must not create a path Explorer, Revit and the PowerShell tools cannot
+  open. Wants a length check in plan-building that refuses or warns, not a blind
+  prefix. Possibly also a `doctor` finding for over-long paths, which was
+  considered and deferred as a new finding type.
+- **Deep unreadable detection.** `doctor` checks the project root only, because
+  that is all `scan_drive` enumerates. A folder three levels down that cannot be
+  read is invisible until the tree lands. Ticket 07 inherits it.
 - **Tree states.** Loading, empty project, permission error, a folder too large to
   walk, a stale tree after an external change. Ticket 06 adds two that must be
   designed distinctly: **enumeration error**, which must never look like empty, and

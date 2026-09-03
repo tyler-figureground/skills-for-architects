@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .mapfile import DriveMap
-from .scan import DriveInventory, ProjectInventory, count_files
+from .scan import DriveInventory, ProjectInventory, long_path, count_files
 
 # Files tolerated at a project root without being flagged: OS noise plus the
 # PRD-209 time-ledger family, which is blessed control plane per the map note.
@@ -42,6 +42,9 @@ class ProjectReport:
     relocations: tuple[RelocationHit, ...] = ()
     sweeps: tuple[tuple[str, str], ...] = ()          # (root file, target dir)
     unfiled: tuple[str, ...] = ()
+    # Folders Atlas could not enumerate. Not actionable - Atlas cannot repair what
+    # it cannot read - but never silently treated as empty. See ADR 0004.
+    unreadable: tuple[str, ...] = ()
 
     @property
     def actionable(self) -> bool:
@@ -88,7 +91,7 @@ def _dir_exists_exact(base: Path, rel: str) -> bool:
     current = base
     for segment in rel.replace("\\", "/").split("/"):
         try:
-            with os.scandir(current) as it:
+            with os.scandir(long_path(current)) as it:
                 match = next(
                     (e for e in it if e.name == segment and e.is_dir(follow_symlinks=False)),
                     None,
@@ -162,7 +165,15 @@ def report_project(inv: ProjectInventory, m: DriveMap) -> ProjectReport:
         if e.name not in explained and e.name not in swept and not _tolerated(e.name)
     )
 
-    if sections_present == 0:
+    unreadable: list[str] = []
+    if not inv.root_entries.readable:
+        unreadable.append(f".  {inv.root_entries.error}")
+
+    if unreadable:
+        # A person has to look. Never STUB - "no sections found" would claim we
+        # looked and saw nothing, and never CONFORM, which would claim it is fine.
+        status = STATUS_UNFILED
+    elif sections_present == 0:
         status = STATUS_STUB
     elif missing or drift or reloc_hits or sweeps:
         status = STATUS_DRIFT
@@ -180,6 +191,7 @@ def report_project(inv: ProjectInventory, m: DriveMap) -> ProjectReport:
         relocations=tuple(reloc_hits),
         sweeps=tuple(sweeps),
         unfiled=tuple(unfiled),
+        unreadable=tuple(unreadable),
     )
 
 
@@ -211,6 +223,7 @@ def report_to_dict(report: DriveReport) -> dict:
                 ],
                 "sweeps": [{"file": a, "target": b} for a, b in p.sweeps],
                 "unfiled": list(p.unfiled),
+                "unreadable": list(p.unreadable),
             }
             for p in report.projects
         ],

@@ -1,7 +1,7 @@
 # Enumeration failure as a core fact
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: -
 Parent: ../map.md
 
@@ -67,3 +67,64 @@ Two things this pins down that the ticket previously left open:
   fix (ticket 19) and a permission error does not.
 
 Report: `docs/research/atlas-drive-latency-measurement.md`
+
+## Answer
+
+Built and shipped. `uv run pytest` 211 passed (was 201), `./scripts/lint.sh`
+passed, and both live failing paths verified fixed against the real drive.
+
+**`list_entries` returns a `Listing`, not a tuple.** It carries a Load State
+(`read` / `unreadable`, with `partial` modelled but not yet produced), the entries,
+and the error string. `readable` is the property callers check.
+
+Two design choices worth recording:
+
+- `Listing` implements `__iter__` and `__len__`, so all six existing consumers -
+  five in `doctor`, one in the TUI's project token - needed no change at all.
+- It also defines `__bool__` returning `True` unconditionally. Without that,
+  `__len__` would make `if listing:` false for an unreadable directory, which is
+  precisely the bug this type exists to prevent. There is a test pinning it.
+
+**Every caller's behaviour:** unchanged, because they all iterate. The one place
+that had to change is `report_project`, which now records the failure and refuses
+to call the project `conform`.
+
+**Status when a project root is unreadable: `unfiled` (REVIEW).** Not `stub` -
+that means "no canonical sections found", which claims Atlas looked and saw
+nothing. Not a fifth status: ADR 0004 deliberately left the project statuses
+alone, and REVIEW already means "a person has to look at this". If REVIEW proves
+too coarse once the tree lands, a distinct status is a small follow-up.
+
+**`--json` gains an `unreadable` key** per project. The existing
+`test_report_json_shape` pins the exact key set and failed on the change, which is
+what it is for; it was updated deliberately and now also asserts the key is empty
+on a healthy project. Exit codes are unchanged: an unreadable project reports
+`unfiled`, which was already exit 1.
+
+**The TUI detail pane** gets a `COULD NOT READ` block, above `REVIEW REQUIRED` and
+never folded into it, plus the headline "Cannot read - Atlas could not open part of
+this project" and the line "Nothing above is trustworthy for this project."
+
+**Partial enumeration is modelled but not detected.** `PARTIAL` exists in the Load
+State constants and nothing produces it. The drive-cost research found no reliable
+way to notice a short enumeration - CPython issue 102993 returns fewer entries with
+no error at all. Recorded rather than faked.
+
+### Residual scope, stated plainly
+
+`report_project` checks the **project root only**, because that is all `scan_drive`
+enumerates today. A folder three levels down that cannot be read is still invisible
+to `doctor`. The two live failures are exactly that shape - they are deep inside
+projects, and after the fix they read fine, so nothing is currently hidden. But the
+general case waits for the tree, which enumerates deeply and where `Listing` is
+already the return type. Ticket 07 inherits this.
+
+### Verified on the live drive
+
+```
+path length 259 -> state read, readable True, 0 entries   (genuinely empty)
+path length 273 -> state read, readable True, 1 entries: ['02 Sheets']
+```
+
+Before the fix the second returned zero entries and claimed to be empty. Whole-drive
+scan and report: 14 projects, 404 ms, zero unreadable.

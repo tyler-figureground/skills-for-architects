@@ -108,7 +108,9 @@ def project_detail(row: ProjectRow) -> str:
     """Render selected-project diagnosis in studio language."""
 
     report = row.report
-    if report.status == "conform":
+    if report.unreadable:
+        headline = "Cannot read - Atlas could not open part of this project."
+    elif report.status == "conform":
         headline = "Ready - project follows the current drive map."
     elif report.status == "unfiled":
         headline = "Review - Atlas found items that need a filing decision."
@@ -135,6 +137,13 @@ def project_detail(row: ProjectRow) -> str:
     lines.extend(f"  {line}" for line in fix_lines)
     if not fix_lines:
         lines.append("  No mapped repairs pending")
+
+    if report.unreadable:
+        # Never folded into "no unfiled items": a folder Atlas could not open is
+        # not a folder it looked inside and found empty. ADR 0004.
+        lines.extend(("", "COULD NOT READ"))
+        lines.extend(f"  {detail}" for detail in report.unreadable)
+        lines.append("  Nothing above is trustworthy for this project.")
 
     lines.extend(("", "REVIEW REQUIRED"))
     if report.unfiled:
