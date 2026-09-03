@@ -75,6 +75,15 @@ Continuity: `.agent/handoff/` per this repo's checkpoint rule.
   wordmark and the cursor - no scanlines on data. Field muted, selected row the
   only full-strength thing on screen. `SETUP` moved from steel blue into the ember
   family. Prototype token values recorded on the ticket.
+- [A latency number for the tree](issues/12-latency-budget.md) - measured on the
+  live drive with the user's authorisation, read-only. The **whole studio drive is
+  7,956 folders and 18,536 files, walked in 4.24 seconds**, so throughput is a
+  non-issue at this size and a drive-wide index is affordable. The cost is all in
+  the tail: cold p99 91 ms, worst 314 ms, nothing over a second. Budgets set -
+  loading state at 120 ms, prefetch one level capped at 50, concurrency cap 4,
+  count cap 500, cache TTL 60 s. Found two live `MAX_PATH` failures, one of which
+  Atlas reports as an empty folder that is not empty. Report:
+  `docs/research/atlas-drive-latency-measurement.md`.
 - [Textual 8.2.8 tree widgets and lazy loading](issues/05-research-textual-tree-widgets.md)
   - build on plain `Tree`; `DirectoryTree` destroys injected nodes on reload, can
   only subtract paths, and costs ~2 stats per entry. Copy its lazy-load machinery,

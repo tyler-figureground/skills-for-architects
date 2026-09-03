@@ -36,3 +36,34 @@ Resolve:
   Atlas uses 0 clean, 1 findings, 2 error.
 
 `/tdd` applies - this is core, and every branch above wants a test.
+
+## Evidence from ticket 12
+
+No longer hypothetical. A read-only walk of the live studio drive found two
+directories that raise `FileNotFoundError` from `os.scandir` while their own
+parents list them without trouble. Both are `MAX_PATH` - 259 and 273 characters -
+and both read correctly through the `\\?\` extended-length prefix.
+
+```
+path length 273
+  atlas list_entries()     -> 0 entries  (indistinguishable from empty)
+  reality via \\?\ prefix  -> 1 entries
+  MISREPORT: True
+```
+
+So the false negative this ticket was opened about is happening today, on
+production data, in a folder that has contents.
+
+Two things this pins down that the ticket previously left open:
+
+- **`find_empty_dirs` is not at risk.** `os.walk` uses `onerror=None`, so a
+  failing directory is omitted from the walk entirely; it is never yielded as a
+  root, never enters `empties`, and because it still appears in its parent's
+  `dirs` list the `all(...)` test at `ops.py:264` fails and the parent is not
+  marked empty either. Verified. The failure mode is false reporting, not
+  destruction - so this ticket is about correctness, not safety.
+- **The trigger is path length, not permissions.** Whatever `list_entries`
+  returns instead must be able to say *which* failure, because `MAX_PATH` has a
+  fix (ticket 19) and a permission error does not.
+
+Report: `docs/research/atlas-drive-latency-measurement.md`
