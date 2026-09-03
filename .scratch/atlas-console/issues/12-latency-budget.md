@@ -19,6 +19,10 @@ expensive than normal". That means the tree cannot currently be given:
 - a lazy-load budget - how many nodes may be prefetched ahead of the cursor
 - a count cap - where "n+" replaces a real number
 - a cache TTL - how long an enumeration stays trustworthy
+- a cold-folder ceiling - how long a node expansion may run before the tree must
+  show a loading state rather than appear frozen (raised by ticket 05)
+- a concurrency cap - how many node loads may be in flight against the shared
+  thread pool at once, given ticket 05 establishes they cannot be exclusive
 
 Every one of those is a number, and none can come from documentation.
 

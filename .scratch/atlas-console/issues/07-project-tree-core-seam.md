@@ -2,7 +2,7 @@
 
 Type: grilling
 Status: open
-Blocked by: 04, 05, 13
+Blocked by: 04, 13, 14, 16
 Parent: ../map.md
 
 ## Question
@@ -15,8 +15,8 @@ Resolve, once the write contract and both research tickets are in:
 
 - What structure does core hand the TUI for one project? A node tree, a flat list
   with depth, or a lazily-expanding handle?
-- How do map facts attach to nodes: expected-but-absent, drift source and target,
-  relocation, sweep, unfiled, empty. `doctor.report_project` already computes most
+- How do map facts attach to nodes? Ticket 14 names the kinds; this decides where
+  they live on the structure, along with drift and relocation targets. `doctor.report_project` already computes most
   of these against the project as a whole - does the tree reuse that report or need
   its own pass?
 - Where does the not-on-disk list come from, and is it derived from the same
@@ -39,3 +39,20 @@ Resolve, once the write contract and both research tickets are in:
 
 Record the vocabulary in `/CONTEXT.md` and the seam in `.agent/handoff/`. This is
 the ticket most likely to earn an ADR.
+
+## Constraints already fixed
+
+From ticket 05, binding on whatever this seam produces:
+
+- The TUI side is a plain `Tree`. `DirectoryTree` destroys injected nodes on
+  reload, its only subclass hook can subtract paths but never add them, and it
+  costs ~2 `is_dir()` stats per entry per load where `os.scandir` costs zero.
+- Per-node styling has exactly one route: `render_label`. Tree nodes are not DOM
+  nodes and take no CSS.
+- Labels must be `rich.text.Text`, never `str`. `Tree.process_label` runs
+  `Text.from_markup`, so a real folder named `[b] Basement Survey` silently loses
+  its prefix - and `[2024]` survives, which is what makes it latent.
+- Selection is restored by line number, not node identity. The seam must expose a
+  stable key the TUI re-resolves against after every refresh.
+- Per-node load workers must not be `exclusive` - that would cancel every other
+  in-flight expansion sharing the widget's default worker group.

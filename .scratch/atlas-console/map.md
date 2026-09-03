@@ -45,6 +45,11 @@ Standing constraints:
   Atlas hard-codes zero canonical folder names.
 - Never touch a production or shared drive during development. Build synthetic
   fixture drives, as `tests/conftest.py` and the prior smoke run did.
+- Tree work is built on a plain Textual `Tree`, never `DirectoryTree`. Labels are
+  always `rich.text.Text`, never `str`, or folder names containing square brackets
+  are silently mangled. Selection is re-resolved from Atlas's own key after every
+  refresh, because Textual restores the cursor by line number. Per-node load
+  workers are never `exclusive`. All four are measured findings from ticket 05.
 - Verification per session: `cd tools/atlas && uv run pytest`, plus a headless
   Textual render at 132x38 and 80x24. State which ran.
 - Google Drive File Stream latency is the performance reality, not local disk.
@@ -63,6 +68,13 @@ Continuity: `.agent/handoff/` per this repo's checkpoint rule.
   - landed as four commits, `c6d564a..7737de7`, tests and lint green before
   committing. `.agent/`, `.impeccable/`, and `.scratch/` are tracked, not ignored.
   Not pushed.
+- [Textual 8.2.8 tree widgets and lazy loading](issues/05-research-textual-tree-widgets.md)
+  - build on plain `Tree`; `DirectoryTree` destroys injected nodes on reload, can
+  only subtract paths, and costs ~2 stats per entry. Copy its lazy-load machinery,
+  do not inherit it. Scrolling is virtualized but `_build()` is linear in expanded
+  nodes - 20-30ms at 5000. Two measured silent-corruption traps: markup injection
+  via `str` labels, and cursor restore by line number. Report:
+  `docs/research/atlas-tree-widget-evidence.md`.
 - [Reading a project tree over Google Drive File Stream](issues/06-research-drive-tree-cost.md)
   - shared drives are streaming-only; enumeration is the unit of cost, not `stat`;
   no official latency figure exists from anyone; recursive counts have no cheap
@@ -77,7 +89,9 @@ Fog toward the destination. Graduates into tickets as the frontier clears it.
 - **Textual token layer.** Once the visual world is locked, the palette, glyph
   vocabulary, and rule weights need to live in one place every screen reads -
   a Textual theme, a CSS variable block, or a Python token module. Which, and how
-  the existing modal CSS migrates onto it.
+  the existing modal CSS migrates onto it. Ticket 05 constrains it: tree nodes take
+  no CSS at all, so whatever this layer is, `render_label` has to be able to read
+  it from Python. Blocked in practice by ticket 14, which names what it keys on.
 - **ASCII header implementation.** The wordmark itself plus the responsive collapse
   rule, the narrow-terminal fallback, and where drive identity sits relative to it.
   Direction is now 3D extruded gradient lettering - see ticket 02 - so this also
@@ -96,7 +110,15 @@ Fog toward the destination. Graduates into tickets as the frontier clears it.
   while Explorer reads it fine.
 - **80x24 composition.** What the console becomes when neither pane fits.
 - **Test strategy for the new surface.** The current three-happy-path TUI coverage
-  will not hold a tree, a search overlay, and a dossier panel.
+  will not hold a tree, a search overlay, and a dossier panel. Ticket 05 shows the
+  shape that works: probe scripts driving real widgets through `App.run_test()`
+  against the pinned venv, asserting on measured syscall and message counts rather
+  than on rendered output.
+- **Rebuild cost at depth.** `Tree._build()` is linear in expanded nodes and calls
+  `render_label` once per line, and it fires on any mutation, resize or style
+  change. Ticket 05 measured 20-30ms at 5000 expanded nodes and cut the median from
+  25.4ms to 6.4ms by overriding `get_label_width`. Whether Atlas needs that, and
+  what caps expansion depth, is unspecified.
 - **Docs and release.** README, CHANGELOG, any ADR the seam decisions earn, and the
   `uv tool install --editable` redeploy.
 - **Cache and invalidation layer.** Ticket 06 prescribes TTL plus explicit refresh
