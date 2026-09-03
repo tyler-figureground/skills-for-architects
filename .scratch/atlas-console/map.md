@@ -75,6 +75,15 @@ Continuity: `.agent/handoff/` per this repo's checkpoint rule.
   wordmark and the cursor - no scanlines on data. Field muted, selected row the
   only full-strength thing on screen. `SETUP` moved from steel blue into the ember
   family. Prototype token values recorded on the ticket.
+- [Node kind vocabulary](issues/14-node-kind-vocabulary.md) - a node is a thing
+  that exists on disk; an unmet map Expectation is not a node and is listed beside
+  the tree, which means the prototype renders showing missing folders inline were
+  wrong and the renderer drops those rows. Every node carries two orthogonal
+  values: **Filing State** (Mapped / Drifted / Misplaced / Loose / Unfiled, first
+  matching map rule wins) and **Load State** (Unread / Read / Unreadable /
+  Partial). Emptiness is derived, never stored. Solid vs hatched answers "is
+  anything wrong", colour answers "mine or Atlas's". Terms in `/CONTEXT.md`,
+  decision in `docs/adr/0004`.
 - [A latency number for the tree](issues/12-latency-budget.md) - measured on the
   live drive with the user's authorisation, read-only. The **whole studio drive is
   7,956 folders and 18,536 files, walked in 4.24 seconds**, so throughput is a
