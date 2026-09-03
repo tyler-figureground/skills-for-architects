@@ -6,7 +6,7 @@ generated_by: skills-for-architects
 
 # Atlas console redesign - wayfinder continuity
 
-Status: map charted, awaiting visual-world lock
+Status: world locked, both research tickets in, awaiting wordmark decision
 Date: 2026-09-02
 Effort: `atlas-console`
 
@@ -51,11 +51,32 @@ Wayfinder's plan-don't-do default and is recorded in the map's Notes.
   instructed to write under `docs/research/`, create no branch, commit nothing, and
   never touch a production or shared drive.
 
-## Frontier when this session ended
+## Session 2
 
-Open, unblocked, unclaimed: 01, 02, 03, 04, 08 (blocked by 06), 10.
-Claimed and running: 05, 06.
-Blocked: 07 (on 04, 05, 06), 09 (on 03).
+- Landed the whole working tree on the user's instruction. Tests (201) and lint
+  green before committing. `main` ahead of `origin/main`, not pushed.
+- Visual world locked: **A - POCHE**. The user then reopened the wordmark itself,
+  asking for retro-cyberpunk 3D extruded gradient lettering. Five treatments built
+  and published on the same artifact; ticket 02 stays claimed on three questions.
+- Both research tickets resolved and indexed. Six tickets graduated from what they
+  surfaced: 11, 12, 13 from the Drive cost research; 14, 15, 16 from the Textual
+  research.
+
+## Frontier
+
+Unblocked and unclaimed: 03, 04, 08, 10, 11, 12, 13, 14, 16.
+Claimed: 02, waiting on the user.
+Blocked: 07 (on 04, 13, 14, 16), 09 (on 03), 15 (on 04).
+Resolved: 01, 05, 06.
+
+Two tickets want the user specifically rather than any session: **02** (which
+wordmark treatment, where the header collapses, how far the retro register
+travels) and **12** (provision a synthetic Workspace shared drive, or authorise a
+one-off read of the studio drive, so the tree can be given a latency budget).
+
+Good first ticket for a fresh session with no user present: **14**, the node kind
+vocabulary. Nothing blocks it, it is pure `/domain-modeling`, and it unblocks both
+the token layer and the tree seam.
 
 ## Warning for the next session
 
