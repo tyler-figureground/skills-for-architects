@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Atlas `0.3.0` project and contact editing.** Select a project and press `e` to edit intake fields, reassign contacts, refresh project snapshots, and preview/confirm collision-safe folder renames. Press `m` to edit shared contact details while retaining stable IDs. Matching `atlas project edit` and `atlas contacts edit` commands support interactive and confirmed automation modes. Contact mailing addresses now accept physical streets or PO boxes while Project Address remains a physical site address. `PROJECT.md` gains additive structured site-address keys for reliable round-trip editing.
+- **`09-project-dossier` (`1.3.1`) - structured editable site addresses.** Documents the additive address component keys while retaining the formatted `address` key and Identity mirror for consumers.
+- **Atlas `0.2.0` complete project intake.** New three-step TUI wizard and CLI parity require Project Name, structured US Project Address, Project Use Case, Billing Contact, and Client Contact. Folder names derive from short street address. Reusable contacts persist per drive in `_tools/billing-contacts.json`; each project dossier stores stable IDs plus historical snapshots. Expanded project indexes omit contact personal data and migrate legacy tables with a backup.
+- **`09-project-dossier` (`1.3.0`) - Atlas intake contract.** Adds Project Use Case and flat Billing/Client Contact snapshot keys and Identity rows while preserving existing Norma fields.
 - **Atlas operations console.** Responsive project-health detail, filtering,
   sorting, contextual help, durable operation results, and marked-project batch
   conform. Shared-drive scans and mutations run through background workers.

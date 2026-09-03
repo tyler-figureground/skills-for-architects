@@ -32,6 +32,8 @@ The dossier is the **facts layer**. The **reasoning layer** — why a choice was
 3. **Facts only.** "Zoning district: R7A" belongs here. "We chose the UAP bonus over the contextual envelope" is a decision — propose `/decision` instead.
 4. **Project facts only.** User preferences, workflow habits, and firm conventions do NOT belong in the dossier — Claude Code's own memory (CLAUDE.md, auto memory) handles those.
 5. **Front-matter and tables stay in sync.** Every code/identity fact you write to a human table also updates the matching front-matter key, and vice-versa — they are one fact in two places. The front-matter holds the bare current value (no source/date — YAML keys can't); the table row carries that value plus its Source + Date. If they ever disagree, the table (with its provenance) is the source of truth — reconcile the front-matter to it.
+6. **Contact snapshots are project history.** Atlas records Billing Contact and Client Contact directory IDs plus creation-time details. Preserve those snapshots during unrelated updates. A later shared-directory edit does not silently rewrite an existing project; change a project contact only from an explicit user correction.
+7. **Project Use Case is not occupancy.** Renovation, Addition, Feasibility, and related intake labels describe the engagement. Never copy them into `occupancy_group` or infer an IBC use group from them.
 
 ## The machine contract (front-matter)
 
@@ -40,7 +42,13 @@ The YAML block at the top of `PROJECT.md` is the contract every architect skill 
 | Key | Type / values | Mirrors (human table) | Notes |
 |-----|---------------|-----------------------|-------|
 | `project` | free text | Identity → Project | display name; `name` is an accepted alias |
-| `address` | free text | Identity → Address / BBL | |
+| `address` | free text | Identity → Address / BBL | formatted full project/site address; not a contact mailing address |
+| `address_street`, `address_unit`, `address_city`, `address_state`, `address_postal_code` | strings | Identity → Address / BBL | Atlas structured site-address components; street is physical, never a PO box |
+| `description` | free text | Identity → Descriptor | optional folder qualifier |
+| `project_use_case` | canonical label or custom Other label | Identity → Project Use Case | engagement classification; not IBC occupancy |
+| `project_use_case_category` | canonical label | Identity → Project Use Case | preserves `Other` when the display value is custom |
+| `billing_contact_*` | flat contact snapshot fields | Identity → Billing rows | suffixes: `id`, `name`, `email`, `phone`, `company`, `address` |
+| `client_contact_*` | flat contact snapshot fields | Identity → Client rows | same suffixes; client may differ from billing |
 | `jurisdiction` | `nyc` \| `california` \| `other` | Identity → Jurisdiction | **drives Norma's corpus + edition** |
 | `edition` | string | Code → Building code edition | blank → derived from `jurisdiction` |
 | `occupancy_group` | `B`, `"A-2"`, or list `[B, "S-1"]` | Code → Occupancy group | IBC use group(s) |
@@ -86,7 +94,27 @@ Rules for the block:
 # this block carries only the current value each tool reads. Leave a field blank
 # when unknown (a blank field is ignored, not assumed).
 project:                     # display name (free text)
-address:                     # street address / BBL (free text)
+address:                     # formatted full project/site address
+address_street:              # physical numbered street; never a PO box
+address_unit:                # optional
+address_city:
+address_state:               # two-letter US state
+address_postal_code:         # ZIP or ZIP+4
+description:                 # optional folder qualifier
+project_use_case:            # display label; custom value when category is Other
+project_use_case_category:   # Renovation | Addition | Renovation + Addition | Ground Up | Feasibility | Existing Conditions | Code Compliance | Other
+billing_contact_id:          # shared Atlas contact UUID
+billing_contact_name:
+billing_contact_email:
+billing_contact_phone:
+billing_contact_company:
+billing_contact_address:
+client_contact_id:           # shared Atlas contact UUID
+client_contact_name:
+client_contact_email:
+client_contact_phone:
+client_contact_company:
+client_contact_address:
 jurisdiction:                # nyc | california | other  → drives the governing corpus + edition
 edition:                     # blank → derived from jurisdiction; pin a string only to override
 occupancy_group:             # IBC use group(s): B, "A-2", or a list [B, "S-1"]
@@ -113,7 +141,20 @@ tenancy:                     # single | multi  (tenant configuration)
 |-------|-------|
 | Project | |
 | Address / BBL | |
+| Project Use Case | |
 | Client | |
+| Billing Contact | |
+| Billing Email | |
+| Billing Phone | |
+| Billing Company | |
+| Billing Address | |
+| Client Contact | |
+| Client Email | |
+| Client Phone | |
+| Client Company | |
+| Client Address | |
+| Descriptor | |
+| Created | |
 | Jurisdiction | |
 | Virtual tour | |
 
@@ -159,7 +200,7 @@ tenancy:                     # single | multi  (tenant configuration)
 
 ## How other skills use the dossier
 
-Identity rows with no front-matter key (Client, Virtual tour, …) are human-only facts; tools that need them parse the table.
+Identity rows with no front-matter key (Virtual tour, …) are human-only facts; tools that need them parse the table. Atlas intake rows for Project Use Case and Billing/Client Contact snapshots have matching flat front-matter keys.
 
 Analysis skills in this marketplace check for `PROJECT.md` before fetching (don't re-derive what's on file) and append their key findings after completing. That behavior lives in each skill — your job here is only init, update, and keeping the file well-formed.
 

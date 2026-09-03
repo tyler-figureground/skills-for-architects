@@ -75,3 +75,7 @@ dossier's hard rule keeps them in sync with the table as the provenance source o
 a hand-edited `PROJECT.md` can desync until the next `/project-dossier update`. The
 front-matter is trusted as authoritative when present - a wrong value there silently
 mis-scopes every downstream calculation, which is why `scope-check` exists as the backstop.
+
+Atlas 0.2 extends this same additive contract with project intake and flat Billing/Client Contact snapshot keys. Existing Norma keys and semantics remain unchanged. Shared contact IDs plus historical project snapshots are governed by [ADR 0003](./0003-shared-contact-directory-with-project-snapshots.md).
+
+Atlas 0.3 adds `address_street`, `address_unit`, `address_city`, `address_state`, and `address_postal_code` beside the formatted `address`. These additive keys let Atlas safely pre-populate and edit site-address components without guessing how commas divide a legacy formatted address. Atlas retains the formatted key and mirrored Identity row for existing consumers. Project Address remains a physical numbered street; PO-box support applies only to Contact Mailing Address.

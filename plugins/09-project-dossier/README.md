@@ -4,14 +4,14 @@ Persistent per-project state for architecture work, as plain files in the projec
 
 | Layer | File(s) | Holds | Skill |
 |-------|---------|-------|-------|
-| **Facts** | `PROJECT.md` | What is — address, zoning district, FAR, program, code edition. Each entry sourced and dated. | [`/project-dossier`](./skills/project-dossier) |
+| **Facts** | `PROJECT.md` | What is — project identity, use case, billing/client contacts, address, zoning, program, and code. | [`/project-dossier`](./skills/project-dossier) |
 | **Reasoning** | `decisions/NNNN-*.md` | Why it is — ADR-style records: context, options, the call, consequences, status. | [`/decision`](./skills/decision) |
 
 ## Why
 
 A building project spans months and a team. Without a dossier, every session re-derives the BBL, the district, the code edition — and the *reasoning* behind choices ("why scheme B?") gets lost in email threads and meetings. Software solved the second problem with ADRs; AEC never adopted an equivalent. These are Architecture Decision Records for actual architecture.
 
-The analysis skills in this marketplace check `PROJECT.md` before fetching, append their key findings after completing, and propose `/decision` when an analysis forces a choice.
+Atlas project intake pre-populates project identity, full address, Project Use Case, and creation-time Billing/Client Contact snapshots. Analysis skills check `PROJECT.md` before fetching, append their key findings after completing, and propose `/decision` when an analysis forces a choice.
 
 ## What this is not
 
