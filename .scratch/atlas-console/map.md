@@ -75,6 +75,13 @@ Continuity: `.agent/handoff/` per this repo's checkpoint rule.
   wordmark and the cursor - no scanlines on data. Field muted, selected row the
   only full-strength thing on screen. `SETUP` moved from steel blue into the ember
   family. Prototype token values recorded on the ticket.
+- [The wordmark and header, as Atlas code](issues/17-wordmark-and-header-in-atlas.md)
+  - **shipped.** Half-block compositor, extrusion, ramp sampler and the three
+  compositions, written fresh under test. Measured at 111 / 78 / 20 columns and
+  4 / 4 / 1 rows. The width rule needed a correction the prototype hid: thresholds
+  are the mark width plus the console's four columns of padding, which is exactly
+  the published 115 and 82, and a test walks every width from 20 to 240 asserting
+  the chosen composition fits. Replaces Textual's `Header`, refreshed on resize.
 - [The token layer](issues/18-token-layer.md) - **built.** A Python module owns
   the palette and glyph table and generates the Textual CSS from it, because tree
   nodes take no CSS and `render_label` must read from Python. `MODAL_CSS` and

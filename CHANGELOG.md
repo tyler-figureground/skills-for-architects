@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **The SOLID+VOID ATLAS header.** A 3D extruded, gradient-mapped wordmark rendered in half-blocks, so it costs four rows where whole blocks would cost seven - and the gradient gains a band rather than losing one, because there are more pixel rows to sample. Collapses by terminal width: full mark at 115 columns and up, a compact composition with ATLAS set beside the mark at 82-114, and a single knocked-out bar below that.
+- **A token layer.** One Python module owns the palette and the folder-state glyph table and generates the Textual stylesheet from it, because tree nodes take no CSS and must read their colours from Python. Colour is tested by contrast and structure rather than by hex literal: every text token must clear 4.5:1 against the ground, and a hand-edited colour in the generated CSS fails the suite.
+
 - **Atlas tells "empty" apart from "could not read".** `list_entries` now returns a `Listing` carrying a Load State rather than an empty tuple on error, so a folder Atlas failed to open is never rendered as a folder with nothing in it. A project whose root is unreadable reports REVIEW instead of READY or SETUP, gains a `COULD NOT READ` block in the detail pane, and appears under a new `unreadable` key in `--json`. Found on the live studio drive, where a folder containing one item was being reported as empty.
 - **Atlas reads paths past Windows MAX_PATH.** `long_path()` applies the extended-length prefix on demand at the three read chokepoints, fixing real studio-drive folders over 260 characters that failed to open while their own parents listed them. Writes are deliberately unchanged: a move can lengthen a path past the limit, and Atlas must not create paths that Explorer, Revit and the PowerShell tools cannot open.
 

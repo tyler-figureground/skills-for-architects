@@ -62,6 +62,7 @@ from ..core.project_data import (
 )
 from ..core.scan import DriveInventory, ProjectInventory, discover_drives, scan_drive
 from . import tokens
+from .wordmark import BAR, composition_for, mark_width, render_mark
 from .model import ProjectRow, project_detail, project_rows, visible_rows
 
 STATUS_STYLES = {name: f"bold {hex_}" for name, hex_ in tokens.PALETTE.status.items()}
@@ -741,6 +742,7 @@ class AtlasApp(App):
     # its colours from Python - drifting away from everything around it.
     CSS = MODAL_CSS + """
     Screen { layout: vertical; }
+    #mark { height: auto; padding: 1 2 0 2; }
     #drives { height: 1fr; padding: 1 2; }
     #filter { display: none; margin: 0 1; }
     #custom-use-case-label, #custom-use-case { display: none; }
@@ -794,7 +796,7 @@ class AtlasApp(App):
     # ------------------------------------------------------------- lifecycle
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield Static("", id="mark", markup=False)
         yield ListView(id="drives")
         yield Input(placeholder="Filter by project name or health", id="filter")
         with Horizontal(id="workspace"):
@@ -806,7 +808,33 @@ class AtlasApp(App):
         yield Static("Ready", id="operation", markup=False)
         yield Footer()
 
+    def _identity(self) -> str:
+        """The line under the mark: which drive, which map, what needs attention."""
+        if self._inventory is None:
+            return self.sub_title or ""
+        drive = self._inventory.map
+        parts = [drive.drive, f"map v{drive.version}", f"{len(self._rows)} projects"]
+        attention = sum(1 for r in self._rows if r.report.status != "conform")
+        if attention:
+            parts.append(f"{attention} need attention")
+        return "   ".join(parts)
+
+    def _refresh_mark(self) -> None:
+        """Pick the widest composition the terminal can hold, then draw it.
+
+        Called on mount, on resize, and whenever the inventory changes, so the
+        mark collapses as the window narrows instead of clipping.
+        """
+        width = self.size.width or mark_width(BAR)
+        mark = render_mark(composition_for(width))
+        mark.append(self._identity(), style=tokens.PALETTE.muted)
+        self.query_one("#mark", Static).update(mark)
+
+    def on_resize(self, _: object) -> None:
+        self._refresh_mark()
+
     def on_mount(self) -> None:
+        self._refresh_mark()
         table = self.query_one("#projects", DataTable)
         table.add_column("Mark", key="mark", width=4)
         table.add_column("Health", key="health")
@@ -906,6 +934,7 @@ class AtlasApp(App):
             self._open_drive(self._drives[0])
         else:
             drive_list.focus()
+        self._refresh_mark()
         self.refresh_bindings()
 
     def on_list_view_selected(self, _: ListView.Selected) -> None:
@@ -967,6 +996,7 @@ class AtlasApp(App):
         self.query_one("#drives", ListView).display = False
         self.query_one("#workspace", Horizontal).display = True
         self.sub_title = f"{report.drive} - map v{report.map_version}"
+        self._refresh_mark()
         self._fill()
         if generation == self._announced_scan_generation:
             self._set_operation(f"Scan complete - {len(self._rows)} project(s)")
