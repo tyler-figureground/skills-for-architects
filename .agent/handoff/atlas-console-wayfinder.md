@@ -6,7 +6,7 @@ generated_by: skills-for-architects
 
 # Atlas console redesign - wayfinder continuity
 
-Status: world locked, both research tickets in, awaiting wordmark decision
+Status: visual direction fully resolved; ready for domain modelling then build
 Date: 2026-09-02
 Effort: `atlas-console`
 
@@ -62,21 +62,26 @@ Wayfinder's plan-don't-do default and is recorded in the map's Notes.
   surfaced: 11, 12, 13 from the Drive cost research; 14, 15, 16 from the Textual
   research.
 
+## Session 3
+
+Ticket 02 resolved: POCHE world, EMBER wordmark, half-block rendering. Header
+went from 9 rows to 6 with a finer gradient, not a coarser one. Three-step
+collapse rule by terminal width. Retro register stops at the wordmark and the
+cursor. Tickets 17 (header as Atlas code) and 18 (token layer) graduated.
+
 ## Frontier
 
 Unblocked and unclaimed: 03, 04, 08, 10, 11, 12, 13, 14, 16.
-Claimed: 02, waiting on the user.
-Blocked: 07 (on 04, 13, 14, 16), 09 (on 03), 15 (on 04).
-Resolved: 01, 05, 06.
+Blocked: 07 (on 04, 13, 14, 16), 09 (on 03), 15 (on 04), 17 (on 14), 18 (on 14).
+Resolved: 01, 02, 05, 06.
 
-Two tickets want the user specifically rather than any session: **02** (which
-wordmark treatment, where the header collapses, how far the retro register
-travels) and **12** (provision a synthetic Workspace shared drive, or authorise a
-one-off read of the studio drive, so the tree can be given a latency budget).
+**14 is the keystone.** Nothing blocks it, it is pure `/domain-modeling`, and
+three tickets wait on it - the tree seam, the header code, and the token layer.
+Start there.
 
-Good first ticket for a fresh session with no user present: **14**, the node kind
-vocabulary. Nothing blocks it, it is pure `/domain-modeling`, and it unblocks both
-the token layer and the tree seam.
+Only **12** still wants the user specifically: provision a synthetic Workspace
+shared drive, or authorise a one-off read of the studio drive, so the tree can be
+given a latency budget.
 
 ## Notes for the next session
 

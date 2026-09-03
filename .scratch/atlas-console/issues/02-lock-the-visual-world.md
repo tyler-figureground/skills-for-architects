@@ -1,7 +1,7 @@
 # Lock the Atlas visual world
 
 Type: prototype
-Status: claimed
+Status: resolved
 Blocked by: -
 Parent: ../map.md
 
@@ -72,3 +72,65 @@ Three questions still open, on the sheet:
 
 Ticket stays claimed until those three are answered. Prototype source is throwaway
 and lives in the session scratchpad only - it is not Atlas code.
+
+## Answer
+
+**World: A - POCHE.** Solid is mass, void is space. Fill weight carries folder
+state. Settled and not reopened.
+
+**Wordmark: EMBER,** rendered in half-blocks. Bone-gold at the crown through amber
+and orange into the vermilion the console already uses for ACTION, then oxblood at
+the base. Chosen over the neon ramps because it introduces no colour the console
+does not already mean something by, and it survives a colourblind check the magenta
+ramps do not.
+
+**Height: solved by half-block rendering,** not by shrinking the letterforms. A
+terminal cell is about twice as tall as it is wide, and U+2580 UPPER HALF BLOCK
+splits it: foreground paints the top half, background the bottom. Every character
+row therefore carries two pixel rows of letterform. Glyphs are drawn six pixels
+tall, packed into three character rows, with extrusion adding a fourth.
+
+| | before | after |
+|---|---|---|
+| wordmark rows | 7 | **4** |
+| whole header | 9 | **6** |
+| gradient bands | 5 | **6** |
+
+The gradient got *finer* while the mark got shorter - more pixel rows to sample
+across. Nothing was traded.
+
+**Collapse rule, three steps by terminal width:**
+
+- **>= 115 columns** - full mark, `SOLID+VOID ATLAS` at 111 columns. 6 header rows.
+- **82 - 114 columns** - compact mark: `SOLID+VOID` in the 3D face with `ATLAS` set
+  beside it in ember caps, 78 columns. Still 6 header rows.
+- **< 82 columns** - collapsed: the name knocked out of a single ember bar, drive
+  identity beneath. 3 header rows.
+
+**Retro register stops at the wordmark and the cursor.** No scanline dimming on
+table rows, no glow, no neon pane rules. One loud moment.
+
+**Cursor and field.** The selected row is the only full-strength thing on screen:
+a solid ember rail in the gutter, bone text, saturated status colour. Every
+unselected row drops to muted ink with its status colour mixed 42% toward the
+ground. The alternative - status knocked out as an inverse chip - was built and
+rejected: it reads faster down a long list but competes with the wordmark.
+
+**One palette change made without being asked:** `SETUP` was a steel blue, the only
+colour on screen from outside the ember family. It is now a warm bronze
+(`#A8845C`). `READY` warmed slightly to `#8AA37A`. `ACTION` and `REVIEW` were
+already ember and did not move. Called out here because it is a semantic colour,
+not decoration - ticket 14 should confirm it when it writes the kind table.
+
+**Tokens as built** (prototype values, to be confirmed by the token-layer ticket):
+
+- ground `#0C0C0D` &middot; surface `#141414` &middot; rail `#282622`
+- bone `#F4F0E6` (cursor only) &middot; ink `#A9A399` &middot; muted `#7A746A` &middot; dim `#48453F`
+- ember ramp `#FFE7BC` `#F6C25A` `#EE8A2B` `#E2452A` `#A8250F` `#5E1206`
+- extrusion shade `#1E0803`, lightened 30% toward `#E2452A` on the near layer
+- ACTION `#E2452A` &middot; REVIEW `#D9A441` &middot; READY `#8AA37A` &middot; SETUP `#A8845C`
+
+Sheet: https://claude.ai/code/artifact/4a9756ec-d166-44d0-b76d-ddd9979fbbc6
+
+The prototype renderer stays throwaway. Ticket 17 writes this into Atlas properly,
+under test.

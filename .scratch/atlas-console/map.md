@@ -68,6 +68,13 @@ Continuity: `.agent/handoff/` per this repo's checkpoint rule.
   - landed as four commits, `c6d564a..7737de7`, tests and lint green before
   committing. `.agent/`, `.impeccable/`, and `.scratch/` are tracked, not ignored.
   Not pushed.
+- [Lock the Atlas visual world](issues/02-lock-the-visual-world.md) - POCHE world
+  with an EMBER wordmark, rendered in half-blocks so the header costs 6 rows
+  instead of 9 while the gradient gets finer. Collapse rule: full mark at >= 115
+  columns, compact at 82 - 114, single bar below 82. Retro register stops at the
+  wordmark and the cursor - no scanlines on data. Field muted, selected row the
+  only full-strength thing on screen. `SETUP` moved from steel blue into the ember
+  family. Prototype token values recorded on the ticket.
 - [Textual 8.2.8 tree widgets and lazy loading](issues/05-research-textual-tree-widgets.md)
   - build on plain `Tree`; `DirectoryTree` destroys injected nodes on reload, can
   only subtract paths, and costs ~2 stats per entry. Copy its lazy-load machinery,
@@ -86,22 +93,12 @@ Continuity: `.agent/handoff/` per this repo's checkpoint rule.
 
 Fog toward the destination. Graduates into tickets as the frontier clears it.
 
-- **Textual token layer.** Once the visual world is locked, the palette, glyph
-  vocabulary, and rule weights need to live in one place every screen reads -
-  a Textual theme, a CSS variable block, or a Python token module. Which, and how
-  the existing modal CSS migrates onto it. Ticket 05 constrains it: tree nodes take
-  no CSS at all, so whatever this layer is, `render_label` has to be able to read
-  it from Python. Blocked in practice by ticket 14, which names what it keys on.
-- **ASCII header implementation.** The wordmark itself plus the responsive collapse
-  rule, the narrow-terminal fallback, and where drive identity sits relative to it.
-  Direction is now 3D extruded gradient lettering - see ticket 02 - so this also
-  owns the glyph table, the extrusion compositor, and the per-cell ramp sampler as
-  real Atlas code rather than throwaway prototype code.
-- **How far the retro register travels.** If it stops at the wordmark, nothing else
-  changes. If it does not, scanline dimming on table rows, selection glow, and neon
-  pane rules all become design work. Ticket 02 question 3 decides which.
 - **File-level action set.** Which actions the tree offers, what core plan each
   builds, and how each previews. Depends on the write contract.
+- **Selection and focus rendering everywhere else.** Ticket 02 settled the cursor
+  for the project list and the tree. Modals, the filter input, the command palette,
+  and the search overlay all still show default Textual focus, which no longer
+  matches. Small, and easy to forget until it looks wrong.
 - **Tree states.** Loading, empty project, permission error, a folder too large to
   walk, a stale tree after an external change. Ticket 06 adds two that must be
   designed distinctly: **enumeration error**, which must never look like empty, and
