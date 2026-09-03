@@ -1,7 +1,7 @@
 # Land the outstanding Atlas working tree
 
 Type: task
-Status: open
+Status: resolved
 Blocked by: -
 Parent: ../map.md
 
@@ -28,3 +28,31 @@ Decide and execute:
 This is a task, not a decision about Atlas. It unblocks clean execution of every
 ticket after it. Resolve by actually landing the tree, then record what was done and
 the resulting commit range.
+
+## Answer
+
+Landed. The whole working tree was committed - modified and untracked alike - on
+the user's instruction to commit everything. `main` is now ahead of `origin/main`
+by five and the tree is clean. Not pushed; that stays the user's call.
+
+Verified before committing: `uv run pytest` 201 passed, `./scripts/lint.sh` all
+checks passed (shellcheck unavailable locally, skipped by the script, CI runs it).
+
+Four commits, oldest first:
+
+- `24e1c82` feat(atlas): project intake, shared contacts, and safe editing
+- `9873ca4` feat(project-dossier): intake contract and structured site address
+- `0b9bd7d` docs(research): cost of reading a project tree over Google Drive
+- `7737de7` chore: agent continuity, design critique, and the atlas-console map
+
+Range: `c6d564a..7737de7`.
+
+Ignore decisions, settled by committing rather than ignoring:
+
+- `.agent/` is **tracked**. Handoffs are continuity the next session needs.
+- `.impeccable/` is **tracked**. The critique is the evidence behind the
+  operations-console direction.
+- `.scratch/` is **tracked**. The map is this effort's canonical artifact and
+  would be worthless if it lived only on one machine.
+
+`.gitignore` was not modified. Nothing was discarded.

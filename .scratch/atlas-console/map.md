@@ -59,6 +59,16 @@ Continuity: `.agent/handoff/` per this repo's checkpoint rule.
 - Destination, tree model, operator, and capability scope settled at charting.
   Filesystem-mirror tree with a separate not-on-disk list; both operators served;
   dossier, search, and file actions in scope; portfolio dashboard out.
+- [Land the outstanding Atlas working tree](issues/01-land-outstanding-working-tree.md)
+  - landed as four commits, `c6d564a..7737de7`, tests and lint green before
+  committing. `.agent/`, `.impeccable/`, and `.scratch/` are tracked, not ignored.
+  Not pushed.
+- [Reading a project tree over Google Drive File Stream](issues/06-research-drive-tree-cost.md)
+  - shared drives are streaming-only; enumeration is the unit of cost, not `stat`;
+  no official latency figure exists from anyone; recursive counts have no cheap
+  primitive; stock Textual `DirectoryTree` is the wrong loader; filesystem watching
+  is not a dependable staleness signal; `Path.rglob` swallows every `OSError` and
+  must never be used here. Report: `docs/research/atlas-drive-tree-read-cost.md`.
 
 ## Not yet specified
 
@@ -73,12 +83,19 @@ Fog toward the destination. Graduates into tickets as the frontier clears it.
 - **File-level action set.** Which actions the tree offers, what core plan each
   builds, and how each previews. Depends on the write contract.
 - **Tree states.** Loading, empty project, permission error, a folder too large to
-  walk, a stale tree after an external change.
+  walk, a stale tree after an external change. Ticket 06 adds two that must be
+  designed distinctly: **enumeration error**, which must never look like empty, and
+  **truncated or partial**, because a count cap can be hit and because CPython
+  issue 102993 shows `os.listdir` returning a partial result on a synced mount
+  while Explorer reads it fine.
 - **80x24 composition.** What the console becomes when neither pane fits.
 - **Test strategy for the new surface.** The current three-happy-path TUI coverage
   will not hold a tree, a search overlay, and a dossier panel.
 - **Docs and release.** README, CHANGELOG, any ADR the seam decisions earn, and the
   `uv tool install --editable` redeploy.
+- **Cache and invalidation layer.** Ticket 06 prescribes TTL plus explicit refresh
+  plus subtree invalidation on Atlas's own mutations, in the shape rclone uses.
+  Where that layer lives, what it keys on, and how conform and clean signal it.
 
 ## Out of scope
 
