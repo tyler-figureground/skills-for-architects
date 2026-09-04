@@ -168,6 +168,16 @@ Continuity: `.agent/handoff/` per this repo's checkpoint rule.
   the scoped Guard already watched, and the cursor follows what it repaired. One
   correction to ADR 0006: **only control-plane Expectations are repairable** -
   conform has never created a mapped section and would skip it. `docs/adr/0007`.
+- [The console shell, as Atlas code](issues/20-console-shell-in-atlas.md) -
+  **built.** The layout rules are a pure module the tests cross without Textual;
+  `app.py` applies them and owns none of the rule. Three Regions, two
+  Compositions, breakpoints at 100 and 40, summary and operation merged below 30
+  rows, one honest line below the floor. Collapse on `[` `]` `z`, sticky and
+  outranking the breakpoint. Tab, Enter and Escape take no width argument, which
+  is what makes identical-in-both-Compositions structural. The health modal is
+  gone: `d` cycles Companion Modes and unmet Expectations reads the real seam from
+  ticket 07. Below 100 columns Textual's footer gives way to `? Help  Tab Region
+  Enter Open`. Rendered headless at 179/120/87/46/39 columns and 51/24 rows.
 - [Console layout and navigation model](issues/03-console-layout-and-navigation.md)
   - **the console is three Regions in two Compositions.** Project List opposite a
   Workspace that stacks the Tree Region over a Companion Region - rows spent to

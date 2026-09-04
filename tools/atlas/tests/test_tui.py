@@ -263,7 +263,7 @@ async def test_filter_is_fast_and_escape_restores_all_projects(fixture_drive):
         await pilot.press("b", "e", "t", "a")
         await pilot.pause()
         assert app.query_one("#projects", DataTable).row_count == 1
-        assert "Beta" in str(app.query_one("#detail-title", Static).content)
+        assert "Beta" in str(app.query_one("#workspace-title", Static).content)
 
         await pilot.press("escape")
         await pilot.pause()
@@ -271,7 +271,10 @@ async def test_filter_is_fast_and_escape_restores_all_projects(fixture_drive):
         assert app.query_one("#projects", DataTable).row_count == 2
 
 
-async def test_enter_opens_project_health_and_escape_closes(fixture_drive):
+async def test_enter_drills_into_the_workspace_and_escape_unwinds(fixture_drive):
+    """Enter used to push a project-health modal. ADR 0005 reclaims it: health is
+    a Companion Mode now, and Enter drills toward the tree without leaving the
+    screen. Nothing about the console is behind a modal any more."""
     make_project(
         fixture_drive,
         "260813_Review",
@@ -282,14 +285,21 @@ async def test_enter_opens_project_health_and_escape_closes(fixture_drive):
 
     async with app.run_test() as pilot:
         await settle(app, pilot)
+        assert app._focus_region == "projects"
+
         await pilot.press("enter")
         await pilot.pause()
-        assert isinstance(app.screen, ResultModal)
-        assert "Project health" in str(app.screen.query_one(".dialog-title", Static).content)
+        assert app.screen is app.screen_stack[0], "no modal"
+        assert app._focus_region == "tree"
+
+        await pilot.press("enter")
+        await pilot.pause()
+        assert app._focus_region == "companion"
 
         await pilot.press("escape")
+        await pilot.press("escape")
         await pilot.pause()
-        assert app.screen is app.screen_stack[0]
+        assert app._focus_region == "projects"
 
 
 async def test_add_folders_requires_a_selection(fixture_drive):

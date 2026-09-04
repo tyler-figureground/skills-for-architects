@@ -61,13 +61,42 @@ from ..core.project_data import (
     preview_project_update,
 )
 from ..core.scan import DriveInventory, ProjectInventory, discover_drives, scan_drive
+from ..core.tree import ProjectTree, open_project_tree
 from . import tokens
 from .wordmark import BAR, composition_for, mark_width, render_mark
+from .layout import (
+    COMPANION,
+    DEFAULT_MODE,
+    EXPECTATIONS,
+    HEALTH,
+    MODE_LABELS,
+    PROJECT_LIST,
+    REFUSED,
+    TREE,
+    drill,
+    footer_actions,
+    layout_for,
+    next_mode,
+    next_region,
+    summary_line,
+    unwind,
+)
 from .model import ProjectRow, project_detail, project_rows, visible_rows
 
 STATUS_STYLES = {name: f"bold {hex_}" for name, hex_ in tokens.PALETTE.status.items()}
 
 MODAL_CSS = tokens.stylesheet()
+
+# The Tree Region's stand-in. Ticket 20 builds the frame; ticket 07's seam fills
+# it. Saying so is better than an empty box that reads as a broken tree.
+TREE_PLACEHOLDER = "The folder tree lands here."
+
+# What the narrow chrome names, in the order layout.footer_actions returns them.
+KEY_HINTS = {
+    "show_help_panel": "? Help",
+    "next_region": "Tab Region",
+    "drill": "Enter Open",
+}
 
 
 def _project_token(project: ProjectInventory) -> tuple[tuple[str, bool], ...]:
@@ -736,7 +765,7 @@ class ResultModal(ModalScreen[None]):
 
 class AtlasApp(App):
     TITLE = "Atlas"
-    HORIZONTAL_BREAKPOINTS = [(0, "-narrow"), (100, "-wide")]
+    HORIZONTAL_BREAKPOINTS = [(0, "-tiny"), (40, "-narrow"), (100, "-wide")]
     # Colour lives in tokens.stylesheet(); this block is geometry only. Keeping
     # them apart is what stops the tree - which takes no CSS at all and must read
     # its colours from Python - drifting away from everything around it.
@@ -746,21 +775,30 @@ class AtlasApp(App):
     #drives { height: 1fr; padding: 1 2; }
     #filter { display: none; margin: 0 1; }
     #custom-use-case-label, #custom-use-case { display: none; }
-    #workspace { height: 1fr; }
-    #projects { width: 3fr; height: 1fr; }
-    #detail { width: 2fr; min-width: 36; height: 1fr; padding: 1 2; }
-    #detail-title { height: auto; margin-bottom: 1; }
-    #detail-body { height: auto; }
-    Screen.-narrow #detail { display: none; }
+    #console { height: 1fr; }
+    #projects { width: 2fr; height: 1fr; }
+    #workspace { width: 3fr; height: 1fr; }
+    #workspace-title { height: 1; padding: 0 2; }
+    #tree { height: 1fr; padding: 0 2; }
+    #companion { height: 1fr; padding: 0 2; }
+    #companion-title { height: auto; }
+    #companion-body { height: auto; }
+    #refusal { height: 1fr; padding: 1 2; }
     #summary { height: 1; padding: 0 2; }
     #operation { height: 1; padding: 0 2; }
+    #keys { dock: bottom; height: 1; padding: 0 2; }
     Footer { dock: bottom; }
     """
     BINDINGS = [
         Binding("q", "quit", "Quit", show=False),
         Binding("r", "refresh", "Refresh", show=False),
         Binding("slash", "filter_projects", "Filter"),
-        Binding("enter", "inspect", "Inspect"),
+        Binding("tab", "next_region", "Region", priority=True),
+        Binding("enter", "drill", "Open"),
+        Binding("d", "cycle_companion", "Companion", show=False),
+        Binding("left_square_bracket", "collapse_list", "Collapse list", show=False),
+        Binding("right_square_bracket", "collapse_companion", "Collapse companion", show=False),
+        Binding("z", "zoom_region", "Zoom", show=False),
         Binding("n", "new_project", "New project"),
         Binding("e", "edit_project", "Edit project"),
         Binding("m", "manage_contacts", "Contacts"),
@@ -776,9 +814,23 @@ class AtlasApp(App):
         Binding("escape", "back", "Back", show=False),
     ]
 
-    def __init__(self, drive: Path | None = None) -> None:
+    def __init__(self, drive: Path | None = None, *,
+                 follow_debounce: float = 0.15) -> None:
         super().__init__()
         self._initial_drive = drive
+        # Region state. Collapse is sticky for the session and outranks the
+        # breakpoint default; the width overrides it only when it cannot carry it.
+        self._focus_region = PROJECT_LIST
+        self._collapsed: set[str] = set()
+        self._zoomed: str | None = None
+        self._companion_mode = DEFAULT_MODE
+        self._showing = "drives"
+        self._summary_text = ""
+        self._operation_text = "Ready"
+        self._trees: dict[str, ProjectTree] = {}
+        self._follow_debounce = follow_debounce
+        self._follow_timer = None
+        self._workspace_project = ""
         self._drives: list[Path] = []
         self._inventory: DriveInventory | None = None
         self._rows: tuple[ProjectRow, ...] = ()
@@ -799,13 +851,19 @@ class AtlasApp(App):
         yield Static("", id="mark", markup=False)
         yield ListView(id="drives")
         yield Input(placeholder="Filter by project name or health", id="filter")
-        with Horizontal(id="workspace"):
+        with Horizontal(id="console"):
             yield DataTable(id="projects")
-            with VerticalScroll(id="detail"):
-                yield Static("Project health", id="detail-title", markup=False)
-                yield Static("Select a project to inspect it.", id="detail-body", markup=False)
+            with Vertical(id="workspace"):
+                yield Static("", id="workspace-title", markup=False)
+                with VerticalScroll(id="tree"):
+                    yield Static(TREE_PLACEHOLDER, id="tree-body", markup=False)
+                with VerticalScroll(id="companion"):
+                    yield Static("", id="companion-title", markup=False)
+                    yield Static("", id="companion-body", markup=False)
+        yield Static("", id="refusal", markup=False)
         yield Static("", id="summary", markup=False)
         yield Static("Ready", id="operation", markup=False)
+        yield Static("", id="keys", markup=False)
         yield Footer()
 
     def _identity(self) -> str:
@@ -832,6 +890,77 @@ class AtlasApp(App):
 
     def on_resize(self, _: object) -> None:
         self._refresh_mark()
+        self._apply_layout()
+
+    # ------------------------------------------------------------- the shell
+
+    def _apply_layout(self) -> None:
+        """Draw the Composition this terminal size earns.
+
+        The rule lives in ``tui.layout``; this only applies it. Regions are shown
+        and hidden rather than shrunk, because a Region too narrow to read is
+        worse than one that is not there.
+        """
+        layout = layout_for(
+            self.size.width or 80, self.size.height or 24,
+            focus=self._focus_region, collapsed=self._collapsed, zoomed=self._zoomed,
+        )
+        refusing = layout.composition == REFUSED
+        refusal = self.query_one("#refusal", Static)
+        refusal.display = refusing
+        if refusing:
+            refusal.update(layout.refusal)
+        self.query_one("#mark", Static).display = not refusing
+        self.query_one("#operation", Static).display = not refusing
+        self.query_one("#drives", ListView).display = (
+            not refusing and self._showing == "drives")
+        self.query_one("#console", Horizontal).display = (
+            not refusing and self._showing == "projects")
+        if not refusing:
+            self.query_one("#projects", DataTable).display = PROJECT_LIST in layout.visible
+            workspace = self.query_one("#workspace", Vertical)
+            workspace.display = bool({TREE, COMPANION} & set(layout.visible))
+            self.query_one("#tree", VerticalScroll).display = TREE in layout.visible
+            self.query_one("#companion", VerticalScroll).display = COMPANION in layout.visible
+        self._merge_status = layout.merge_status
+        self._render_chrome(refusing)
+        self._render_status()
+
+    def _render_chrome(self, refusing: bool = False) -> None:
+        """Textual's footer where there is room for it, three keys where there
+        is not, and neither when Atlas is asking for a bigger window.
+
+        Which bindings exist never changes with width - only how many of them the
+        chrome has room to name. Sizing the chrome through ``check_action`` would
+        have been tidier and is wrong: returning None there disables the key as
+        well as hiding it, so a narrow terminal would have lost the actions rather
+        than only their labels.
+        """
+        permitted = None if refusing else footer_actions(self.size.width or 80)
+        narrow = permitted is not None
+        self.query_one(Footer).display = not narrow and not refusing
+        keys = self.query_one("#keys", Static)
+        keys.display = narrow
+        if narrow:
+            keys.update("  ".join(KEY_HINTS[action] for action in permitted))
+
+    def _render_status(self) -> None:
+        """Summary and operation, merged onto one line when rows run short."""
+        merged = getattr(self, "_merge_status", False)
+        summary = self.query_one("#summary", Static)
+        summary.display = not merged and self.query_one("#operation", Static).display
+        summary.update(self._summary_text)
+        text = self._operation_text
+        if merged and self._summary_text:
+            text = f"{text}  |  {self._summary_text}"
+        self.query_one("#operation", Static).update(text)
+
+    def _focus_current_region(self) -> None:
+        """Move keyboard focus to whatever Region is current, if it is drawn."""
+        target = {PROJECT_LIST: "#projects", TREE: "#tree", COMPANION: "#companion"}
+        widget = self.query_one(target[self._focus_region])
+        if widget.display:
+            widget.focus()
 
     def on_mount(self) -> None:
         self._refresh_mark()
@@ -844,7 +973,7 @@ class AtlasApp(App):
         table.add_column("Review", key="review")
         table.cursor_type = "row"
         table.display = False
-        self.query_one("#workspace", Horizontal).display = False
+        self._showing = "drives"
         if self._initial_drive:
             self._open_drive(self._initial_drive)
         else:
@@ -863,7 +992,7 @@ class AtlasApp(App):
                 yield SystemCommand("New project", "Create a mapped project", self.action_new_project)
                 yield SystemCommand("Manage contacts", "Edit shared contact details", self.action_manage_contacts)
         if self._selected_row() is not None:
-            yield SystemCommand("Inspect project", "Show exact findings", self.action_inspect)
+            yield SystemCommand("Project health", "Show exact findings in the Companion", self.action_show_health)
             yield SystemCommand("Edit project", "Correct project intake fields", self.action_edit_project)
             yield SystemCommand("Open project folder", "Open in the default file manager", self.action_open_folder)
             yield SystemCommand("Mark or unmark project", "Build a batch selection", self.action_toggle_mark)
@@ -895,8 +1024,10 @@ class AtlasApp(App):
             return True if has_project and self._inventory_fresh and not self._busy else None
         if action == "conform_marked":
             return True if self._marked and self._inventory_fresh and not self._busy else None
-        if action in {"inspect", "open_folder", "toggle_mark"}:
+        if action in {"open_folder", "toggle_mark"}:
             return True if has_project and not self._busy else None
+        if action in {"drill", "next_region", "cycle_companion"}:
+            return True if self._showing == "projects" else None
         if action == "show_last_result":
             return True if self._last_result is not None else False
         return super().check_action(action, parameters)
@@ -922,14 +1053,16 @@ class AtlasApp(App):
         drive_list.clear()
         for drive in self._drives:
             drive_list.append(ListItem(Static(str(drive), markup=False)))
-        drive_list.display = True
-        self.query_one("#workspace", Horizontal).display = False
+        self._showing = "drives"
         self.query_one("#filter", Input).display = False
-        self.query_one("#summary", Static).update(
+        self._drive_summary = (
             f"{len(self._drives)} mapped drive(s) - Enter to open"
             if self._drives
             else "No mapped drives - set ATLAS_MOUNT_ROOT or launch with --drive"
         )
+        self._focus_region = PROJECT_LIST
+        self._refresh_summary()
+        self._apply_layout()
         if auto_open and len(self._drives) == 1:
             self._open_drive(self._drives[0])
         else:
@@ -993,8 +1126,8 @@ class AtlasApp(App):
         table = self.query_one("#projects", DataTable)
         table.loading = False
         table.display = True
-        self.query_one("#drives", ListView).display = False
-        self.query_one("#workspace", Horizontal).display = True
+        self._showing = "projects"
+        self._apply_layout()
         self.sub_title = f"{report.drive} - map v{report.map_version}"
         self._refresh_mark()
         self._fill()
@@ -1046,10 +1179,13 @@ class AtlasApp(App):
                 0,
             )
             table.move_cursor(row=selected_index)
-            self._update_detail(self._visible_rows[selected_index])
+            self._follow_cursor(self._visible_rows[selected_index])
         else:
-            self.query_one("#detail-title", Static).update("No matching projects")
-            self.query_one("#detail-body", Static).update(
+            self._workspace_project = ""
+            self._companion_count = 0
+            self.query_one("#workspace-title", Static).update("No matching projects")
+            self.query_one("#companion-title", Static).update("")
+            self.query_one("#companion-body", Static).update(
                 "Change the filter or press Esc to show every project."
                 if query
                 else "No project folders found on this drive. Press n to create one."
@@ -1063,13 +1199,25 @@ class AtlasApp(App):
         ).summary()
         direction = "desc" if self._sort_reverse else "asc"
         filter_note = f" | Filter: {query}" if query else ""
-        self.query_one("#summary", Static).update(
+        self._drive_summary = (
             f"{len(self._rows)} projects | {counts['conform']} ready | "
             f"{counts['drift']} action | {counts['unfiled']} review | "
             f"{counts['stub']} setup | {len(self._marked)} marked | "
             f"{self._sort_column} {direction}{filter_note}"
         )
+        self._refresh_summary()
         self.refresh_bindings()
+
+    def _refresh_summary(self) -> None:
+        """One line, answering for whichever Region has focus."""
+        self._summary_text = summary_line(
+            self._focus_region,
+            drive_summary=getattr(self, "_drive_summary", ""),
+            project=self._workspace_project,
+            companion_mode=self._companion_mode,
+            companion_count=getattr(self, "_companion_count", 0),
+        )
+        self._render_status()
 
     def _selected_row(self) -> ProjectRow | None:
         if not self._visible_rows:
@@ -1085,19 +1233,75 @@ class AtlasApp(App):
             return None
         return self._inventory.root / row.key, row.key
 
-    def _update_detail(self, row: ProjectRow) -> None:
-        self.query_one("#detail-title", Static).update(row.key)
-        self.query_one("#detail-body", Static).update(project_detail(row))
+    # ---- the Workspace follows the Project List cursor -------------------
+
+    def _project_tree(self, row: ProjectRow) -> ProjectTree | None:
+        """The tree handle for one project, built once and kept."""
+        if self._inventory is None:
+            return None
+        if row.key not in self._trees:
+            inv = next((p for p in self._inventory.projects if p.name == row.key), None)
+            if inv is None:
+                return None
+            self._trees[row.key] = open_project_tree(inv, self._inventory.map, row.report)
+        return self._trees[row.key]
+
+    def _follow_cursor(self, row: ProjectRow) -> None:
+        """Populate the Workspace for the Selected Project, debounced.
+
+        The title is free and moves at once. Everything under it costs an
+        enumeration, so it waits out a rest on the cursor - unless this project
+        has been read before, in which case there is nothing to wait for.
+        """
+        if self._follow_timer is not None:
+            self._follow_timer.stop()
+            self._follow_timer = None
+        changed = row.key != self._workspace_project
+        self._workspace_project = row.key
+        self.query_one("#workspace-title", Static).update(row.key)
+        if changed:
+            # A new project answers a new question; the Companion goes back to
+            # the mode that has to be readable beside the tree (ADR 0005).
+            self._companion_mode = DEFAULT_MODE
+        if row.key in self._trees or not self._follow_debounce:
+            self._update_workspace(row)
+            return
+        self._follow_timer = self.set_timer(
+            self._follow_debounce, lambda: self._update_workspace(row))
+
+    def _update_workspace(self, row: ProjectRow) -> None:
+        self._follow_timer = None
+        if row.key != self._workspace_project:
+            return      # the cursor moved on while this was pending
+        mode = self._companion_mode
+        self.query_one("#companion-title", Static).update(MODE_LABELS[mode])
+        if mode == HEALTH:
+            body = project_detail(row)
+            count = row.fixes + row.review
+        elif mode == EXPECTATIONS:
+            tree = self._project_tree(row)
+            unmet = tree.expectations() if tree is not None else ()
+            count = len(unmet)
+            body = "\n".join(
+                f"  {e.path}" + ("" if e.repairable else "   (add folders)")
+                for e in unmet
+            ) or "  Nothing missing - the project has what the map expects."
+        else:
+            body = "  The dossier lands here."
+            count = 0
+        self._companion_count = count
+        self.query_one("#companion-body", Static).update(body)
+        self._refresh_summary()
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         name = str(event.row_key.value)
         row = next((candidate for candidate in self._visible_rows if candidate.key == name), None)
         if row is not None:
-            self._update_detail(row)
+            self._follow_cursor(row)
             self.refresh_bindings()
 
     def on_data_table_row_selected(self, _: DataTable.RowSelected) -> None:
-        self.action_inspect()
+        self.action_drill()
 
     def on_data_table_header_selected(self, event: DataTable.HeaderSelected) -> None:
         column = str(event.column_key.value)
@@ -1127,7 +1331,8 @@ class AtlasApp(App):
         status.remove_class("-warning", "-error")
         if severity in {"warning", "error"}:
             status.add_class(f"-{severity}")
-        status.update(message)
+        self._operation_text = message
+        self._render_status()
 
     def _start_operation(
         self,
@@ -1202,6 +1407,8 @@ class AtlasApp(App):
             self._show_drives(auto_open=False)
 
     def action_back(self) -> None:
+        """Escape unwinds: out of the filter, out through the Regions, out to the
+        drive picker. One key, one direction, the same in both Compositions."""
         if self._busy and self._work_kind != "scan":
             self.notify("Wait for the current operation to finish", title="Atlas is working")
             return
@@ -1214,8 +1421,82 @@ class AtlasApp(App):
             filter_input.display = False
             self.query_one("#projects", DataTable).focus()
             return
+        if self._zoomed is not None:
+            self._zoomed = None
+            self._apply_layout()
+            return
+        outward = unwind(self._focus_region)
+        if outward is not None:
+            self._move_to_region(outward)
+            return
         if self._inventory is not None:
             self._show_drives(auto_open=False)
+
+    def _move_to_region(self, region: str) -> None:
+        self._focus_region = region
+        if self._zoomed is not None:
+            self._zoomed = region
+        self._apply_layout()
+        self._focus_current_region()
+        self._refresh_summary()
+        self.refresh_bindings()
+
+    def action_next_region(self) -> None:
+        if self._showing != "projects":
+            return
+        self._move_to_region(next_region(self._focus_region, collapsed=self._collapsed))
+
+    def action_drill(self) -> None:
+        """Enter drills toward the tree."""
+        if self._busy or self._showing != "projects":
+            return
+        self._move_to_region(drill(self._focus_region))
+
+    def action_show_health(self) -> None:
+        """Project health, in the Companion rather than in a modal (ADR 0005).
+
+        The palette entry that used to push a modal now switches a mode. The
+        finding is the same; what changed is that it no longer covers the screen
+        the operator was reading it against.
+        """
+        if self._showing != "projects":
+            return
+        self._companion_mode = HEALTH
+        row = self._selected_row()
+        if row is not None:
+            self._update_workspace(row)
+        self._refresh_summary()
+
+    def action_cycle_companion(self) -> None:
+        if self._showing != "projects":
+            return
+        self._companion_mode = next_mode(self._companion_mode)
+        row = self._selected_row()
+        if row is not None:
+            self._update_workspace(row)
+        self._refresh_summary()
+
+    def _toggle_collapse(self, region: str) -> None:
+        if region in self._collapsed:
+            self._collapsed.discard(region)
+        else:
+            self._collapsed.add(region)
+            if self._focus_region == region:
+                self._focus_region = next_region(region, collapsed=self._collapsed)
+        self._apply_layout()
+        self._focus_current_region()
+
+    def action_collapse_list(self) -> None:
+        self._toggle_collapse(PROJECT_LIST)
+
+    def action_collapse_companion(self) -> None:
+        self._toggle_collapse(COMPANION)
+
+    def action_zoom_region(self) -> None:
+        """Explicit Single-Region, at any width. Outranks the breakpoint."""
+        self._zoomed = None if self._zoomed is not None else self._focus_region
+        self._apply_layout()
+        self._focus_current_region()
 
     def action_filter_projects(self) -> None:
         if self._busy or self._inventory is None:
@@ -1414,13 +1695,6 @@ class AtlasApp(App):
             ),
             done,
         )
-
-    def action_inspect(self) -> None:
-        if self._busy:
-            return
-        row = self._selected_row()
-        if row is not None:
-            self.push_screen(ResultModal(f"Project health - {row.key}", project_detail(row).splitlines()))
 
     def action_show_last_result(self) -> None:
         if self._last_result is not None:

@@ -200,8 +200,12 @@ def stylesheet(palette: Palette = PALETTE) -> str:
     #dialog Button {{ margin-left: 2; }}
     #dialog #preview, #dialog .supporting {{ color: {p.muted}; margin-bottom: 1; }}
 
-    #detail {{ border-left: solid {p.rail}; }}
-    #detail-title {{ color: {p.bone}; text-style: bold; }}
+    #workspace {{ border-left: solid {p.rail}; }}
+    #workspace-title {{ color: {p.bone}; text-style: bold; }}
+    #companion {{ border-top: solid {p.rail}; }}
+    #companion-title {{ color: {p.bone}; text-style: bold; }}
+    #refusal {{ color: {p.muted}; }}
+    #keys {{ background: {p.surface}; color: {p.muted}; }}
     #summary {{ color: {p.muted}; }}
     #operation {{ background: {p.surface}; color: {p.ink}; }}
     #operation.-warning {{ color: {p.status["REVIEW"]}; }}

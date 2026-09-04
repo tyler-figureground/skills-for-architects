@@ -34,9 +34,10 @@ that is already settled.
   Expectations with a repairable kind, 60-second shelf life. ADR 0007, CONTEXT.md.
 - [x] **P4 - ticket 15.** Reconcile by Move Manifest, cursor follows the repair, no
   new state for a conflict. Folded into ADR 0007. 294 tests pass, up from 281.
-- [ ] **P5 - ticket 20.** The console shell. Regions, Compositions, breakpoints,
-  collapse, navigation, Companion Modes. Headless renders at 179/153/120/87/77/46
-  columns and 51/30/24 rows.
+- [x] **P5 - ticket 20.** The console shell. `tui/layout.py` pure and test-first,
+  `app.py` applying it. Three Regions, two Compositions, collapse, navigation,
+  Companion Modes, narrow chrome, cursor-follow with cancellation. 339 tests pass,
+  up from 294. Rendered headless at 179/120/87/46/39 columns and 51/24 rows.
 
 ## Decisions taken this session
 
@@ -75,3 +76,12 @@ that is already settled.
   failed once with a Textual `NoMatches` during a full run, then passed alone and in
   two consecutive full runs. Timing, not the tree work - nothing in this session
   touches that path. Worth a look if it recurs.
+
+## The mistake worth keeping
+
+Ticket 20's footer rule was first implemented through `check_action`, returning
+`None` for any binding too wide to name. In Textual that return value hides a
+binding **and disables it**, so at 80 columns every action key stopped working and
+twenty-three tests went red in one run. The narrow chrome is now its own widget
+and `check_action` is back to being only about state. Hiding and disabling share a
+return value there and are not the same thing.
