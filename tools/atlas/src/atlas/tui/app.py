@@ -67,6 +67,7 @@ from .wordmark import BAR, composition_for, mark_width, render_mark
 from .layout import (
     COMPANION,
     DEFAULT_MODE,
+    SPLIT_COLUMNS,
     EXPECTATIONS,
     HEALTH,
     MODE_LABELS,
@@ -82,14 +83,12 @@ from .layout import (
     unwind,
 )
 from .model import ProjectRow, project_detail, project_rows, visible_rows
+from .treeview import ProjectTreeView
 
 STATUS_STYLES = {name: f"bold {hex_}" for name, hex_ in tokens.PALETTE.status.items()}
 
 MODAL_CSS = tokens.stylesheet()
 
-# The Tree Region's stand-in. Ticket 20 builds the frame; ticket 07's seam fills
-# it. Saying so is better than an empty box that reads as a broken tree.
-TREE_PLACEHOLDER = "The folder tree lands here."
 
 # What the narrow chrome names, in the order layout.footer_actions returns them.
 KEY_HINTS = {
@@ -780,6 +779,7 @@ class AtlasApp(App):
     #workspace { width: 3fr; height: 1fr; }
     #workspace-title { height: 1; padding: 0 2; }
     #tree { height: 1fr; padding: 0 2; }
+    #tree-body { height: 1fr; }
     #companion { height: 1fr; padding: 0 2; }
     #companion-title { height: auto; }
     #companion-body { height: auto; }
@@ -855,8 +855,8 @@ class AtlasApp(App):
             yield DataTable(id="projects")
             with Vertical(id="workspace"):
                 yield Static("", id="workspace-title", markup=False)
-                with VerticalScroll(id="tree"):
-                    yield Static(TREE_PLACEHOLDER, id="tree-body", markup=False)
+                with Vertical(id="tree"):
+                    yield ProjectTreeView(id="tree-body")
                 with VerticalScroll(id="companion"):
                     yield Static("", id="companion-title", markup=False)
                     yield Static("", id="companion-body", markup=False)
@@ -920,7 +920,7 @@ class AtlasApp(App):
             self.query_one("#projects", DataTable).display = PROJECT_LIST in layout.visible
             workspace = self.query_one("#workspace", Vertical)
             workspace.display = bool({TREE, COMPANION} & set(layout.visible))
-            self.query_one("#tree", VerticalScroll).display = TREE in layout.visible
+            self.query_one("#tree").display = TREE in layout.visible
             self.query_one("#companion", VerticalScroll).display = COMPANION in layout.visible
         self._merge_status = layout.merge_status
         self._render_chrome(refusing)
@@ -1183,6 +1183,7 @@ class AtlasApp(App):
         else:
             self._workspace_project = ""
             self._companion_count = 0
+            self.query_one(ProjectTreeView).set_source(None)
             self.query_one("#workspace-title", Static).update("No matching projects")
             self.query_one("#companion-title", Static).update("")
             self.query_one("#companion-body", Static).update(
@@ -1273,13 +1274,15 @@ class AtlasApp(App):
         self._follow_timer = None
         if row.key != self._workspace_project:
             return      # the cursor moved on while this was pending
+        tree = self._project_tree(row)
+        self.query_one(ProjectTreeView).set_source(
+            tree, narrow=(self.size.width or 80) < SPLIT_COLUMNS)
         mode = self._companion_mode
         self.query_one("#companion-title", Static).update(MODE_LABELS[mode])
         if mode == HEALTH:
             body = project_detail(row)
             count = row.fixes + row.review
         elif mode == EXPECTATIONS:
-            tree = self._project_tree(row)
             unmet = tree.expectations() if tree is not None else ()
             count = len(unmet)
             body = "\n".join(

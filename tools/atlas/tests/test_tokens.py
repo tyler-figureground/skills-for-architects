@@ -150,3 +150,18 @@ def test_stylesheet_has_no_stray_colour_literals():
 def test_ember_ramp_runs_light_to_dark():
     lums = [tokens.relative_luminance(c) for c in PALETTE.ember]
     assert lums == sorted(lums, reverse=True), "the ramp must descend"
+
+
+def test_the_disclosure_marker_follows_expansion_not_readness():
+    """A folder can be Read and still closed - the Companion's Expectations pass
+    reads every mapped section before the operator touches one. A triangle
+    pointing down at a closed folder is a lie about the widget, not about Atlas."""
+    assert tokens.disclosure(tokens.READ, expanded=False) == "\u25b8"
+    assert tokens.disclosure(tokens.READ, expanded=True) == "\u25be"
+    assert tokens.disclosure(tokens.UNREAD, expanded=False) == "\u25b8"
+
+
+def test_a_folder_atlas_cannot_open_overrides_the_triangle():
+    """Unreadable and Partial say something no triangle can, so they win."""
+    assert tokens.disclosure(tokens.UNREADABLE, expanded=True) == "!"
+    assert tokens.disclosure(tokens.PARTIAL, expanded=True) == "\u2026"

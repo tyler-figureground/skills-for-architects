@@ -77,6 +77,10 @@ that is already settled.
   two consecutive full runs. Timing, not the tree work - nothing in this session
   touches that path. Worth a look if it recurs.
 
+- [x] **P6 - ticket 22, charted and built.** The tree widget. `tui/treeview.py`
+  over `core.tree`, wired into the Tree Region in place of ticket 20's
+  placeholder. 360 tests pass, up from 339.
+
 ## The mistake worth keeping
 
 Ticket 20's footer rule was first implemented through `check_action`, returning
@@ -85,3 +89,16 @@ binding **and disables it**, so at 80 columns every action key stopped working a
 twenty-three tests went red in one run. The narrow chrome is now its own widget
 and `check_action` is back to being only about state. Hiding and disabling share a
 return value there and are not the same thing.
+
+## And one the tests did not catch
+
+Ticket 22's widget passed sixteen tests while every closed folder on screen drew
+an open disclosure triangle. The Companion's unmet-Expectations pass reads every
+mapped section before the operator touches one, so those folders really were Read
+- and the token layer had one glyph standing for two different facts. Readness is
+what Atlas knows; expansion is what the widget is doing. `tokens.disclosure` picks
+between them now.
+
+Nothing in the test suite could have found it, because every test asserted on the
+label of a node whose expansion state it had chosen deliberately. Rendering the
+screen found it in one look.

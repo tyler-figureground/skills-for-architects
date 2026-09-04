@@ -178,6 +178,14 @@ Continuity: `.agent/handoff/` per this repo's checkpoint rule.
   gone: `d` cycles Companion Modes and unmet Expectations reads the real seam from
   ticket 07. Below 100 columns Textual's footer gives way to `? Help  Tab Region
   Enter Open`. Rendered headless at 179/120/87/46/39 columns and 51/24 rows.
+- [The tree widget, as Atlas code](issues/22-tree-widget.md) - **built.** A plain
+  `Tree` over `core.tree`: labels as `Text` so a folder named `[2024] Survey` keeps
+  its name, `label_width` adding the parts up instead of rendering to measure,
+  per-node workers that are deliberately not exclusive, no expand-all, and
+  `select_key` re-resolving the cursor through `call_after_refresh`. Rendering it
+  found a bug sixteen passing tests had not: readness and expansion were sharing
+  one glyph, so every folder the Companion had prefetched drew an open triangle
+  while closed. `tokens.disclosure` now separates them.
 - [Console layout and navigation model](issues/03-console-layout-and-navigation.md)
   - **the console is three Regions in two Compositions.** Project List opposite a
   Workspace that stacks the Tree Region over a Companion Region - rows spent to

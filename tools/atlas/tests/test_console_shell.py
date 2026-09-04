@@ -14,6 +14,7 @@ import pytest
 from textual.widgets import Static
 
 from atlas.tui.app import AtlasApp
+from atlas.tui.treeview import ProjectTreeView
 
 from conftest import make_project
 
@@ -280,3 +281,42 @@ async def test_a_cursor_passing_through_never_enumerates_what_it_passed(fixture_
         await pilot.pause()
         assert "260506_Three" in app._trees
         assert "260505_Two" not in app._trees
+
+
+# ------------------------------------------------------------- the Tree Region
+
+
+async def test_the_tree_region_draws_the_selected_project(fixture_drive):
+    """Ticket 20 left a placeholder here. Ticket 22 fills it, and the Workspace's
+    cursor-follow is what points it at a project."""
+    make_project(fixture_drive, "260507_Alpha", sections=["01 Model", "Meetings"],
+                 files={"CLAUDE.md": "x"})
+    make_project(fixture_drive, "260508_Bravo", sections=["06 Research"])
+    app = AtlasApp(fixture_drive, follow_debounce=0)
+
+    async with app.run_test(size=(179, 51)) as pilot:
+        await settle(app, pilot)
+        tree = app.query_one(ProjectTreeView)
+        assert [n.data for n in tree.root.children] == ["01 Model", "Meetings", "CLAUDE.md"]
+
+        await pilot.press("down")
+        await settle(app, pilot)
+        assert [n.data for n in tree.root.children] == ["06 Research"]
+
+
+async def test_the_tree_drops_the_wording_when_the_width_runs_out(fixture_drive):
+    """Same tree, same facts, two Compositions. The glyph and its colour carry
+    the state in both; only the words go."""
+    make_project(fixture_drive, "260509_Narrow", sections=["01 Model", "Meetings"],
+                 files={"Meetings/k.md": "z"})
+
+    async def drifted_row(width):
+        app = AtlasApp(fixture_drive, follow_debounce=0)
+        async with app.run_test(size=(width, 51)) as pilot:
+            await settle(app, pilot)
+            tree = app.query_one(ProjectTreeView)
+            node = tree.node_for("Meetings")
+            return str(tree.render_label(node, "", ""))
+
+    assert "wrong name" in await drifted_row(179)
+    assert "wrong name" not in await drifted_row(46)

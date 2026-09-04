@@ -135,6 +135,20 @@ def load_style(state: str) -> LoadStyle:
     return _LOAD[state]
 
 
+def disclosure(state: str, *, expanded: bool) -> str:
+    """The marker at the head of a folder's detail.
+
+    Readness and expansion are different facts and they were sharing one glyph.
+    A folder can be Read and still closed - the Companion reads every mapped
+    section before the operator opens one - so the triangle follows the widget.
+    Unreadable and Partial override it, because they say something no triangle
+    can and the direction is the less useful of the two.
+    """
+    if state in (UNREADABLE, PARTIAL):
+        return _LOAD[state].suffix
+    return _LOAD[READ].suffix if expanded else _LOAD[UNREAD].suffix
+
+
 def child_count(folders: int, files: int, *, narrow: bool = False) -> str:
     """Immediate children only, folders and files apart (ticket 13).
 

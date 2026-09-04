@@ -360,3 +360,12 @@ def test_a_project_wide_conform_invalidates_the_project(fixture_drive):
 
     assert tree.load_state("") == UNREAD
     assert tree.load_state("01 Model") == UNREAD
+
+
+def test_a_node_cannot_hold_a_load_state_adr_0004_forbids():
+    """A folder Atlas has not opened is Unread, never blank; a file has no Load
+    State at all. Both are enforced on the record, not at the call sites."""
+    from atlas.core.tree import TreeNode
+
+    assert TreeNode(key="01 Model", name="01 Model", is_dir=True).load == UNREAD
+    assert TreeNode(key="a.md", name="a.md", is_dir=False, load=READ).load == ""

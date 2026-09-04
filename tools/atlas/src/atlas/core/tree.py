@@ -69,6 +69,15 @@ class TreeNode:
     folders: int = 0
     files: int = 0
 
+    def __post_init__(self) -> None:
+        # Two states the type would otherwise permit and ADR 0004 does not: a
+        # folder Atlas knows nothing about yet is Unread, not blank, and a file
+        # has no Load State at all. Enforced here rather than at each call site,
+        # because this record is handed to the TUI and built in tests.
+        load = self.load or UNREAD if self.is_dir else ""
+        if load != self.load:
+            object.__setattr__(self, "load", load)
+
 
 @dataclass(frozen=True)
 class Expectation:

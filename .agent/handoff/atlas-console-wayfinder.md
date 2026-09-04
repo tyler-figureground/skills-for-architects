@@ -221,20 +221,27 @@ question, still deferred.
 
 ## Frontier
 
-Unblocked and unclaimed: 08, 09, 10, 11, and the tree widget, which is not yet a
-ticket.
+Unblocked and unclaimed: 08, 09, 10, 11, and the tree's writes, which is not yet
+a ticket.
 Blocked: none.
 Resolved: 01, 02, 03, 04, 05, 06, 07, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21.
 
 **Nothing is blocked any more.** Every remaining ticket is takeable.
 
-**The tree widget is the obvious next thing and it has no ticket.** Ticket 07
-settled the seam and ticket 20 built the frame it lands in, so what remains is a
-plain Textual `Tree` over `core.tree`: `render_label` with `rich.text.Text` (never
-`str` - ticket 05's latent markup bug), per-node workers that must not be
-`exclusive`, lazy expansion off `children()`, and cursor restore by Node Key with
-`call_after_refresh`. Every trap is already written down on ticket 05. Chart it
-before building it.
+**The tree reads; it does not write yet.** Ticket 22 built the widget and the
+Tree Region now draws a real project. What is missing is the other half of ADR
+0006: the repair keys on a node, the inline confirm on the operation line, and the
+per-project undo stack. Core has all of it already - `build_repair_plan`,
+`invert_plan`, `Guard.for_action` - so this is TUI work against a settled surface.
+Chart it as ticket 23 before building it.
+
+**Ticket 10 has now slipped three times.** Sessions 6, 7 and 8 each added surface
+that inherits the unanswered accessibility and CLI-parity question: a wordmark,
+five keybindings, three Regions, two Compositions, an undo stack, an inline
+confirm, and now a tree with its own glyph vocabulary and colour-carried state.
+The colour-carries-meaning question is no longer hypothetical - at narrow widths
+the tree drops the words and leaves the glyph and its colour to say what is
+wrong.
 
 Two build tickets are ready and independent of each other:
 
@@ -274,6 +281,10 @@ in `.agent/handoff/atlas-tdd-four-tickets.md`.
 - **20, the console shell.** Layout rules as a pure module, `tui/layout.py`, with
   `app.py` applying them. Three Regions, two Compositions, collapse, navigation,
   Companion Modes, narrow chrome. The health modal is gone and Enter is reclaimed.
+- **22, the tree widget** - charted this session and built. A plain `Tree` over
+  `core.tree` in the Tree Region: labels as `Text`, `label_width` that adds up
+  rather than renders, non-exclusive per-node workers, no expand-all, `select_key`
+  through `call_after_refresh`.
 
 Two corrections found by building rather than deciding:
 
@@ -284,11 +295,15 @@ Two corrections found by building rather than deciding:
 - **In Textual, hiding a binding and disabling it are the same return value.**
   Sizing the footer through `check_action` disabled every action key at 80 columns.
   The narrow chrome is its own widget now.
+- **Readness and expansion were sharing one glyph.** Sixteen widget tests passed
+  while every closed folder drew an open triangle, because the Companion prefetches
+  every mapped section and those folders really were Read. Found by rendering the
+  screen, not by testing it. `tokens.disclosure` separates the two now.
 
 ## Notes for the next session
 
 The working tree is clean and `main` is ahead of `origin/main` and unpushed - now
-by 24 commits. Pushing has never been asked for. `git fetch` before surveying
+by 26 commits. Pushing has never been asked for. `git fetch` before surveying
 anyway.
 
 **The published design sheet is gone.** The artifact this file cites, and that
