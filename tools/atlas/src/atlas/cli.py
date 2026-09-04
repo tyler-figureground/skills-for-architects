@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 from . import __version__
-from .core.conform import apply_plan, build_plan
+from .core.conform import action_to_dict, apply_plan, build_plan
 from .core.contacts import (
     Contact,
     ContactDraft,
@@ -704,7 +704,7 @@ def cmd_conform(args: argparse.Namespace) -> int:
     results = []
     pending = False
     for inv in targets:
-        plan = build_plan(report_project(inv, m), m)
+        plan = build_plan(report_project(inv, m), m, project=inv.path)
         if plan.empty:
             results.append(plan)
             continue
@@ -717,7 +717,7 @@ def cmd_conform(args: argparse.Namespace) -> int:
     if args.json:
         print(json.dumps([
             {"project": plan.project,
-             "actions": [a.__dict__ for a in plan.actions]}
+             "actions": [action_to_dict(a) for a in plan.actions]}
             for plan in results
         ], indent=2))
     else:
@@ -731,7 +731,8 @@ def cmd_conform(args: argparse.Namespace) -> int:
                 note = f"  ({a.note})" if a.note else ""
                 files = f" ({a.file_count} files)" if a.file_count else ""
                 src = f"{a.src} -> " if a.src else ""
-                print(f"    {a.kind:9} {src}{a.dst}{files}{status}{note}")
+                warning = f"  [path {a.path_length} > 260]" if a.path_warning else ""
+                print(f"    {a.kind:9} {src}{a.dst}{files}{status}{note}{warning}")
         if not args.apply and pending:
             print("\n(dry run - pass --apply to perform)")
     if args.apply:

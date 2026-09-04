@@ -147,6 +147,14 @@ Continuity: `.agent/handoff/` per this repo's checkpoint rule.
   applied on the write side - a warning is only honest if Atlas cannot silently
   exceed the limit. No CLI equivalents; ticket 10 settles parity for all three new
   surfaces at once. Vocabulary in `/CONTEXT.md`, decision in `docs/adr/0006`.
+- [The core write surface for the tree](issues/21-core-write-surface.md) -
+  **built.** `Move` and `Action.moved` give every applied action a manifest;
+  `build_repair_plan` slices one Action out of the Plan conform already builds;
+  `invert_plan` reverses it and refuses outright when a Backfill, a file-empty
+  removal, or a Conflict leaves nothing to reverse; `Guard` exists at two scopes
+  and three tests run them side by side; path length warns from `build_plan` and
+  reaches `--json`, which now names its own fields instead of shipping `__dict__`.
+  281 tests, up from 261.
 - [Console layout and navigation model](issues/03-console-layout-and-navigation.md)
   - **the console is three Regions in two Compositions.** Project List opposite a
   Workspace that stacks the Tree Region over a Companion Region - rows spent to

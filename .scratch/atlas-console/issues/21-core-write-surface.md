@@ -7,7 +7,7 @@ generated_by: skills-for-architects
 # The core write surface for the tree, as Atlas code
 
 Type: task
-Status: open
+Status: resolved
 Blocked by: -
 Parent: ../map.md
 
@@ -62,3 +62,50 @@ bullet. Fixture drives only - never a shared drive. State what ran.
   containing one is not invertible.
 - Ticket 13's ban on recursive counts stands. The path-length walk is per previewed
   action, never per render.
+
+## Resolution
+
+Built test-first, one slice at a time, in `atlas.core.conform`. 281 tests pass, up
+from 261; repo lint green; `atlas conform --json` checked by hand on a scratch
+fixture drive.
+
+- **`Move(src, dst, is_dir)` and `Action.moved`.** Every apply path fills it:
+  a whole-folder rename, the case-only two-step, each child of a merge, and a
+  sweep. `is_dir` is recorded rather than re-read at undo time, because sending a
+  merged child back needs a Sweep for a file and a Relocate for a folder, and
+  asking the filesystem later is both an extra read and a race.
+- **`build_repair_plan(report, m, path)`** returns the one Action for a node, or an
+  empty Plan for Mapped, Unfiled, and paths the report has never heard of. It takes
+  the Action out of the full Plan rather than deriving it a second way, and the
+  test asserts equality against `build_plan` for a Drift, a Relocate, a Sweep and a
+  Backfill in one project.
+- **`invert_plan`** builds the reverse Plan from the manifests, and undo then flows
+  through `apply_plan` like any other write. Inverting a merge is the case that
+  justifies the manifest: moving the folder back would drag along whatever was
+  already living at the destination, and the test proves it does not.
+- **`NotInvertible`.** Invertibility is all-or-nothing. A Backfill creates and the
+  file-empty-source branch deletes; neither has a move to reverse, and a Conflict
+  leaves the drive in a state neither side owns. All three refuse the whole Plan
+  rather than performing a partial undo.
+- **`Guard`, at two scopes.** `for_project` keeps conform's rescan; `for_action`
+  re-reads the map and only the directories the action touches - a move watches the
+  parents it leaves and arrives in, a sweep watches the folder it files into. Three
+  side-by-side tests: both call an in-scope divergence stale, both notice the work
+  itself changed, and the scoped guard deliberately ignores a folder appearing at
+  the project root that the action cannot touch. That asymmetry is the point of
+  scoping, and it is asserted rather than left implied.
+- **`Action.path_length` and `path_warning`.** One walk per previewed action for
+  the deepest path under the source, re-hung under the destination. `long_path()`
+  is still absent from every write path. It reaches `--json` and the plan line a
+  person reads.
+- **`action_to_dict`.** `--json` used `a.__dict__`, which stopped serialising the
+  moment the manifest held records. The JSON surface now names its own fields.
+
+### Not done here, deliberately
+
+`app.py` still carries its own copy of the full-rescan guard in both
+`action_conform` and `action_conform_marked`. Adopting `Guard` there is a TUI
+change and belongs with the shell work, not with the core surface. Every
+`build_plan` call in the TUI now passes `project=` so preview and guard measure
+path length identically - passing it at only some call sites would have made every
+conform abort as stale.

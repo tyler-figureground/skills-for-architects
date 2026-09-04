@@ -203,3 +203,19 @@ abandons it and says what changed.
 The Plans applied to one Project during this session, most recent first. Undoing
 one applies its inverse, which is itself a Plan and is previewed, confirmed, and
 checked for staleness like any other.
+
+**Guard**
+What a preview saw, and what has to still be true before Atlas writes. Guard
+strength scales with the scope of what it protects: a project-wide conform re-reads
+the whole drive and the project root, while a one-Action Plan from a Tree Node
+re-reads only the drive map and the directories that Action touches. Both abort
+identically - nothing moves, and the operator is told what changed. A guard
+deliberately does not see a change it cannot be affected by; that is what makes the
+narrow one affordable on a keystroke.
+
+**Path Length Warning**
+The longest absolute path an Action would create, measured while the Plan is still
+a preview. Atlas warns above 260 characters and never refuses, and never applies
+the extended-length prefix on the write side - routing around the limit would let
+Atlas create a path Explorer and Revit cannot open, which is the opposite of
+warning about it.

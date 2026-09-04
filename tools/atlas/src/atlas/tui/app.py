@@ -1255,10 +1255,12 @@ class AtlasApp(App):
         drive_map = inventory.map
         rows_by_name = {row.key: row for row in self._rows}
         names = sorted(name for name in self._marked if name in rows_by_name)
-        plans: dict[str, Plan] = {
-            name: build_plan(rows_by_name[name].report, drive_map) for name in names
-        }
         inventory_projects = {project.name: project for project in inventory.projects}
+        plans: dict[str, Plan] = {
+            name: build_plan(rows_by_name[name].report, drive_map,
+                             project=inventory_projects[name].path)
+            for name in names
+        }
         initial_tokens = {name: _project_token(inventory_projects[name]) for name in names}
         lines: list[str] = []
         for name in names:
@@ -1287,7 +1289,8 @@ class AtlasApp(App):
                     if project is None:
                         changed.append(f"{name}: project no longer available")
                         continue
-                    fresh_plan = build_plan(report_project(project, fresh_map), fresh_map)
+                    fresh_plan = build_plan(report_project(project, fresh_map), fresh_map,
+                                            project=project.path)
                     fresh_plans[name] = fresh_plan
                     fresh_tokens[name] = _project_token(project)
                     if (
@@ -1320,7 +1323,8 @@ class AtlasApp(App):
                     }
                     immediate_project = immediate_projects.get(name)
                     immediate_plan = (
-                        build_plan(report_project(immediate_project, immediate_inventory.map), immediate_inventory.map)
+                        build_plan(report_project(immediate_project, immediate_inventory.map),
+                                   immediate_inventory.map, project=immediate_project.path)
                         if immediate_project is not None
                         else None
                     )
@@ -1741,7 +1745,7 @@ class AtlasApp(App):
         drive_map = inventory.map
         original_project = next(project for project in inventory.projects if project.name == name)
         original_token = _project_token(original_project)
-        plan = build_plan(row.report, drive_map)
+        plan = build_plan(row.report, drive_map, project=project_path)
         lines = [
             f"{action.kind.title()}: {action.src + ' -> ' if action.src else ''}{action.dst}"
             + (f" ({action.file_count} files)" if action.file_count else "")
@@ -1767,7 +1771,8 @@ class AtlasApp(App):
                         severity="warning",
                     )
                 fresh_map = fresh_inventory.map
-                fresh_plan = build_plan(report_project(fresh_project, fresh_map), fresh_map)
+                fresh_plan = build_plan(report_project(fresh_project, fresh_map), fresh_map,
+                                        project=fresh_project.path)
                 if (
                     fresh_map != drive_map
                     or fresh_plan.actions != plan.actions

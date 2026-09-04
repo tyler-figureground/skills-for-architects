@@ -19,8 +19,8 @@ import re
 from dataclasses import dataclass, replace
 from pathlib import Path
 
-from .doctor import ProjectReport
-from .mapfile import DriveMap
+from .doctor import ProjectReport, report_project
+from .mapfile import DriveMap, find_map, load_map
 from .ops import OpsError, append_log, mkdir_below
 from .projectmd import (
     FRONT_MATTER_HEAD,
@@ -30,6 +30,7 @@ from .projectmd import (
     create_crlf_no_bom,
     decisions_readme_lines,
 )
+from .scan import ProjectInventory, list_entries, long_path, scan_drive
 
 # Action kinds, in apply order.
 BACKFILL = "backfill"
@@ -43,6 +44,32 @@ CONFLICT = "conflict"   # no-clobber leftovers; a human resolves
 SKIPPED = "skipped"
 
 
+# Windows refuses a path longer than this without the extended-length prefix,
+# and so do Explorer, Revit, and the studio's PowerShell tools. Atlas warns when a
+# move would create one and never applies long_path() on the write side: routing
+# around the limit would make the warning dishonest. See ADR 0006 and ticket 19.
+WINDOWS_MAX_PATH = 260
+
+
+class NotInvertible(OpsError):
+    """The applied Plan changed the drive in a way its manifests cannot reverse."""
+
+
+@dataclass(frozen=True)
+class Move:
+    """One source-and-destination pair an Action actually moved.
+
+    ``is_dir`` is recorded rather than re-read at inversion time: sending a
+    merged child back needs to know whether it is a file (a sweep) or a folder
+    (a relocate), and asking the filesystem later is both an extra read and a
+    race against whatever happened in between.
+    """
+
+    src: str
+    dst: str
+    is_dir: bool
+
+
 @dataclass(frozen=True)
 class Action:
     kind: str
@@ -51,6 +78,16 @@ class Action:
     file_count: int = 0
     status: str = ""    # empty until applied
     note: str = ""
+    # The Move Manifest: every pair this action actually moved. Empty until
+    # applied, and still empty after a backfill, which creates rather than moves.
+    moved: tuple[Move, ...] = ()
+    # Longest absolute path this action would create, measured at preview time.
+    # Zero when the plan was built without a project path to measure against.
+    path_length: int = 0
+
+    @property
+    def path_warning(self) -> bool:
+        return self.path_length > WINDOWS_MAX_PATH
 
 
 @dataclass(frozen=True)
@@ -63,7 +100,46 @@ class Plan:
         return not self.actions
 
 
-def build_plan(report: ProjectReport, m: DriveMap) -> Plan:
+def _deepest_tail(src: Path) -> int:
+    """Longest path below ``src``, measured from ``src`` itself; 0 when empty.
+
+    One walk per previewed action, never per render (ticket 13). What matters
+    after a move is not the folder's own path but the deepest thing under it,
+    re-hung beneath a destination that may be longer than where it sits now.
+    """
+    base = long_path(src)
+    root_len = len(base)
+    deepest = 0
+    for root, _dirs, files in os.walk(base, followlinks=False):
+        tail = len(root) - root_len
+        deepest = max(deepest, tail)
+        for name in files:
+            deepest = max(deepest, tail + 1 + len(name))
+    return deepest
+
+
+def _path_length(project: Path | None, action: Action) -> int:
+    """Longest absolute path the action would leave behind, or 0 if unmeasured."""
+    if project is None:
+        return 0
+    dst = action.dst.replace("\\", "/").rstrip("/")
+    if action.kind == BACKFILL:
+        return len(str(project / dst))
+    if action.kind == SWEEP:
+        return len(str(project / dst / Path(action.src).name))
+    src = project / action.src
+    if not src.is_dir():
+        return len(str(project / dst))
+    return len(str(project / dst)) + _deepest_tail(src)
+
+
+def build_plan(report: ProjectReport, m: DriveMap, project: Path | None = None) -> Plan:
+    """The Plan for everything the report found wrong with one project.
+
+    ``project`` is the project folder on disk. Given it, every Action carries the
+    longest path it would create, which is how the operator finds out before the
+    write that a move would push something past MAX_PATH.
+    """
     actions: list[Action] = []
     for item in report.missing_control_plane:
         actions.append(Action(kind=BACKFILL, src="", dst=item))
@@ -73,7 +149,200 @@ def build_plan(report: ProjectReport, m: DriveMap) -> Plan:
         actions.append(Action(kind=RELOCATE, src=hit.source, dst=hit.target, file_count=hit.file_count))
     for name, target in report.sweeps:
         actions.append(Action(kind=SWEEP, src=name, dst=target))
-    return Plan(project=report.name, actions=tuple(actions))
+    measured = tuple(
+        replace(a, path_length=_path_length(project, a)) for a in actions
+    )
+    return Plan(project=report.name, actions=measured)
+
+
+def build_repair_plan(report: ProjectReport, m: DriveMap, path: str,
+                      project: Path | None = None) -> Plan:
+    """The Plan for one node's Repair, holding one Action or none.
+
+    ``path`` is project-relative: the Tree Node's own path for a Drifted,
+    Misplaced or Loose node, and the Expectation's path for a Backfill. A Mapped
+    or Unfiled node earns no Repair and yields an empty Plan, as does a path the
+    report knows nothing about.
+
+    The Action is taken from the full Plan rather than derived a second way. The
+    tree introduces no action kinds of its own (ADR 0006), and two derivations of
+    "what does this node need" would eventually disagree.
+    """
+    full = build_plan(report, m, project=project)
+    match = next(
+        (a for a in full.actions if a.src == path),
+        next((a for a in full.actions if not a.src and a.dst == path), None),
+    )
+    return Plan(project=report.name, actions=(match,) if match else ())
+
+
+def action_to_dict(action: Action) -> dict:
+    """One Action as JSON. The record is read by six surfaces; this is the one
+    that leaves the process, so it names its own fields rather than shipping
+    whatever ``__dict__`` happens to hold."""
+    return {
+        "kind": action.kind,
+        "src": action.src,
+        "dst": action.dst,
+        "file_count": action.file_count,
+        "status": action.status,
+        "note": action.note,
+        "moved": [{"src": mv.src, "dst": mv.dst, "is_dir": mv.is_dir}
+                  for mv in action.moved],
+        "path_length": action.path_length,
+        "path_warning": action.path_warning,
+    }
+
+
+# ----------------------------------------------------------------- inverse
+
+
+def _parent(rel: str) -> str:
+    """Project-relative parent of a project-relative path; "" at the root."""
+    normalised = rel.replace("\\", "/").rstrip("/")
+    return normalised.rpartition("/")[0]
+
+
+def invert_plan(plan: Plan) -> Plan:
+    """The Plan that reverses an applied one, built from the Move Manifests.
+
+    Undo is not a special execution mode: it is an ordinary Plan that happens to
+    move things back, and it goes through ``apply_plan`` like anything else.
+
+    Invertibility is all-or-nothing. An action that changed the drive in a way
+    its manifest does not describe - a backfill, which creates, or a removed
+    file-empty source, which deletes - makes the whole Plan uninvertible, as does
+    a conflict. A partial undo would leave a third state that is neither before
+    nor after, and the operator pressed one key expecting one thing.
+    """
+    for action in plan.actions:
+        if action.status == SKIPPED:
+            continue    # nothing happened, so there is nothing to reverse
+        if action.status != DONE:
+            raise NotInvertible(
+                f"{action.kind} {action.src or action.dst} is "
+                f"{action.status or 'not applied'}; the plan cannot be reversed"
+            )
+        if not action.moved:
+            raise NotInvertible(
+                f"{action.kind} {action.src or action.dst} moved nothing Atlas can "
+                f"put back; the plan cannot be reversed"
+            )
+    actions: list[Action] = []
+    for action in plan.actions:
+        for mv in action.moved:
+            if mv.is_dir:
+                actions.append(Action(kind=RELOCATE, src=mv.dst, dst=mv.src))
+            else:
+                # A file goes back by sweep, whose destination is the folder it
+                # came from. _apply_move refuses files outright.
+                actions.append(Action(kind=SWEEP, src=mv.dst, dst=_parent(mv.src)))
+    return Plan(project=plan.project, actions=tuple(actions))
+
+
+# ------------------------------------------------------------------ guards
+
+# What one watched directory looked like at preview time.
+_Snapshot = tuple[str, str, tuple[tuple[str, bool], ...]]
+
+
+def _watched_dirs(plan: Plan) -> tuple[str, ...]:
+    """The project-relative directories a Plan's actions read and write.
+
+    A move watches the parents its item leaves and arrives in. A sweep's
+    destination is already a directory, so it is watched as itself. A backfill
+    watches whatever would contain the thing it creates.
+    """
+    dirs: set[str] = set()
+    for action in plan.actions:
+        if action.src:
+            dirs.add(_parent(action.src))
+        dst = action.dst.replace("\\", "/").rstrip("/")
+        dirs.add(dst if action.kind == SWEEP else _parent(dst))
+    return tuple(sorted(dirs))
+
+
+def _snapshot(project: Path, dirs: tuple[str, ...]) -> tuple[_Snapshot, ...]:
+    """Enumerate the watched directories, carrying Load State so that a folder
+    that became unreadable reads as a change rather than as an empty one."""
+    shots: list[_Snapshot] = []
+    for rel in dirs:
+        listing = list_entries(project / rel if rel else project)
+        shots.append((rel, listing.state,
+                      tuple(sorted((e.name, e.is_dir) for e in listing))))
+    return tuple(shots)
+
+
+@dataclass(frozen=True)
+class Guard:
+    """What a preview saw, and what has to still be true before Atlas writes.
+
+    Guard strength scales with action scope (ADR 0006). A project-wide conform
+    keeps the rescan it has always had; a one-action Plan from a Tree Node
+    re-reads only the map and the directories that action touches, because a
+    keystroke cannot afford a walk of the whole drive.
+
+    Both scopes abort the same way and for the same reasons: the map changed, the
+    project went away, the rebuilt actions differ, or a watched directory differs.
+    The scoped guard deliberately does not see a change elsewhere in the project -
+    that is what makes it cheap, and it is safe because such a change cannot alter
+    what the guarded action does.
+    """
+
+    project: str
+    drive_map: DriveMap
+    actions: tuple[Action, ...]
+    watched: tuple[_Snapshot, ...]
+    whole_project: bool
+    node: str = ""
+
+    @classmethod
+    def for_project(cls, drive_root: Path, project: str, m: DriveMap, plan: Plan) -> Guard:
+        """Guard a whole-project conform: every action, and the project root."""
+        return cls(project=project, drive_map=m, actions=plan.actions,
+                   watched=_snapshot(drive_root / project, ("",)),
+                   whole_project=True)
+
+    @classmethod
+    def for_action(cls, drive_root: Path, project: str, m: DriveMap, plan: Plan) -> Guard:
+        """Guard one node's Repair: that action, and the directories it touches."""
+        node = plan.actions[0].src or plan.actions[0].dst if plan.actions else ""
+        return cls(project=project, drive_map=m, actions=plan.actions,
+                   watched=_snapshot(drive_root / project, _watched_dirs(plan)),
+                   whole_project=False, node=node)
+
+    def check(self, drive_root: Path) -> str | None:
+        """Re-read what was watched. Returns why the Plan is stale, or None."""
+        project_path = drive_root / self.project
+        if not project_path.is_dir():
+            return f"{self.project} is no longer available"
+
+        if self.whole_project:
+            # The rescan conform has always paid for: it also refreshes the
+            # drive-wide view the operator is looking at.
+            fresh_map = scan_drive(drive_root).map
+        else:
+            map_path = find_map(drive_root)
+            if map_path is None:
+                return "the drive map is no longer there"
+            fresh_map = load_map(map_path)
+        if fresh_map != self.drive_map:
+            return "the drive map changed"
+
+        inv = ProjectInventory(path=project_path, name=self.project,
+                               root_entries=list_entries(project_path))
+        report = report_project(inv, fresh_map)
+        if self.whole_project:
+            fresh = build_plan(report, fresh_map, project=project_path).actions
+        else:
+            fresh = build_repair_plan(report, fresh_map, self.node,
+                                      project=project_path).actions
+        if fresh != self.actions:
+            return f"{self.project} no longer needs the same work"
+
+        if _snapshot(project_path, tuple(rel for rel, _s, _e in self.watched)) != self.watched:
+            return f"{self.project} changed on disk since the preview"
+        return None
 
 
 # ------------------------------------------------------------------- apply
@@ -216,39 +485,49 @@ def _apply_move(project: Path, action: Action, merge_into_existing: bool) -> Act
         tmp = src.with_name(src.name + ".atlas-tmp")
         src.rename(tmp)
         tmp.rename(dst)
-        return replace(action, status=DONE, note="case-only rename")
+        return replace(action, status=DONE, note="case-only rename",
+                       moved=(Move(src=action.src, dst=action.dst, is_dir=True),))
 
     if not dst.exists():
         dst.parent.mkdir(parents=True, exist_ok=True)
         src.rename(dst)
-        return replace(action, status=DONE)
+        return replace(action, status=DONE,
+                       moved=(Move(src=action.src, dst=action.dst, is_dir=True),))
 
     if not merge_into_existing:
         return replace(action, status=CONFLICT, note="target exists")
 
     # Merge, never clobber: move each child whose name is free at the target.
-    moved, left = 0, 0
+    manifest: list[Move] = []
+    left = 0
     for child in list(src.iterdir()):
         target = dst / child.name
         if target.exists():
             left += 1
             continue
+        is_dir = child.is_dir()
         child.rename(target)
-        moved += 1
+        manifest.append(Move(src=f"{action.src}/{child.name}",
+                             dst=f"{action.dst}/{child.name}", is_dir=is_dir))
+    moved = len(manifest)
     if left == 0 and _remove_if_file_empty(src):
-        return replace(action, status=DONE, note=f"merged {moved} item(s)")
+        return replace(action, status=DONE, note=f"merged {moved} item(s)",
+                       moved=tuple(manifest))
     return replace(action, status=CONFLICT,
-                   note=f"merged {moved}, {left} name collision(s) left in {action.src}")
+                   note=f"merged {moved}, {left} name collision(s) left in {action.src}",
+                   moved=tuple(manifest))
 
 
 def _apply_sweep(project: Path, action: Action) -> Action:
     src = project / action.src
     if not src.is_file():
         return replace(action, status=SKIPPED, note="source gone")
-    dst_dir = project / action.dst.replace("\\", "/").rstrip("/")
+    dst_rel = action.dst.replace("\\", "/").rstrip("/")
+    dst_dir = project / dst_rel
     dst_dir.mkdir(parents=True, exist_ok=True)
     target = dst_dir / src.name
     if target.exists():
         return replace(action, status=CONFLICT, note="name exists at target")
     src.rename(target)
-    return replace(action, status=DONE)
+    return replace(action, status=DONE,
+                   moved=(Move(src=action.src, dst=f"{dst_rel}/{src.name}", is_dir=False),))
