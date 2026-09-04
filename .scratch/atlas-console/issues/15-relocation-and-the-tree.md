@@ -1,7 +1,7 @@
 # What the tree does when conform moves things
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: -
 Parent: ../map.md
 
@@ -33,3 +33,30 @@ Resolve:
 - Does an external change - someone else moving a folder on the shared drive -
   reach the tree at all, or only through explicit refresh? Ticket 06 rules out
   filesystem watching.
+
+## Resolution
+
+Folded into `docs/adr/0007` and built with the seam - the questions could not be
+answered before the structure existed. Ticket 21's Move Manifest turned out to
+answer most of them.
+
+- **Which of the three.** Neither option 1 as written nor option 2. **Invalidate by
+  manifest.** The manifest names exactly which folders changed, so `reconcile`
+  forgets the parent of each source and each destination - the same two directories
+  the scoped Guard watched. Two enumerations, not a walk from a common ancestor.
+  A project-wide conform invalidates the project instead, because its manifest can
+  span everything. Invalidation strength scales with action scope, the way guard
+  strength does.
+- **Selection restore key.** The **Node Key** - the project-relative path.
+  `follow(key, applied)` maps a pre-write key to its post-write one from the
+  manifest, so the cursor follows the thing it just repaired instead of landing on
+  whatever now occupies that line. A merge needed the Action as well as the
+  manifest: it moves children one at a time and nothing in the manifest names the
+  folder that vanished.
+- **Conflict or Failed.** No new state. A conflicted merge leaves the source in
+  place with its colliding children in it, and the tree draws that truthfully
+  because it is a mirror. The outcome is reported on the operation line and in the
+  Companion, where ADR 0005 already put write outcomes. Filing State says what the
+  map says, not what happened.
+- **External change.** Only through the 60-second shelf life or an explicit
+  refresh. Ticket 06 ruled out watching and nothing here reopens it.

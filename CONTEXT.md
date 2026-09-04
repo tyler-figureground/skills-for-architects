@@ -219,3 +219,35 @@ a preview. Atlas warns above 260 characters and never refuses, and never applies
 the extended-length prefix on the write side - routing around the limit would let
 Atlas create a path Explorer and Revit cannot open, which is the opposite of
 warning about it.
+
+## Atlas Project Tree Seam
+
+**Node Key**
+A Tree Node's project-relative path, forward-slashed, with `""` for the project
+root. The node's stable identity: it survives a refresh, and Atlas can say where a
+Node Key went after a write. Necessary because Textual restores the tree cursor by
+line number rather than by node identity, so a rebuild with a different child list
+would otherwise move the selection silently.
+
+**Project Tree**
+The handle core gives the TUI for one Project. Expands lazily - one enumeration per
+folder actually displayed - hands out immutable Tree Nodes, and keeps the cache
+behind them. It owns filesystem facts; the widget owns interaction.
+
+**Containment**
+The rule that decides Filing State below the project root, where the drive map has
+no rule of its own. A Tree Node at or under a canonical path is Mapped; one under
+an Unfiled node is Unfiled. A path the map names explicitly keeps its own verdict
+at any depth.
+
+**Shelf Life**
+How long a folder's enumeration may be trusted before Atlas reads it again: 60
+seconds. There is no filesystem watching over the Drive redirector, so somebody
+else's change reaches the tree when the shelf life expires or when the operator
+refreshes, and never sooner.
+
+**Reconcile**
+What the tree does after Atlas applies a Plan: forget the folders the Move Manifest
+names, take the fresh report with it, and move the cursor to where the repaired
+node went. Scoped like the Guard is - a one-node repair forgets two folders, a
+project-wide conform forgets the project.

@@ -155,6 +155,19 @@ Continuity: `.agent/handoff/` per this repo's checkpoint rule.
   and three tests run them side by side; path length warns from `build_plan` and
   reaches `--json`, which now names its own fields instead of shipping `__dict__`.
   281 tests, up from 261.
+- [The ProjectTree core seam](issues/07-project-tree-core-seam.md) and
+  [What the tree does when conform moves things](issues/15-relocation-and-the-tree.md)
+  - **decided and built.** Core hands the TUI a **lazily-expanding handle**, not a
+  node tree and not a flat list: immutable nodes out, cache inside, one enumeration
+  per displayed folder. Below the root, where `report_project` has no opinion,
+  **containment** decides Filing State - Mapped under a canonical path, Unfiled
+  under an Unfiled one - which needs no amendment to ADR 0004. The **Node Key** is
+  the project-relative path and it is what the line-number cursor re-resolves
+  against. Staleness is a 60-second shelf life plus explicit refresh; after Atlas's
+  own write the tree **reconciles by Move Manifest**, forgetting the two folders
+  the scoped Guard already watched, and the cursor follows what it repaired. One
+  correction to ADR 0006: **only control-plane Expectations are repairable** -
+  conform has never created a mapped section and would skip it. `docs/adr/0007`.
 - [Console layout and navigation model](issues/03-console-layout-and-navigation.md)
   - **the console is three Regions in two Compositions.** Project List opposite a
   Workspace that stacks the Tree Region over a Companion Region - rows spent to

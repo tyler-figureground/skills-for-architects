@@ -22,8 +22,12 @@ from .mapfile import DriveMap, find_map, load_map
 
 DEFAULT_MOUNT_ROOT = Path(os.environ.get("ATLAS_MOUNT_ROOT", r"G:\Shared drives"))
 
-# Load State, per ADR 0004. PARTIAL is modelled but not yet produced: no reliable
-# way to detect a short enumeration has been found (see the drive-cost research).
+# Load State, per ADR 0004. UNREAD is the state of every folder Atlas has not
+# opened yet - it belongs to the tree rather than to a Listing, since a Listing
+# only exists once a folder has been read. PARTIAL is modelled but not yet
+# produced: no reliable way to detect a short enumeration has been found (see the
+# drive-cost research).
+UNREAD = "unread"
 READ = "read"
 UNREADABLE = "unreadable"
 PARTIAL = "partial"

@@ -1,7 +1,7 @@
 # The ProjectTree core seam
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: -
 Parent: ../map.md
 
@@ -56,3 +56,40 @@ From ticket 05, binding on whatever this seam produces:
   stable key the TUI re-resolves against after every refresh.
 - Per-node load workers must not be `exclusive` - that would cancel every other
   in-flight expansion sharing the widget's default worker group.
+
+## Resolution
+
+`atlas.core.tree`, built test-first alongside the decision. 15 tests; whole suite
+294, up from 281. Recorded in `docs/adr/0007`, vocabulary in `/CONTEXT.md` under
+Atlas Project Tree Seam.
+
+Answers, in the order the ticket asked:
+
+- **Structure.** A lazily-expanding handle, `ProjectTree`. Immutable `TreeNode`
+  values out, mutable cache inside. Not a node tree (eager, which ticket 06 ruled
+  out) and not a flat list with depth (bakes TUI expansion state into core).
+- **Map facts.** The tree reuses `doctor.report_project` rather than running a
+  second pass. Below the root, where the report has no opinion, **containment**
+  decides: at or under a canonical path is Mapped, under an Unfiled node is
+  Unfiled, and a path the map names explicitly keeps its own verdict at any depth.
+- **Not-on-disk list.** Computed from the map and the root listing, separately from
+  the tree, per the filesystem-mirror model. The ticket's framing was incomplete on
+  one point: **only control-plane Expectations are repairable.** Conform has never
+  created a mapped section and `_apply_backfill` would skip it, so an Expectation
+  carries its kind and a missing section keeps the add-folders path.
+- **Eager or lazy.** Lazy, one enumeration per displayed folder. Cancellation lives
+  in the TUI worker; every core call is side-effect free, so an abandoned one costs
+  the read and nothing more.
+- **Counts.** Immediate children only, free from the enumeration already held.
+- **Staleness.** 60-second shelf life, explicit refresh, invalidation by Move
+  Manifest on Atlas's own writes. An external change is invisible until one of the
+  first two - stated, not hidden.
+- **Partial and failed enumeration.** Carried through from `Listing`, which already
+  models both. A folder Atlas could not open never renders as empty.
+- **Immutable or mutated.** Nodes immutable and regenerated; the handle mutable.
+- **CLI.** No `atlas tree` here. The seam is pure core and could carry one; whether
+  it should is ticket 10's call, along with search and the dossier.
+
+Inherited and still open: `report_project` checks the project root only, so a
+folder three levels down that cannot be read is invisible to `doctor`. Ticket 16
+recorded it; this seam carries it forward rather than closing it.

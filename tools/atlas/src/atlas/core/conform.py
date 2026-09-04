@@ -197,10 +197,11 @@ def action_to_dict(action: Action) -> dict:
 # ----------------------------------------------------------------- inverse
 
 
-def _parent(rel: str) -> str:
+def parent_key(rel: str) -> str:
     """Project-relative parent of a project-relative path; "" at the root."""
     normalised = rel.replace("\\", "/").rstrip("/")
     return normalised.rpartition("/")[0]
+
 
 
 def invert_plan(plan: Plan) -> Plan:
@@ -236,7 +237,7 @@ def invert_plan(plan: Plan) -> Plan:
             else:
                 # A file goes back by sweep, whose destination is the folder it
                 # came from. _apply_move refuses files outright.
-                actions.append(Action(kind=SWEEP, src=mv.dst, dst=_parent(mv.src)))
+                actions.append(Action(kind=SWEEP, src=mv.dst, dst=parent_key(mv.src)))
     return Plan(project=plan.project, actions=tuple(actions))
 
 
@@ -256,9 +257,9 @@ def _watched_dirs(plan: Plan) -> tuple[str, ...]:
     dirs: set[str] = set()
     for action in plan.actions:
         if action.src:
-            dirs.add(_parent(action.src))
+            dirs.add(parent_key(action.src))
         dst = action.dst.replace("\\", "/").rstrip("/")
-        dirs.add(dst if action.kind == SWEEP else _parent(dst))
+        dirs.add(dst if action.kind == SWEEP else parent_key(dst))
     return tuple(sorted(dirs))
 
 

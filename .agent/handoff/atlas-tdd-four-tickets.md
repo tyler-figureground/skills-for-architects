@@ -29,8 +29,11 @@ that is already settled.
 - [x] **P2 - ticket 21, built.** `Move`, `Action.moved`, `build_repair_plan`,
   `invert_plan`, `Guard` at two scopes, path-length warning, `action_to_dict` for
   the CLI. 281 tests pass, up from 261. Repo lint green.
-- [ ] **P3 - ticket 07.** The seam.
-- [ ] **P4 - ticket 15.** What the tree does after conform moves things.
+- [x] **P3 - ticket 07.** The seam. `core/tree.py` built test-first alongside the
+  decision: lazily-expanding handle, containment below the root, Node Key, unmet
+  Expectations with a repairable kind, 60-second shelf life. ADR 0007, CONTEXT.md.
+- [x] **P4 - ticket 15.** Reconcile by Move Manifest, cursor follows the repair, no
+  new state for a conflict. Folded into ADR 0007. 294 tests pass, up from 281.
 - [ ] **P5 - ticket 20.** The console shell. Regions, Compositions, breakpoints,
   collapse, navigation, Companion Modes. Headless renders at 179/153/120/87/77/46
   columns and 51/30/24 rows.
@@ -41,6 +44,13 @@ that is already settled.
   has to send a file back as a Sweep and a folder back as a Relocate, and inferring
   which at undo time is one more read and a race. One stat per moved child, paid
   only on the write path.
+- **Filing State below the root is containment.** A node at or under a canonical
+  path is Mapped, one under an Unfiled node is Unfiled, and a path the map names
+  explicitly keeps its own verdict at any depth. Needs no amendment to ADR 0004,
+  and never renders something nobody can explain as accounted for.
+- **The tree reconciles by Move Manifest.** Forget the two folders the scoped Guard
+  already watched, take the fresh report, move the cursor to where the node went.
+  A project-wide conform forgets the project instead.
 - **Invertibility is uniform or refused.** Backfill creates and the file-empty
   removal deletes; neither has a move to reverse. `invert_plan` raises on a Plan
   containing one rather than performing a partial undo, which would leave a third
@@ -54,3 +64,14 @@ that is already settled.
 - Colour comes from `tui/tokens.py`; the app CSS block is geometry only.
 - Ticket 13 stands: no recursive counts. The path-length walk is per previewed
   action, never per render.
+
+## Two things the next session should know
+
+- **The published design sheet is gone.** The artifact at
+  `claude.ai/code/artifact/4a9756ec-...`, cited by the wayfinder handoff and by
+  tickets 02 and 03, no longer resolves for this account. Anything that needs those
+  renders has to re-render them. It was already out of date in two ways.
+- **One intermittent TUI test.** `test_edit_project_prepopulates_and_confirms_folder_rename`
+  failed once with a Textual `NoMatches` during a full run, then passed alone and in
+  two consecutive full runs. Timing, not the tree work - nothing in this session
+  touches that path. Worth a look if it recurs.
