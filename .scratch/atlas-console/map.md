@@ -128,6 +128,25 @@ Continuity: `.agent/handoff/` per this repo's checkpoint rule.
   count cap 500, cache TTL 60 s. Found two live `MAX_PATH` failures, one of which
   Atlas reports as an empty folder that is not empty. Report:
   `docs/research/atlas-drive-latency-measurement.md`.
+- [What the folder tree is allowed to write](issues/04-tree-write-contract.md) -
+  **the tree invents no new action kinds.** Every write it offers is a one-action
+  slice of the Plan conform already builds: Drifted earns RENAME, Misplaced
+  RELOCATE, Loose SWEEP, an unmet Expectation BACKFILL from the Companion. Unfiled
+  earns nothing but reveal. Every write crosses a Plan, previews, and confirms with
+  no exceptions - but confirmation weight follows plan size, so one action confirms
+  inline on the operation line and only longer plans get the modal. **A full undo
+  stack, one per Project**, in memory, no redo - undo restores the precondition
+  that offered the action, so re-pressing the repair key *is* redo. Undo needs
+  `Action.moved`, a manifest of what each apply actually moved, because a merge
+  cannot otherwise be inverted without guessing and a wrong guess is data loss.
+  **Revalidation scopes to the action:** the existing guard is a full 4.24-second
+  `scan_drive` and `_project_token` only covers the project root, so a one-action
+  Plan re-reads the map and re-enumerates two parent folders instead. The same
+  guard runs on every undo pop, which is what lets the stack be optimistic. Path
+  length **warns and obeys**, computed in `build_plan`, and `long_path()` is never
+  applied on the write side - a warning is only honest if Atlas cannot silently
+  exceed the limit. No CLI equivalents; ticket 10 settles parity for all three new
+  surfaces at once. Vocabulary in `/CONTEXT.md`, decision in `docs/adr/0006`.
 - [Console layout and navigation model](issues/03-console-layout-and-navigation.md)
   - **the console is three Regions in two Compositions.** Project List opposite a
   Workspace that stacks the Tree Region over a Companion Region - rows spent to
@@ -170,12 +189,11 @@ Fog toward the destination. Graduates into tickets as the frontier clears it.
   cycles them, **which Region has focus has to be legible without moving the
   cursor**, and in Single-Region Composition it has to be legible when only one is
   drawn. Small, and easy to forget until it looks wrong.
-- **Long paths on the write side.** Reads are fixed; `conform` and `ops` are not.
-  A move can push a path past MAX_PATH even when both endpoints were fine, and
-  Atlas must not create a path Explorer, Revit and the PowerShell tools cannot
-  open. Wants a length check in plan-building that refuses or warns, not a blind
-  prefix. Possibly also a `doctor` finding for over-long paths, which was
-  considered and deferred as a new finding type.
+- **A `doctor` finding for over-long paths.** Ticket 04 put the length warning on
+  the Action at plan-building time, which covers what Atlas is about to create. It
+  does not surface paths already over the limit that nobody is currently moving.
+  Considered and deferred once already as a new finding type; still deferred, now
+  for a narrower reason.
 - **Deep unreadable detection.** `doctor` checks the project root only, because
   that is all `scan_drive` enumerates. A folder three levels down that cannot be
   read is invisible until the tree lands. Ticket 07 inherits it.

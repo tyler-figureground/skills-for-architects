@@ -6,7 +6,7 @@ generated_by: skills-for-architects
 
 # Atlas console redesign - wayfinder continuity
 
-Status: header, token layer and console layout settled; the tree is what remains
+Status: layout and write contract settled; nothing is blocked; the tree is what remains
 Date: 2026-09-03
 Effort: `atlas-console`
 
@@ -171,31 +171,85 @@ Recorded in `docs/adr/0005`, vocabulary in `CONTEXT.md` under Atlas Console
 Layout. Ticket 20 graduated - the console shell as Atlas code, the frame without
 the tree in it.
 
+---
+title: "handoff-tail-2.md"
+date: 2026-09-03
+generated_by: skills-for-architects
+---
+
+## Session 7 continued - the write contract
+
+Ticket 04 resolved in the same session as 03, on the user's instruction to
+proceed. Wayfinder's one-ticket-per-session rule was set aside deliberately, not
+forgotten; context budget was the reason for it and there was budget.
+
+Reading the write path first changed the ticket. Two findings the ticket's own
+framing had wrong:
+
+- **The staleness guard is a full `scan_drive`.** `action_conform` rescans the
+  entire drive on confirm - 4.24 seconds per ticket 12 - and refuses to write
+  unless the map, the rebuilt plan, and `_project_token` all match the preview.
+  Correct once for a deliberate conform. Fatal per keystroke on a node.
+- **`_project_token` only covers the project root** (`app.py:73`, the sorted
+  `(name, is_dir)` list of `root_entries`). A node three levels down was never
+  covered by the guard the ticket assumed protected it.
+
+The decision, in one line: **the tree invents no new action kinds.** Drifted,
+Misplaced and Loose are exactly RENAME, RELOCATE and SWEEP; an unmet Expectation
+is BACKFILL and belongs to the Companion because ADR 0004 says it is not a node.
+Core gains a way to build a one-Action Plan, nothing more.
+
+Everything else follows from that plus the user's two overrides - full undo stack
+rather than the one-level version recommended, and warn rather than refuse on
+MAX_PATH:
+
+- Confirmation weight follows plan size. One action confirms inline on the
+  operation line; longer plans keep the modal.
+- Full undo stack, **one per Project**, in memory, no redo. Undo restores the
+  precondition that offered the action, so re-pressing the repair key is redo.
+- `Action.moved`, a manifest of what each apply actually moved. A merge cannot be
+  inverted without it, and inverting by inference is data loss.
+- Revalidation scopes to the action. Same guard runs on undo pops, which is what
+  lets the stack be optimistic rather than eagerly invalidated.
+- Path length warns in `build_plan`, and **`long_path()` is never applied on the
+  write side** - the warning is only honest if Atlas cannot silently exceed 260.
+
+Recorded in `docs/adr/0006`, vocabulary in `CONTEXT.md` under Atlas Writes. Ticket
+21 graduated - the core write surface, buildable and testable without a TUI. The
+write-side MAX_PATH fog patch is cleared; what is left of it is a narrower `doctor`
+question, still deferred.
+
 ## Frontier
 
-Unblocked and unclaimed: 04, 08, 09, 10, 11, 15, 20.
-Blocked: 07 (on 04).
-Resolved: 01, 02, 03, 05, 06, 12, 13, 14, 16, 17, 18, 19.
+Unblocked and unclaimed: 07, 08, 09, 10, 11, 15, 20, 21.
+Blocked: none.
+Resolved: 01, 02, 03, 04, 05, 06, 12, 13, 14, 16, 17, 18, 19.
 
-**Take 04 next.** It is the tree write contract - does a tree action mutate, and
-does every one build a core plan and confirm. It is the last thing blocking 07,
-the seam, which is the biggest remaining piece; it also feeds 15.
+**Nothing is blocked any more.** Every remaining ticket is takeable, which is the
+first time that has been true on this map.
 
-**20 is the alternative if a session wants code rather than a decision.** It
-builds the shell with placeholders in the Tree and Companion Regions, so the tree
-later lands into a layout that already works at every width instead of into one
-being invented around it. It is independent of 04 and 07.
+Two build tickets are ready and independent of each other:
 
-**10 is now more overdue, not less.** Ticket 03 added five keybindings, three
-Regions, and two Compositions, and settled none of what a screen reader gets from
-any of it. Every surface built after this inherits a wider gap than the one the
-wordmark left.
+- **21, the core write surface.** Test-first, no TUI, fixture drives only.
+  `conform` gets better whether the tree ships or not. The lowest-risk next
+  session.
+- **20, the console shell.** The frame from ADR 0005 with placeholders in the Tree
+  and Companion Regions, so the tree later lands into a layout that already works
+  at every width.
+
+**07 is the seam** and is the largest remaining decision. It is unblocked now but
+reads better after 21 exists, because 21 settles what core actually hands over.
+
+**10 is the one that keeps slipping.** Sessions 6 and 7 each added surface that
+inherits the unanswered accessibility question - a wordmark, five keybindings,
+three Regions, two Compositions, and now an undo stack and an inline confirm on
+the operation line. It has been recommended forward twice and taken neither time.
 
 ## Notes for the next session
 
-The working tree is clean and `main` is ahead of `origin/main` and unpushed -
-now by 20 commits. Pushing has never been asked for. `git fetch` before surveying
-anyway; session 7 did, and confirmed ahead 19 / behind 0 before starting.
+The working tree is clean and `main` is ahead of `origin/main` and unpushed - now
+by 21 commits. Pushing has never been asked for. `git fetch` before surveying
+anyway.
 
 Prototype renderers for the wordmark and the three visual worlds live only in the
 session scratchpad and are deliberately throwaway. They are not Atlas code. When
@@ -206,5 +260,5 @@ The published design sheet at
 https://claude.ai/code/artifact/4a9756ec-d166-44d0-b76d-ddd9979fbbc6 is now out of
 date in **two** ways, not one. It still draws missing folders inline in the tree,
 which ticket 14 ruled out. And its renders are all 132x38, a width that ticket 03
-established is not one you actually use. It has not been re-rendered and the user
-has not said whether to.
+established is not one the user actually works at. It has not been re-rendered and
+the user has not said whether to.

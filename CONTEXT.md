@@ -163,3 +163,43 @@ The console arrangement showing exactly one Region at a time, the others hidden
 rather than shrunk. The arrangement at narrow terminal widths, and the common one
 rather than the degraded one. The navigation model is identical in both
 Compositions; only what is on screen differs.
+---
+title: "context-append-2.md"
+date: 2026-09-03
+generated_by: skills-for-architects
+---
+
+
+## Atlas Writes
+
+**Plan**
+The complete description of a set of writes, built in core, shown to a person
+before anything happens, and applied only after they confirm it. Atlas has no
+other way to change a drive.
+
+**Action**
+One write inside a Plan. Exactly one of Backfill (create a folder the drive map
+expects), Rename (a Drifted Tree Node to its canonical name), Relocate (a
+Misplaced Tree Node to its mapped path), or Sweep (a Loose file into its target
+folder).
+
+**Repair**
+The single Action a Tree Node's Filing State earns: Drifted earns a Rename,
+Misplaced a Relocate, Loose a Sweep. Mapped and Unfiled earn none - the first
+because nothing is wrong, the second because only a person can decide.
+
+**Move Manifest**
+The record of every source-and-destination pair an Action actually moved, filled
+in at the moment it is applied. What makes a move into an existing folder
+reversible: without it, Atlas cannot tell which items it moved in and which were
+already there.
+
+**Stale Plan**
+A Plan whose preview no longer describes the drive, because something changed
+between the preview and the confirmation. A Stale Plan is never applied - Atlas
+abandons it and says what changed.
+
+**Undo Stack**
+The Plans applied to one Project during this session, most recent first. Undoing
+one applies its inverse, which is itself a Plan and is previewed, confirmed, and
+checked for staleness like any other.
