@@ -221,12 +221,20 @@ question, still deferred.
 
 ## Frontier
 
-Unblocked and unclaimed: 07, 08, 09, 10, 11, 15, 20, 21.
+Unblocked and unclaimed: 08, 09, 10, 11, and the tree widget, which is not yet a
+ticket.
 Blocked: none.
-Resolved: 01, 02, 03, 04, 05, 06, 12, 13, 14, 16, 17, 18, 19.
+Resolved: 01, 02, 03, 04, 05, 06, 07, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21.
 
-**Nothing is blocked any more.** Every remaining ticket is takeable, which is the
-first time that has been true on this map.
+**Nothing is blocked any more.** Every remaining ticket is takeable.
+
+**The tree widget is the obvious next thing and it has no ticket.** Ticket 07
+settled the seam and ticket 20 built the frame it lands in, so what remains is a
+plain Textual `Tree` over `core.tree`: `render_label` with `rich.text.Text` (never
+`str` - ticket 05's latent markup bug), per-node workers that must not be
+`exclusive`, lazy expansion off `children()`, and cursor restore by Node Key with
+`call_after_refresh`. Every trap is already written down on ticket 05. Chart it
+before building it.
 
 Two build tickets are ready and independent of each other:
 
@@ -245,11 +253,51 @@ inherits the unanswered accessibility question - a wordmark, five keybindings,
 three Regions, two Compositions, and now an undo stack and an inline confirm on
 the operation line. It has been recommended forward twice and taken neither time.
 
+## Session 8 - four tickets, test-first
+
+21, 07, 15 and 20 in that order, driven through `/tdd`. 339 tests pass, up from
+261 at the start of the day. Repo lint green throughout. Continuity for the run is
+in `.agent/handoff/atlas-tdd-four-tickets.md`.
+
+- **21, the core write surface.** `Move` and `Action.moved` give every applied
+  action a manifest; `build_repair_plan` slices one Action out of the Plan conform
+  already builds; `invert_plan` reverses it from manifests and refuses outright
+  when a Backfill, a file-empty removal, or a Conflict leaves nothing to reverse.
+  `Guard` now exists at two scopes with three tests running them side by side.
+  Path length warns from `build_plan`; `long_path()` is still absent from every
+  write path.
+- **07 and 15, the seam and its aftermath.** A lazily-expanding handle,
+  `core.tree`. Below the root, where `report_project` has no opinion, containment
+  decides Filing State. The Node Key is the project-relative path. After a write
+  the tree reconciles by Move Manifest - the same two folders the scoped guard
+  watched - and the cursor follows what it repaired. ADR 0007.
+- **20, the console shell.** Layout rules as a pure module, `tui/layout.py`, with
+  `app.py` applying them. Three Regions, two Compositions, collapse, navigation,
+  Companion Modes, narrow chrome. The health modal is gone and Enter is reclaimed.
+
+Two corrections found by building rather than deciding:
+
+- **Only control-plane Expectations are repairable.** ADR 0006 said an unmet
+  Expectation is a Backfill. Conform has never created a mapped section and would
+  report an unknown item and skip it. Recorded on ADR 0007 rather than left to be
+  discovered by an operator pressing a key that does nothing.
+- **In Textual, hiding a binding and disabling it are the same return value.**
+  Sizing the footer through `check_action` disabled every action key at 80 columns.
+  The narrow chrome is its own widget now.
+
 ## Notes for the next session
 
 The working tree is clean and `main` is ahead of `origin/main` and unpushed - now
-by 21 commits. Pushing has never been asked for. `git fetch` before surveying
+by 24 commits. Pushing has never been asked for. `git fetch` before surveying
 anyway.
+
+**The published design sheet is gone.** The artifact this file cites, and that
+tickets 02 and 03 cite, no longer resolves for this account. Anything needing
+those renders has to re-render them.
+
+**One intermittent TUI test.** `test_edit_project_prepopulates_and_confirms_folder_rename`
+failed once with a Textual `NoMatches` during a full run and has passed alone and
+in four consecutive full runs since. Timing, not the session's work.
 
 Prototype renderers for the wordmark and the three visual worlds live only in the
 session scratchpad and are deliberately throwaway. They are not Atlas code. When
