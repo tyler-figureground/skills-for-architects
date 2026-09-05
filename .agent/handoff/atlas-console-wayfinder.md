@@ -221,6 +221,18 @@ question, still deferred.
 
 ## Frontier
 
+**As of session 9:** unblocked and unclaimed are **24** (`atlas tree` - ticket 22's
+retroactive parity debt under ADR 0008, charted and deliberately not folded into
+another ticket's commit), 08 (global search scope), 09 (dossier Companion Mode),
+and 11 (Drive API read path). Nothing is blocked. 10 and 23 are resolved.
+
+24 is the natural next one: it is small, it discharges an obligation that is
+already overdue, and it is the cheapest real test of whether the ticket 07 seam is
+a seam - a second consumer that is not a Textual widget either uses it cleanly or
+exposes what the widget was carrying.
+
+*The section below is the session-7 frontier, kept for the reasoning.*
+
 Unblocked and unclaimed: 08, 09, 10, 11, and the tree's writes, which is not yet
 a ticket.
 Blocked: none.
@@ -300,11 +312,76 @@ Two corrections found by building rather than deciding:
   every mapped section and those folders really were Read. Found by rendering the
   screen, not by testing it. `tokens.disclosure` separates the two now.
 
+## Session 9 - the debt, then the writes
+
+Tickets 10 and 23. **405 tests**, up from 360 at the start of the day. Repo lint
+green. Continuity for the run is in
+`.agent/handoff/atlas-session-9-ten-then-twentythree.md`.
+
+**10, taken at last after slipping sessions 6, 7 and 8.** Grilled to a decision in
+three rounds. Two facts found while answering it reframed the ticket: the
+accessibility justification traced to a synthetic persona and Textual's unresolved
+#2425 rather than to an operator, and `--json` has zero consumers anywhere in this
+repo. Both recorded rather than glossed.
+
+The rule: **a CLI form is owed by every capability that writes and every capability
+that produces a fact; navigation is exempt**, and the obligation is discharged in
+the same session as the surface, never in a later ticket - which is precisely how
+this one slipped three times.
+
+The defect behind it was worse than the ticket described. Dropping the Filing State
+word at narrow width left Drifted, Misplaced and Loose rendering identically **to
+everyone**, because ADR 0004 has them share a glyph and a colour by design and the
+word was the only separator; what remained measured **1.82:1**, vermilion against
+ochre, on the red/green axis. The word now abbreviates - `NAME` `PLACE` `LOOSE`
+`UNMAPPED` - and is never dropped. The trigger was measuring the wrong thing too:
+`SPLIT_COLUMNS` stripped labels at 87 columns, where Single-Region gives the tree
+nearly the whole terminal, so `ABBREVIATE_COLUMNS` is its own named 60. ADR 0008.
+
+**23, the tree's writes, built test-first.** `tui/repair.py` pure like
+`tui/layout.py`; `f` means "conform what has focus"; an inline confirm on the
+operation line that Enter commits and Escape abandons; `u` undoes, per Project, no
+redo. `conform --node PATH` and `conform --revert FILE` are the CLI half, and
+`--revert` needed `plan_from_dict` because `action_to_dict` had no inverse and the
+Move Manifest was write-only.
+
+**Five bugs, two of them design errors in shipped ADRs.**
+
+- `Guard.for_action` cannot guard an undo: it re-derives the Plan from the map and
+  an undo reverses the map, so it refused every undo on an unchanged drive. ADR
+  0006 had claimed one guard served both. `Guard.for_undo` now exists.
+- `reconcile` missed the folder a merge consumed, because every Move in a merge
+  names a *child*. The tree drew a row for a directory that no longer existed, as
+  Mapped - the ghost ADR 0004 rules out. `follow` already knew this in a comment.
+- **The Tree Region could not take keyboard focus at all.** `#tree` is a `Vertical`
+  and `Vertical.focus()` is a no-op, so the tree widget shipped in session 8
+  entirely unreachable by keyboard while sixteen widget tests passed. Fixing it
+  exposed Textual's `Tree` taking Atlas's Enter, and a drilled tree having no
+  cursor until an arrow key moved it.
+
+Corrections are on ADR 0006 and ADR 0007, where the ADRs are.
+
+**The render scripts are now in the repo**, at `tools/atlas/scripts/`, with a
+README saying why. Three consecutive sessions have had a real defect found by
+looking at the screen and missed by a green suite, and the pattern is consistent:
+tests assert on what the app *believes* - `_focus_region`, `display`, a Filing
+State - and not on what it draws or what the keyboard reaches.
+
 ## Notes for the next session
 
 The working tree is clean and `main` is ahead of `origin/main` and unpushed - now
-by 26 commits. Pushing has never been asked for. `git fetch` before surveying
+by 28 commits. Pushing has never been asked for. `git fetch` before surveying
 anyway.
+
+**Render the screen before believing the suite.** `tools/atlas/scripts/` holds the
+fixture builder and two renderers, and its README lists the three defects a green
+suite has now missed in a row. The fixture puts `11 Meetings` beside `Meetings` on
+purpose, so the rename is a merge - the plain-rename case hid one of them.
+
+**`space` changed meaning without being decided.** With focus working, it toggles
+a folder when the tree has focus and marks a project when the list does. That
+falls out of Textual's own bindings and is almost certainly right, but nobody
+argued it. Worth a look in use.
 
 **The published design sheet is gone.** The artifact this file cites, and that
 tickets 02 and 03 cite, no longer resolves for this account. Anything needing
