@@ -31,10 +31,19 @@ def _detail(node: TreeNode, narrow: bool) -> str:
     return tokens.load_style(node.load).label
 
 
-def _names_its_fault(node: TreeNode, narrow: bool) -> bool:
-    """The glyph says something is wrong; the word says what. Dropped when the
-    width runs out, because the glyph and its colour still carry it."""
-    return not narrow and node.filing != tokens.MAPPED
+def _fault_word(node: TreeNode, narrow: bool) -> str:
+    """The glyph says something is wrong; this says what.
+
+    Abbreviated when the width runs out, never dropped (ticket 10). Dropping it
+    was the original behaviour and it left Drifted, Misplaced and Loose rendering
+    the identical hatch in the identical colour - indistinguishable to anyone, at
+    the width Atlas is most often opened at. The word is the only thing that ever
+    separated them.
+    """
+    if node.filing == tokens.MAPPED:
+        return ""
+    style = tokens.filing_style(node.filing)
+    return style.short if narrow else style.label
 
 
 def node_label(node: TreeNode, *, narrow: bool = False, expanded: bool = False) -> Text:
@@ -50,11 +59,15 @@ def node_label(node: TreeNode, *, narrow: bool = False, expanded: bool = False) 
     label.append(filing.glyph, style=filing.colour)
     label.append(" ")
     label.append(node.name, style=tokens.PALETTE.ink)
+    # A file says what is wrong with it too. It has no disclosure marker and no
+    # count, but a Loose file and an Unfiled file are otherwise the same hatch
+    # in two hues, which is the whole thing ticket 10 rules out.
+    fault = _fault_word(node, narrow)
+    if fault:
+        label.append("  ")
+        label.append(fault, style=filing.colour)
     if not node.is_dir:
         return label
-    if _names_its_fault(node, narrow):
-        label.append("  ")
-        label.append(filing.label, style=filing.colour)
     label.append("  ")
     label.append(tokens.disclosure(node.load, expanded=expanded), style=tokens.PALETTE.dim)
     label.append("  ")
@@ -72,10 +85,11 @@ def label_width(node: TreeNode, *, narrow: bool = False, expanded: bool = False)
     a test holds the two in agreement.
     """
     width = 2 + cell_len(node.name)
+    fault = _fault_word(node, narrow)
+    if fault:
+        width += 2 + cell_len(fault)
     if not node.is_dir:
         return width
-    if _names_its_fault(node, narrow):
-        width += 2 + cell_len(tokens.filing_style(node.filing).label)
     width += 2 + cell_len(tokens.disclosure(node.load, expanded=expanded))
     width += 2 + cell_len(_detail(node, narrow))
     return width

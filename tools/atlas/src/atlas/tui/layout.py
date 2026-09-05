@@ -34,6 +34,16 @@ MIN_COLUMNS = 40
 MERGE_ROWS = 30
 MIN_ROWS = 16
 
+# Below this, a tree row abbreviates what is wrong with a folder instead of
+# spelling it out (ticket 10). It approximates the Tree Region's own width, which
+# the Composition decides: in Split the tree gets roughly half the terminal, in
+# Single-Region nearly all of it, so no single number is right for both. 60 is
+# the value that keeps the measured 87- and 77-column terminals spelling the word
+# out - they are Single-Region, so the tree owns the width - while the 46-column
+# case, the most common of all, abbreviates. Reusing SPLIT_COLUMNS here was the
+# original bug: it stripped labels at 87 as though the tree were cramped.
+ABBREVIATE_COLUMNS = 60
+
 REFUSAL = "Atlas needs at least 40 columns and 16 rows."
 
 

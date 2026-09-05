@@ -50,6 +50,14 @@ Press `m` to edit the shared contact directory. Contact IDs remain stable. Conta
 
 CLI edit commands are interactive when run in a terminal. Omitted fields retain their current values. Automation and `--json` require `--yes`; a folder rename also requires separate `--rename` approval. Use `--dry-run` to inspect the project-update plan without changing files. Run `atlas project edit --help` or `atlas contacts edit --help` for field flags.
 
+## Accessibility
+
+Atlas has not been validated with assistive technology and makes no accessibility conformance claim. Textual's screen-reader support is unresolved upstream ([textual#2425](https://github.com/Textualize/textual/issues/2425)), so the console should not be assumed usable with a screen reader.
+
+Every capability that writes, and every fact the console can show, is also reachable from the CLI with `--json`. That path is plain text and is the supported one for automation - and for anyone the console does not serve.
+
+Within the console, colour reinforces a distinction and never carries one alone. A folder or file with something wrong with it names what is wrong in words; when the terminal is too narrow for the full phrase the word abbreviates - `NAME`, `PLACE`, `LOOSE`, `UNMAPPED` - rather than leaving the glyph and its colour to say it.
+
 ## Install
 
 Install once as an editable uv tool. The `atlas` command then works from any directory, and local source changes take effect without reinstalling.

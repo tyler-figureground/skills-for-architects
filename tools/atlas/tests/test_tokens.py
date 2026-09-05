@@ -86,6 +86,39 @@ def test_unreadable_never_reads_as_empty():
     assert load_style(UNREADABLE).label != load_style(READ).label
 
 
+def test_no_two_filing_states_are_told_apart_by_colour_alone():
+    """Ticket 10, and the reason it existed.
+
+    Colour is allowed to reinforce a distinction. It is never allowed to be the
+    only thing carrying one. Both widths are checked because the narrow row is
+    where this failed: the word was dropped, and Drifted, Misplaced and Loose all
+    collapsed onto one hatch in one hue - unreadable to anyone, not only to
+    someone who cannot separate vermilion from ochre.
+    """
+    for wide, short in ((True, False), (False, True)):
+        assert wide is not short
+        seen: dict[tuple[str, str], str] = {}
+        for state in FILING_STATES:
+            style = filing_style(state)
+            key = (style.glyph, style.short if short else style.label)
+            assert key not in seen, (
+                f"{state} and {seen[key]} render identically without colour "
+                f"at {'narrow' if short else 'full'} width: {key}"
+            )
+            seen[key] = state
+
+
+def test_every_state_that_needs_a_word_has_a_short_one():
+    """Abbreviated, never dropped. Mapped is the exception and says nothing at
+    either width, because 'nothing is wrong' is what a solid glyph already
+    means."""
+    assert filing_style(MAPPED).short == ""
+    for state in (DRIFTED, MISPLACED, LOOSE, UNFILED):
+        style = filing_style(state)
+        assert style.short, f"{state} has no short form"
+        assert len(style.short) < len(style.label), f"{state} does not abbreviate"
+
+
 # ----------------------------------------------------------------- legible
 
 

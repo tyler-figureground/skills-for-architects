@@ -251,3 +251,34 @@ What the tree does after Atlas applies a Plan: forget the folders the Move Manif
 names, take the fresh report with it, and move the cursor to where the repaired
 node went. Scoped like the Guard is - a one-node repair forgets two folders, a
 project-wide conform forgets the project.
+
+## Atlas Interface Contract
+
+**CLI Obligation**
+The rule deciding which console capabilities owe a CLI form: every capability that
+writes, and every capability that produces a fact. Navigation is exempt - an agent
+wants the facts and the writes, never the cursor. Discharged in the same session as
+the surface it belongs to, in either order, never in a later ticket.
+
+**Agent Interface**
+`--json` output. The documented machine-readable path into every fact and every
+write Atlas can perform. Distinct from the TUI, which is for a person, and from a
+CLI's plain-text output, which is for a person reading a terminal.
+
+**Fault Word**
+The word on a tree row naming what is wrong with a Tree Node - its Filing State,
+in the operator's language rather than the model's: `wrong name`, `wrong place`,
+`not filed yet`, `not in the map`. A Mapped node has none, because a solid glyph
+already says nothing is wrong. Carried by files as well as folders.
+
+**Short Form**
+The abbreviated Fault Word a narrow row uses instead: `NAME`, `PLACE`, `LOOSE`,
+`UNMAPPED`. Substituted for the long form below `ABBREVIATE_COLUMNS`, never
+dropped. Dropping it was the defect that made this vocabulary necessary - Drifted,
+Misplaced and Loose share a glyph and a colour by design, so the word is the only
+thing between them.
+
+**Colour-Alone Rule**
+Colour may reinforce a distinction and may never be the only thing carrying one.
+Tested by asserting that no two Filing States render identically once colour is
+stripped, at either width, rather than by pinning any colour value.

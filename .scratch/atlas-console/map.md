@@ -201,6 +201,25 @@ Continuity: `.agent/handoff/` per this repo's checkpoint rule.
   replaced by Companion Modes; unmet Expectations is the privileged default
   because it is the only one that must be simultaneous with the tree. Vocabulary
   in `/CONTEXT.md`, decision in `docs/adr/0005`.
+- [CLI parity and the accessible fallback](issues/10-cli-parity-and-accessibility.md) -
+  **a CLI form is owed by every capability that writes and every capability that
+  produces a fact; navigation is exempt, and the obligation is discharged in the
+  same session as the surface.** Parity is kept but re-founded: the accessibility
+  justification traced to one synthetic persona and Textual's unresolved #2425,
+  not to an operator, and `--json` has zero consumers in this repo today - both
+  recorded rather than glossed. The README now states the negative first and
+  claims no conformance. The second rule is the one with a live victim: **colour
+  may reinforce a distinction and never carry one alone.** Dropping the Filing
+  State word at narrow width left Drifted, Misplaced and Loose rendering
+  identically *to everyone*, because ADR 0004 has them share a glyph and a colour
+  by design and the word was the only separator; what remained measured **1.82:1**,
+  vermilion against ochre, on the red/green axis. The word now abbreviates -
+  `NAME` `PLACE` `LOOSE` `UNMAPPED` - and is never dropped, on files as well as
+  folders. The trigger was measuring the wrong thing too: `SPLIT_COLUMNS` stripped
+  labels at 87 columns where the tree owns nearly the whole terminal, so
+  `ABBREVIATE_COLUMNS` is its own named 60. Colour is tested by asserting no two
+  Filing States survive having it stripped, never by a hex. Vocabulary in
+  `/CONTEXT.md`, decision in `docs/adr/0008`. Tickets 23 and 24 graduated.
 - [Textual 8.2.8 tree widgets and lazy loading](issues/05-research-textual-tree-widgets.md)
   - build on plain `Tree`; `DirectoryTree` destroys injected nodes on reload, can
   only subtract paths, and costs ~2 stats per entry. Copy its lazy-load machinery,
@@ -221,6 +240,12 @@ Fog toward the destination. Graduates into tickets as the frontier clears it.
 
 - **File-level action set.** Which actions the tree offers, what core plan each
   builds, and how each previews. Depends on the write contract.
+- **Load State labels do not abbreviate.** Ticket 10 gave the Fault Word a short
+  form; the Load State label beside it kept its long one, so `not opened yet` runs
+  past the viewport at 46 columns and the row scrolls. Same principle, different
+  vocabulary, and `cannot read` is the one that must not be shortened into
+  ambiguity - ticket 16's rule is that an unreadable folder never reads as empty.
+  Deliberately out of scope at ticket 10; small, and visible on screen.
 - **Selection and focus rendering everywhere else.** Ticket 02 settled the cursor
   for the project list and the tree. Modals, the filter input, the command palette,
   and the search overlay all still show default Textual focus, which no longer

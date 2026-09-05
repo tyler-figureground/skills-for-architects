@@ -14,7 +14,15 @@ from textual.app import App
 
 from atlas.core.doctor import report_project
 from atlas.core.scan import PARTIAL, READ, UNREAD, UNREADABLE, scan_drive
-from atlas.core.tree import DRIFTED, MAPPED, TreeNode, open_project_tree
+from atlas.core.tree import (
+    DRIFTED,
+    LOOSE,
+    MAPPED,
+    MISPLACED,
+    UNFILED,
+    TreeNode,
+    open_project_tree,
+)
 from atlas.tui.treeview import ProjectTreeView, node_label
 
 
@@ -29,7 +37,9 @@ def test_a_read_folder_shows_its_glyph_and_its_own_children():
     assert str(node_label(node)) == "█ 01 Model  ▸  2 folders, 3 files"
 
 
-def test_a_file_carries_a_glyph_and_nothing_else():
+def test_a_filed_file_carries_a_glyph_and_nothing_else():
+    """No disclosure marker and no count: a file has no children to describe.
+    A file with something wrong with it still names it - see below."""
     node = TreeNode(key="CLAUDE.md", name="CLAUDE.md", is_dir=False, filing=MAPPED)
 
     assert str(node_label(node)) == "█ CLAUDE.md"
@@ -71,13 +81,47 @@ def test_a_partial_listing_says_so():
     assert "partial" in str(node_label(node))
 
 
-def test_a_repairable_folder_names_what_is_wrong_until_the_width_runs_out():
+def test_a_repairable_folder_abbreviates_what_is_wrong_rather_than_dropping_it():
     node = folder("Meetings", filing=DRIFTED, load=READ, files=1)
 
     assert "wrong name" in str(node_label(node))
     narrow = str(node_label(node, narrow=True))
-    assert "wrong name" not in narrow, "the glyph and its colour still carry it"
+    assert "wrong name" not in narrow, "the long form does not fit"
+    assert "NAME" in narrow, "but the row must still say what is wrong"
     assert "0F 1" in narrow
+
+
+def test_a_file_says_what_is_wrong_with_it_too():
+    """Found by rendering, not by the suite. A file returns early - no disclosure
+    marker, no count - and used to return before the word as well, which left a
+    Loose file and an Unfiled file identical but for hue at every width."""
+    loose = TreeNode(key="HANDOFF.md", name="HANDOFF.md", is_dir=False, filing=LOOSE)
+    unfiled = TreeNode(key="scratch.txt", name="scratch.txt", is_dir=False, filing=UNFILED)
+
+    for narrow in (False, True):
+        rendered = {str(node_label(n, narrow=narrow)) for n in (loose, unfiled)}
+        assert len(rendered) == 2, rendered
+        for node, text in zip((loose, unfiled), sorted(rendered)):
+            assert text.rstrip() != f"▚ {node.name}", (
+                f"a {node.filing} file says nothing at "
+                f"{'narrow' if narrow else 'full'} width"
+            )
+
+    assert "not filed yet" in str(node_label(loose))
+    assert "LOOSE" in str(node_label(loose, narrow=True))
+    assert "UNMAPPED" in str(node_label(unfiled, narrow=True))
+
+
+def test_the_narrow_row_still_tells_the_repairable_states_apart():
+    """The defect ticket 10 was opened for. Drifted, Misplaced and Loose share a
+    glyph and a colour by design - the word is the only thing between them, so
+    the narrow row cannot be allowed to drop it."""
+    rendered = {
+        filing: str(node_label(folder("Meetings", filing=filing, load=READ), narrow=True))
+        for filing in (DRIFTED, MISPLACED, LOOSE, UNFILED)
+    }
+
+    assert len(set(rendered.values())) == len(rendered), rendered
 
 
 # ------------------------------------------------------------- the widget
@@ -137,7 +181,6 @@ def test_the_width_and_the_label_agree():
     saving. Two ways of computing one number is a place they can drift, so they
     are held together here rather than trusted."""
     from atlas.core.scan import UNREAD
-    from atlas.core.tree import LOOSE, MISPLACED, UNFILED
     from atlas.tui.treeview import label_width
 
     for filing in (MAPPED, DRIFTED, MISPLACED, LOOSE, UNFILED):

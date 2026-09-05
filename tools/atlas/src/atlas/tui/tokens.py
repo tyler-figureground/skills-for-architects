@@ -92,6 +92,7 @@ class FilingStyle:
     glyph: str
     colour: str
     label: str
+    short: str
     solid: bool
 
 
@@ -109,12 +110,21 @@ _HATCH = "▚"
 # reads "something is wrong and Atlas can handle it" without a legend.
 _FIXABLE = PALETTE.status["ACTION"]
 
+# Every state carries a short form as well as a long one (ticket 10). The row
+# abbreviates when the width runs out; it never goes silent. Dropping the word
+# left four of five states rendering the identical hatch, separated only by hue -
+# vermilion against ochre, which measures 1.82:1 and is the red/green confusion
+# axis besides. Colour reinforces the word here. It never carries it alone.
+#
+# Caps because these read as tokens rather than as clipped prose, and because the
+# project list already names its statuses that way.
 _FILING: dict[str, FilingStyle] = {
-    MAPPED: FilingStyle(_SOLID, PALETTE.status["READY"], "filed", solid=True),
-    DRIFTED: FilingStyle(_HATCH, _FIXABLE, "wrong name", solid=False),
-    MISPLACED: FilingStyle(_HATCH, _FIXABLE, "wrong place", solid=False),
-    LOOSE: FilingStyle(_HATCH, _FIXABLE, "not filed yet", solid=False),
-    UNFILED: FilingStyle(_HATCH, PALETTE.status["REVIEW"], "not in the map", solid=False),
+    MAPPED: FilingStyle(_SOLID, PALETTE.status["READY"], "filed", "", solid=True),
+    DRIFTED: FilingStyle(_HATCH, _FIXABLE, "wrong name", "NAME", solid=False),
+    MISPLACED: FilingStyle(_HATCH, _FIXABLE, "wrong place", "PLACE", solid=False),
+    LOOSE: FilingStyle(_HATCH, _FIXABLE, "not filed yet", "LOOSE", solid=False),
+    UNFILED: FilingStyle(_HATCH, PALETTE.status["REVIEW"], "not in the map", "UNMAPPED",
+                         solid=False),
 }
 
 # Never blank, and never a zero: an Unread folder showing "0 files" would be the

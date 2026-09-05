@@ -65,6 +65,7 @@ from ..core.tree import ProjectTree, open_project_tree
 from . import tokens
 from .wordmark import BAR, composition_for, mark_width, render_mark
 from .layout import (
+    ABBREVIATE_COLUMNS,
     COMPANION,
     DEFAULT_MODE,
     SPLIT_COLUMNS,
@@ -1276,7 +1277,7 @@ class AtlasApp(App):
             return      # the cursor moved on while this was pending
         tree = self._project_tree(row)
         self.query_one(ProjectTreeView).set_source(
-            tree, narrow=(self.size.width or 80) < SPLIT_COLUMNS)
+            tree, narrow=(self.size.width or 80) < ABBREVIATE_COLUMNS)
         mode = self._companion_mode
         self.query_one("#companion-title", Static).update(MODE_LABELS[mode])
         if mode == HEALTH:
