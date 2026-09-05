@@ -7,7 +7,7 @@ generated_by: skills-for-architects
 # The tree's write keys, the inline confirm, and the undo stack
 
 Type: task
-Status: open
+Status: resolved
 Blocked by: -
 Parent: ../map.md
 
@@ -85,3 +85,66 @@ rather than against fixtures.
   state on the operation line is a token, not a hex.
 - The confirm must read at 46 columns, and colour may not be the only thing
   distinguishing it from `-warning` and `-error` (ADR 0008).
+
+## Resolution
+
+Status: resolved
+Date: 2026-09-05
+Corrections recorded on `docs/adr/0006` and `docs/adr/0007`
+
+Built test-first through `/tdd`. **405 tests, up from 364.** Repo lint green.
+Rendered headless at 120 / 87 / 46 columns and driven end to end with keys only.
+
+### What shipped
+
+- **`tui/repair.py`**, pure like `tui/layout.py`. `repair_offer` decides whether
+  the key does anything and carries a reason when it does not - Unfiled says only
+  a person can decide, Mapped says it is filed correctly, a non-control-plane
+  Expectation says Atlas does not create it (ADR 0007's correction). `confirms_inline`
+  and `confirm_line` are ADR 0006's confirmation weight. `UndoStack` is per
+  Project, no redo, and **refuses an uninvertible Plan at push rather than at
+  pop** - a stack that discovers it cannot honour a depth it advertised is worse
+  than one that never advertised it.
+- **The key on the node.** `f` means "conform what has focus": the whole project
+  from the list, one node from the tree. Arms an inline confirm on the operation
+  line; Enter commits, Escape abandons, nothing touches disk until Enter.
+- **`u` undoes**, guarded, per Project.
+- **`conform --node PATH`** and **`conform --revert FILE`**, the CLI forms ADR
+  0008 obliges. `--revert` reads back the `--json` manifest a prior apply printed,
+  which needed `plan_from_dict` in core - `action_to_dict` had no inverse, so the
+  Move Manifest was write-only.
+
+### Five bugs, and where each came from
+
+Two were design errors in shipped ADRs. Three were shipped code that no test could
+have caught, all found by rendering.
+
+1. **`Guard.for_action` cannot guard an undo.** It re-derives the Plan from the
+   map and compares; an undo's Plan reverses the map. It refused every undo on a
+   drive nothing had changed on. ADR 0006 claimed one guard served both.
+   `Guard.for_undo` keeps the map check and the snapshot, drops the re-derivation.
+2. **`reconcile` missed the folder a merge consumed.** Every Move in a merge names
+   a *child*, so their parents are the two merged folders - never the folder that
+   lost the source from its own listing. The tree drew a row for a directory that
+   no longer existed, as Mapped. `follow` already knew this and said so in a
+   comment; `reconcile` did not.
+3. **The Tree Region could not take keyboard focus at all.** `#tree` is a
+   `Vertical`; `Vertical.focus()` is a no-op. The app believed it had drilled
+   while the arrow keys still drove the project list. **The tree widget shipped
+   entirely unreachable by keyboard** and sixteen widget tests plus a console
+   shell suite all passed.
+4. **Textual's `Tree` took Atlas's Enter** the moment the tree could hold focus.
+   `priority=True`, as `tab` already was.
+5. **A freshly drilled tree had no cursor.** `cursor_line` is -1 until an arrow
+   key moves it, so the repair key was silently inert on arrival.
+
+3, 4 and 5 are one finding wearing three hats: nothing had ever asserted which
+widget the keyboard was talking to. Tests asserted on `_focus_region` and on
+`display`, and both were correct the whole time.
+
+### Also fixed
+
+`confirm_line` was handed the terminal width, but `#operation` has `padding: 0 2`,
+so `Esc cancel` clipped to `Esc` at 46 columns. `OPERATION_MARGIN = 4`, the same
+correction ticket 17 needed for the wordmark and named `MARGIN` there. Third time
+this repo has paid for that arithmetic.

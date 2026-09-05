@@ -320,3 +320,122 @@ async def test_the_tree_drops_the_wording_when_the_width_runs_out(fixture_drive)
 
     assert "wrong name" in await drifted_row(179)
     assert "wrong name" not in await drifted_row(46)
+
+
+# ------------------------------------------------- focus, not just intent
+
+
+async def test_drilling_into_the_tree_actually_moves_keyboard_focus(fixture_drive):
+    """Ticket 23 found this by rendering. `_focus_current_region` focused the
+    Region's container - `#tree` is a Vertical, and a Vertical cannot take focus,
+    so `focus()` was a no-op. The app believed it had drilled, the arrow keys
+    still drove the project list, and the tree cursor never existed.
+
+    Asserting on `_focus_region` or on `display` cannot catch it. Only asserting
+    on which widget the keyboard is actually talking to can.
+    """
+    two_projects(fixture_drive)
+    app = AtlasApp(fixture_drive, follow_debounce=0)
+
+    async with app.run_test(size=(120, 51)) as pilot:
+        await settle(app, pilot)
+        assert app.focused is app.query_one("#projects")
+
+        await pilot.press("enter")
+        await settle(app, pilot)
+
+        assert app.focused is app.query_one(ProjectTreeView)
+
+
+async def test_arrow_keys_move_the_tree_cursor_once_drilled(fixture_drive):
+    """The consequence, stated as behaviour: after Enter, down belongs to the
+    tree. It was moving the project list, which also changed what the tree was
+    showing underneath the operator."""
+    two_projects(fixture_drive)
+    app = AtlasApp(fixture_drive, follow_debounce=0)
+
+    async with app.run_test(size=(120, 51)) as pilot:
+        await settle(app, pilot)
+        before = app._workspace_project
+
+        await pilot.press("enter")
+        await settle(app, pilot)
+        await pilot.press("down")
+        await settle(app, pilot)
+
+        assert app._workspace_project == before, "down must not change the project"
+        assert app.query_one(ProjectTreeView).selected_facts() is not None
+
+
+async def test_unwinding_returns_focus_to_the_project_list(fixture_drive):
+    two_projects(fixture_drive)
+    app = AtlasApp(fixture_drive, follow_debounce=0)
+
+    async with app.run_test(size=(120, 51)) as pilot:
+        await settle(app, pilot)
+        await pilot.press("enter")
+        await settle(app, pilot)
+        await pilot.press("escape")
+        await settle(app, pilot)
+
+        assert app.focused is app.query_one("#projects")
+
+
+async def test_enter_stays_atlas_key_when_the_tree_has_focus(fixture_drive):
+    """ADR 0005: Enter drills, identically in both Compositions and in every
+    Region. Textual's Tree binds enter to select_cursor, and a widget binding
+    beats an App one - so once the focus bug was fixed and the tree could
+    actually hold focus, the tree quietly took Atlas's key. Enter is priority
+    for the same reason Tab already is."""
+    two_projects(fixture_drive)
+    app = AtlasApp(fixture_drive, follow_debounce=0)
+
+    async with app.run_test(size=(120, 51)) as pilot:
+        await settle(app, pilot)
+        await pilot.press("enter")
+        await settle(app, pilot)
+        assert app.focused is app.query_one(ProjectTreeView)
+
+        await pilot.press("enter")
+        await settle(app, pilot)
+
+        assert app.focused is app.query_one("#companion"), "Enter drilled onward"
+
+
+async def test_space_toggles_a_folder_once_the_tree_has_focus(fixture_drive):
+    """The other half of the same finding: with focus real, each Region's own
+    space does the right thing. Marking is a project-list idea; in the tree,
+    space opens a folder - which was unreachable by keyboard until now."""
+    two_projects(fixture_drive)
+    app = AtlasApp(fixture_drive, follow_debounce=0)
+
+    async with app.run_test(size=(120, 51)) as pilot:
+        await settle(app, pilot)
+        await pilot.press("enter")
+        await settle(app, pilot)
+        tree = app.query_one(ProjectTreeView)
+        assert tree.cursor_node is not None and not tree.cursor_node.is_expanded
+
+        await pilot.press("space")
+        await settle(app, pilot)
+
+        assert tree.cursor_node.is_expanded
+        assert not app._marked, "space in the tree must not mark a project"
+
+
+async def test_drilling_into_the_tree_lands_the_cursor_on_a_node(fixture_drive):
+    """Textual leaves cursor_line at -1 until an arrow key moves it, so a freshly
+    drilled tree had focus, rows, and no cursor - and the repair key was silently
+    inert until the operator pressed down. A key that does nothing and says
+    nothing is the one failure mode this whole ticket is trying to avoid."""
+    two_projects(fixture_drive)
+    app = AtlasApp(fixture_drive, follow_debounce=0)
+
+    async with app.run_test(size=(120, 51)) as pilot:
+        await settle(app, pilot)
+        await pilot.press("enter")
+        await settle(app, pilot)
+
+        tree = app.query_one(ProjectTreeView)
+        assert tree.cursor_node is not None
+        assert tree.selected_facts() is not None

@@ -180,6 +180,31 @@ class ProjectTreeView(Tree):
         """The widget node for a Node Key, or None if it is not drawn."""
         return self._by_key.get(key)
 
+    def on_focus(self) -> None:
+        """Land the cursor on the first node when the Region takes focus.
+
+        Textual leaves ``cursor_line`` at -1 until an arrow key moves it, so a
+        freshly drilled tree has focus and rows and no cursor. Every key that
+        acts on the selected node - the repair key above all - is then silently
+        inert until the operator happens to press down. Silently is the problem:
+        the key looks broken rather than inapplicable.
+        """
+        if self.cursor_line < 0 and self.root.children:
+            self.cursor_line = 0
+
+    def selected_facts(self) -> TreeNode | None:
+        """The Tree Node under the cursor, as core last described it.
+
+        The widget's own node carries only a Node Key in ``data``; everything a
+        repair needs to decide - the Filing State above all - lives on the
+        immutable record core handed over. The cursor can also sit on the root,
+        which is not a node at all.
+        """
+        node = self.cursor_node
+        if node is None:
+            return None
+        return self._facts.get(str(node.data or ""))
+
     def select_key(self, key: str) -> None:
         """Put the cursor on a Node Key, now or as soon as it is drawn.
 

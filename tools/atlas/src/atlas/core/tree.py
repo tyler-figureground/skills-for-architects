@@ -208,10 +208,19 @@ class ProjectTree:
         for action in applied.actions:
             if action.status != DONE:
                 continue
-            for mv in action.moved:
-                for key in (parent_key(mv.src), parent_key(mv.dst)):
-                    if key not in touched:
-                        touched.append(key)
+            keys = [parent_key(mv.src) for mv in action.moved]
+            keys += [parent_key(mv.dst) for mv in action.moved]
+            # The Action's own endpoints, not only its manifest's. A merge moves
+            # children one at a time, so every Move names a child and the parents
+            # of those children are the two merged folders - never the folder
+            # that just lost the source from its own listing. Leaving that one
+            # cached draws a row for a folder that is no longer on disk, which
+            # ADR 0004 rules out. `follow` already relies on the same fact.
+            if action.moved:
+                keys += [parent_key(action.src), parent_key(action.dst)]
+            for key in keys:
+                if key not in touched:
+                    touched.append(key)
         self.invalidate(touched, report)
         return tuple(sorted(touched))
 

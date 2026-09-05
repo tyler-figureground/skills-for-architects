@@ -287,6 +287,38 @@ def test_reconcile_invalidates_exactly_the_folders_the_move_touched(fixture_driv
     assert tree.load_state("") == READ, "the project root did not change"
 
 
+def test_reconcile_forgets_the_folder_a_merge_consumed(fixture_drive):
+    """Found by rendering ticket 23, not by the suite.
+
+    A merge moves children one at a time, so every Move in the manifest names a
+    child - and the parents of those children are the two merged folders, never
+    the folder that lost `Meetings` from its own listing. That folder is the
+    project root, its cached listing still held a `Meetings` entry, and the tree
+    drew a row for a folder that no longer exists - as Mapped, because the fresh
+    report has no complaint about a name that is gone.
+
+    `follow` already knew this and says so in its own comment: nothing in the
+    manifest names the merged folder itself, the Action does. `reconcile` did
+    not, and a node that is not on disk is exactly what ADR 0004 rules out.
+    """
+    project = make_project(
+        fixture_drive, "260415_Merged",
+        sections=["01 Model", "Meetings/Agendas", "11 Meetings"],
+        files={"Meetings/kickoff.md": "z"},
+    )
+    tree = tree_for(fixture_drive, "260415_Merged")
+    assert "Meetings" in {node.name for node in tree.children()}
+
+    applied = applied_repair(fixture_drive, "260415_Merged", "Meetings")
+    assert all(a.status == "done" for a in applied.actions), applied.actions
+    assert not (project / "Meetings").exists(), "the merge consumed the source"
+
+    touched = tree.reconcile(applied)
+
+    assert "" in touched, f"the root lost a child and must be re-read: {touched}"
+    assert "Meetings" not in {node.name for node in tree.children()}
+
+
 def test_the_cursor_follows_what_it_just_repaired(fixture_drive):
     """A rebuild restores the cursor by line number, so the seam has to say where
     the node went. Otherwise pressing the repair key moves the selection to

@@ -20,7 +20,7 @@ lands already conformant instead of adding a fourth session of debt.
 
 ## Phase plan
 
-- [ ] **P0 - survey.** Read ticket 10, CONTEXT.md, the CLI surface and its
+- [x] **P0 - survey.** Read ticket 10, CONTEXT.md, the CLI surface and its
   `--json` contract, the TUI-only capabilities added in sessions 6-8, and the
   narrow-width render where colour carries Filing State alone.
 - [ ] **P1 - ticket 10, grilled.** Resolve the five questions on the ticket. The
@@ -50,4 +50,25 @@ lands already conformant instead of adding a fourth session of debt.
 
 ## Log
 
-<!-- appended per phase -->
+**P0 done.** Fetched, baseline 360 green, read ticket 10, `tokens.py`,
+`treeview.py`, `layout.py`, the CLI parser, `report_to_dict`, `cmd_conform`.
+
+**P1 + P2 done, committed.** Ticket 10 grilled through three rounds and resolved.
+ADR 0008, CONTEXT.md under Atlas Interface Contract, README accessibility section,
+map line, fog note. Code: `FilingStyle.short`, `_fault_word`,
+`layout.ABBREVIATE_COLUMNS = 60`, `app.py` keying `narrow` on it. **364 tests**,
+up from 360. Repo lint green.
+
+Two findings worth carrying:
+
+- The defect was worse than the ticket described. Dropping the word collapsed
+  Drifted, Misplaced and Loose into one appearance **for everyone**, not only for
+  a colour-blind operator - ADR 0004 has them share a glyph and a colour by
+  design. What was left measured 1.82:1, vermilion against ochre.
+- **Rendering found the second half of the same bug and the suite did not.**
+  `node_label` returned early for a file, before the word was appended, so a Loose
+  file and an Unfiled file were separated by hue alone at *every* width. Second
+  session running that a headless render found what a green suite could not.
+
+Tickets 23 and 24 charted. 24 is ticket 22's retroactive parity debt under ADR
+0008 and is deliberately its own ticket, not folded into 23's commit.

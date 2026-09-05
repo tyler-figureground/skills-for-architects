@@ -194,6 +194,42 @@ def action_to_dict(action: Action) -> dict:
     }
 
 
+def plan_from_dict(payload: dict) -> Plan:
+    """A Plan back from the JSON ``action_to_dict`` produced.
+
+    The return leg. Without it the Move Manifest is write-only: six surfaces can
+    read one and nothing can feed one back, which leaves ``invert_plan``
+    reachable only from inside a live session. A stateless undo needs this.
+
+    Refuses a manifest missing a field rather than defaulting it. By the time a
+    manifest comes back it is operator-supplied input, and a silently defaulted
+    ``moved`` becomes an uninvertible Plan two steps later, where the message no
+    longer names the real problem. ``path_warning`` is derived and ignored on the
+    way in - it is a property, and honouring a supplied one would let a manifest
+    contradict its own ``path_length``.
+    """
+    try:
+        actions = tuple(
+            Action(
+                kind=a["kind"],
+                src=a["src"],
+                dst=a["dst"],
+                file_count=a["file_count"],
+                status=a["status"],
+                note=a["note"],
+                moved=tuple(
+                    Move(src=mv["src"], dst=mv["dst"], is_dir=mv["is_dir"])
+                    for mv in a["moved"]
+                ),
+                path_length=a["path_length"],
+            )
+            for a in payload["actions"]
+        )
+        return Plan(project=payload["project"], actions=actions)
+    except (KeyError, TypeError) as error:
+        raise OpsError(f"manifest is missing {error}") from error
+
+
 # ----------------------------------------------------------------- inverse
 
 
@@ -296,6 +332,11 @@ class Guard:
     watched: tuple[_Snapshot, ...]
     whole_project: bool
     node: str = ""
+    # Whether the guarded actions can be re-derived from the drive map at all.
+    # A repair can: it is a slice of the Plan conform builds, so rebuilding it
+    # and comparing is the strongest check available. An undo cannot, because
+    # its Plan reverses the map rather than following it - see for_undo.
+    derived: bool = True
 
     @classmethod
     def for_project(cls, drive_root: Path, project: str, m: DriveMap, plan: Plan) -> Guard:
@@ -311,6 +352,26 @@ class Guard:
         return cls(project=project, drive_map=m, actions=plan.actions,
                    watched=_snapshot(drive_root / project, _watched_dirs(plan)),
                    whole_project=False, node=node)
+
+    @classmethod
+    def for_undo(cls, drive_root: Path, project: str, m: DriveMap, inverse: Plan) -> Guard:
+        """Guard an undo: the map, and the directories the inverse touches.
+
+        Not ``for_action``. That one re-derives the Plan from the drive map and
+        compares, which is the strongest check available for a repair - and
+        impossible for an undo, whose Plan reverses the map instead of following
+        it. Guarding an inverse that way refuses every time, on a drive nothing
+        has changed on. ADR 0006 assumed one guard served both; it does not, and
+        ADR 0008's ticket found out by pressing the key.
+
+        What an undo actually has to verify is not "does the map still want this
+        work" - it never did - but "are these folders still as they were when the
+        repair applied". That is the snapshot, and the snapshot is unchanged.
+        """
+        node = inverse.actions[0].src or inverse.actions[0].dst if inverse.actions else ""
+        return cls(project=project, drive_map=m, actions=inverse.actions,
+                   watched=_snapshot(drive_root / project, _watched_dirs(inverse)),
+                   whole_project=False, node=node, derived=False)
 
     def check(self, drive_root: Path) -> str | None:
         """Re-read what was watched. Returns why the Plan is stale, or None."""
@@ -330,16 +391,17 @@ class Guard:
         if fresh_map != self.drive_map:
             return "the drive map changed"
 
-        inv = ProjectInventory(path=project_path, name=self.project,
-                               root_entries=list_entries(project_path))
-        report = report_project(inv, fresh_map)
-        if self.whole_project:
-            fresh = build_plan(report, fresh_map, project=project_path).actions
-        else:
-            fresh = build_repair_plan(report, fresh_map, self.node,
-                                      project=project_path).actions
-        if fresh != self.actions:
-            return f"{self.project} no longer needs the same work"
+        if self.derived:
+            inv = ProjectInventory(path=project_path, name=self.project,
+                                   root_entries=list_entries(project_path))
+            report = report_project(inv, fresh_map)
+            if self.whole_project:
+                fresh = build_plan(report, fresh_map, project=project_path).actions
+            else:
+                fresh = build_repair_plan(report, fresh_map, self.node,
+                                          project=project_path).actions
+            if fresh != self.actions:
+                return f"{self.project} no longer needs the same work"
 
         if _snapshot(project_path, tuple(rel for rel, _s, _e in self.watched)) != self.watched:
             return f"{self.project} changed on disk since the preview"

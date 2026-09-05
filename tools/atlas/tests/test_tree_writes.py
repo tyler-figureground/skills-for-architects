@@ -19,10 +19,13 @@ from atlas.core.conform import (
     WINDOWS_MAX_PATH,
     Guard,
     NotInvertible,
+    OpsError,
+    action_to_dict,
     apply_plan,
     build_plan,
     build_repair_plan,
     invert_plan,
+    plan_from_dict,
 )
 from atlas.core.doctor import report_project
 from atlas.core.scan import long_path, scan_drive
@@ -401,3 +404,188 @@ def test_conform_plan_shows_the_path_warning_to_a_person(fixture_drive, capsys):
                  "--project", "260320_Warned"]) == 1
     out = capsys.readouterr().out
     assert "> 260]" in out, out
+
+
+def undo_setup(drive, name):
+    """Apply a one-node repair and hand back the inverse, ready to guard."""
+    project = make_project(drive, name, sections=["01 Model", "Meetings"],
+                           files={"Meetings/kickoff.md": "z"})
+    inventory = scan_drive(drive)
+    m = inventory.map
+    inv = next(p for p in inventory.projects if p.name == name)
+    plan = build_repair_plan(report_project(inv, m), m, "Meetings", project=inv.path)
+    applied = apply_plan(drive, inv.path, m, plan)
+    return project, m, applied, invert_plan(applied)
+
+
+def test_the_action_guard_cannot_guard_an_undo(fixture_drive):
+    """The defect ticket 23 found, kept as a test because it is not obvious.
+
+    `Guard.for_action.check` re-derives the Plan from the drive map and compares.
+    An undo's Plan is by construction not map-derived - the map wants
+    Meetings -> 11 Meetings, and the undo does the reverse - so re-deriving can
+    only ever disagree. ADR 0006 claimed 'the same guard runs on every undo pop';
+    it cannot, and this is why.
+    """
+    _project, m, _applied, inverse = undo_setup(fixture_drive, "260327_CannotGuard")
+
+    guard = Guard.for_action(fixture_drive, "260327_CannotGuard", m, inverse)
+
+    assert guard.check(fixture_drive) is not None, "it refuses a drive nothing changed on"
+
+
+def test_an_undo_guard_over_an_untouched_project_is_fresh(fixture_drive):
+    """What an undo actually has to verify: not 'does the map still want this
+    work' - it never did - but 'are the folders still as they were when the
+    repair applied'. Same watched directories, same map check, no re-derivation."""
+    _project, m, _applied, inverse = undo_setup(fixture_drive, "260328_UndoFresh")
+
+    guard = Guard.for_undo(fixture_drive, "260328_UndoFresh", m, inverse)
+
+    assert guard.check(fixture_drive) is None
+
+
+def test_an_undo_guard_notices_the_folder_moved_on(fixture_drive):
+    """Optimism has a limit. If somebody has been in the folder since, the undo
+    refuses rather than moving whatever is there now."""
+    project, m, _applied, inverse = undo_setup(fixture_drive, "260329_UndoStale")
+    guard = Guard.for_undo(fixture_drive, "260329_UndoStale", m, inverse)
+
+    (project / "11 Meetings" / "someone-elses-note.md").write_text("x", encoding="utf-8")
+
+    assert guard.check(fixture_drive) is None, "a file inside a watched folder is not a change"
+
+    (project / "ZZZ New").mkdir()
+    parent_guard = Guard.for_undo(fixture_drive, "260329_UndoStale", m, inverse)
+    (project / "11 Meetings").rename(project / "11 Meetings Renamed")
+    assert parent_guard.check(fixture_drive) is not None
+
+
+# ------------------------------------------ the manifest, both directions
+
+
+def test_an_applied_plan_survives_a_round_trip_through_json(fixture_drive):
+    """action_to_dict had no inverse, so the Move Manifest was write-only: six
+    consumers could read it and nothing could feed it back. A stateless CLI undo
+    needs the return leg, and a round trip is the only honest test of it."""
+    project = make_project(
+        fixture_drive, "260326_RoundTrip", sections=["01 Model", "Meetings"],
+        files={"Meetings/kickoff.md": "z"},
+    )
+    plan, inv, m = plan_for(fixture_drive, "260326_RoundTrip")
+    done = apply_plan(fixture_drive, project, m, plan)
+
+    payload = json.loads(json.dumps({
+        "project": done.project,
+        "actions": [action_to_dict(a) for a in done.actions],
+    }))
+
+    assert plan_from_dict(payload) == done
+
+
+def test_a_manifest_missing_a_field_is_refused_rather_than_defaulted(fixture_drive):
+    """A manifest is operator-supplied input by the time it comes back. Silently
+    defaulting a missing `moved` would turn an unreadable manifest into an
+    uninvertible Plan two steps later, where the message means nothing."""
+    with pytest.raises(OpsError):
+        plan_from_dict({"project": "X", "actions": [{"kind": "rename"}]})
+
+
+# --------------------------------------- the CLI form the tree's writes owe
+#
+# ADR 0008: a capability that writes owes a CLI form, discharged in the same
+# session as the surface. --only filters by action class and cannot express
+# "this folder", which is exactly what a repair key on a node does.
+
+
+def test_conform_node_plans_one_action_for_one_node(fixture_drive, capsys):
+    make_project(
+        fixture_drive, "260321_Node",
+        sections=["01 Model", "Meetings", "08 OUT/Invoices", "10 Legal"],
+        files={"Meetings/kickoff.md": "z", "08 OUT/Invoices/INV-1.pdf": "z"},
+    )
+
+    assert main(["conform", "--drive", str(fixture_drive),
+                 "--project", "260321_Node", "--node", "Meetings", "--json"]) == 1
+
+    payload = json.loads(capsys.readouterr().out)
+    actions = [a for p in payload for a in p["actions"]]
+    assert len(actions) == 1, actions
+    assert (actions[0]["kind"], actions[0]["src"]) == ("rename", "Meetings")
+
+
+def test_conform_node_applies_only_that_node(fixture_drive):
+    """The whole point of --node over --only: the project has two repairs
+    pending and exactly one of them happens."""
+    project = make_project(
+        fixture_drive, "260322_NodeApply",
+        sections=["01 Model", "Meetings", "08 OUT/Invoices", "10 Legal"],
+        files={"Meetings/kickoff.md": "z", "08 OUT/Invoices/INV-1.pdf": "z"},
+    )
+
+    assert main(["conform", "--drive", str(fixture_drive),
+                 "--project", "260322_NodeApply", "--node", "Meetings", "--apply"]) == 0
+
+    assert (project / "11 Meetings").is_dir()
+    assert not (project / "Meetings").exists()
+    assert (project / "08 OUT" / "Invoices").is_dir(), "the other repair was not touched"
+
+
+def test_conform_node_on_a_node_with_nothing_wrong_is_clean_not_an_error(fixture_drive, capsys):
+    make_project(fixture_drive, "260323_Fine", sections=["01 Model"])
+
+    assert main(["conform", "--drive", str(fixture_drive),
+                 "--project", "260323_Fine", "--node", "01 Model"]) == 0
+    assert "no repair" in capsys.readouterr().out.lower()
+
+
+def test_conform_node_needs_a_project(fixture_drive, capsys):
+    """--node is meaningless drive-wide: a Node Key is project-relative, so the
+    same key names a different folder in every project."""
+    assert main(["conform", "--drive", str(fixture_drive),
+                 "--all", "--node", "Meetings"]) == 2
+    assert "--project" in capsys.readouterr().err
+
+
+def test_conform_revert_undoes_an_applied_node_repair(fixture_drive, capsys, tmp_path):
+    """The CLI has no session, so it cannot hold the TUI's undo stack. What it
+    can do is take back the manifest it printed: --json out, --revert in. That
+    makes invert_plan reachable from outside without Atlas persisting any state
+    of its own to the drive."""
+    project = make_project(
+        fixture_drive, "260324_Revert", sections=["01 Model", "Meetings"],
+        files={"Meetings/kickoff.md": "z"},
+    )
+    assert main(["conform", "--drive", str(fixture_drive), "--project", "260324_Revert",
+                 "--node", "Meetings", "--apply", "--json"]) == 0
+    manifest = tmp_path / "applied.json"
+    manifest.write_text(capsys.readouterr().out, encoding="utf-8")
+    assert (project / "11 Meetings").is_dir()
+
+    assert main(["conform", "--drive", str(fixture_drive), "--revert", str(manifest)]) == 0
+
+    assert (project / "Meetings").is_dir(), "the folder went back where it came from"
+    assert not (project / "11 Meetings").exists()
+
+
+def test_conform_revert_refuses_a_manifest_it_cannot_reverse(fixture_drive, capsys, tmp_path):
+    """A backfill creates and has nothing to move back. invert_plan refuses the
+    whole Plan rather than performing a partial undo, and the CLI has to surface
+    that refusal rather than reporting success for a no-op."""
+    # make_project writes no control plane, so conform backfills PROJECT.md.
+    make_project(fixture_drive, "260325_Backfill", sections=["01 Model"])
+    assert main(["conform", "--drive", str(fixture_drive), "--project", "260325_Backfill",
+                 "--apply", "--json"]) == 0
+    manifest = tmp_path / "backfilled.json"
+    manifest.write_text(capsys.readouterr().out, encoding="utf-8")
+
+    assert main(["conform", "--drive", str(fixture_drive), "--revert", str(manifest)]) == 2
+    assert "reverse" in capsys.readouterr().err.lower()
+
+
+def test_conform_revert_reports_a_manifest_it_cannot_read(fixture_drive, tmp_path, capsys):
+    bad = tmp_path / "nonsense.json"
+    bad.write_text("{not json", encoding="utf-8")
+
+    assert main(["conform", "--drive", str(fixture_drive), "--revert", str(bad)]) == 2
+    assert "nonsense.json" in capsys.readouterr().err

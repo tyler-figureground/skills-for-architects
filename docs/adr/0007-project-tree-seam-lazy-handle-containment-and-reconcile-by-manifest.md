@@ -167,3 +167,40 @@ that skips, which is worse.
 `reconcile` trusts the manifest. An Action that changed the drive without recording
 what it moved would leave the tree confidently wrong - which is the same property
 that makes such an Action uninvertible, and `invert_plan` already refuses those.
+
+## Corrections
+
+Found by building the tree's write keys on top of this seam (ticket 23, session 9).
+Both were found by rendering the flow, not by the suite.
+
+**Reconcile missed the folder a merge consumed.** `reconcile` invalidated the
+parent of every `Move` in the manifest. A merge moves children one at a time, so
+every Move names a child and their parents are the two merged folders - never the
+folder that just lost the source from its own listing. That folder's cached
+listing kept an entry for a directory that no longer exists, and the tree drew a
+row for it, as Mapped, because a fresh report has no complaint about a name that
+is gone. A node that is not on disk is exactly what ADR 0004 rules out.
+
+`follow` had the insight already and says so in its own comment - *nothing in the
+manifest names the folder itself, which is now gone; the Action does*. `reconcile`
+now invalidates the Action's own endpoints as well as its manifest's. For a plain
+rename those are the same folders, so the cost is unchanged.
+
+The suite could not have caught it: the TDD fixture had no pre-existing
+`11 Meetings`, so its rename was never a merge.
+
+**The Tree Region could not take keyboard focus at all.** Not a seam defect, but
+it hid the one above. `_focus_current_region` focused the Region's container, and
+`#tree` is a `Vertical` - which cannot take focus, so `focus()` silently did
+nothing and the keyboard stayed on the project list. Arrow keys drove the project
+list while the operator believed they were in the tree, and no binding the tree
+widget declares was ever reachable by keyboard. Asserting on `_focus_region` or on
+`display` cannot catch that; only asserting on which widget the keyboard is
+actually talking to can.
+
+Fixing it exposed two things the bug had been masking. Textual's `Tree` binds
+`enter` to `select_cursor`, and a widget binding beats an App one, so the tree took
+Atlas's drill key the moment it could hold focus - `enter` is `priority=True` now,
+for the same reason `tab` already was. And Textual leaves `cursor_line` at -1 until
+an arrow key moves it, so a freshly drilled tree had focus, rows, and no cursor,
+which made the repair key silently inert on arrival.

@@ -282,3 +282,40 @@ thing between them.
 Colour may reinforce a distinction and may never be the only thing carrying one.
 Tested by asserting that no two Filing States render identically once colour is
 stripped, at either width, rather than by pinning any colour value.
+
+## Atlas Tree Repairs
+
+**Repair**
+The one-Action write the tree offers for a single Tree Node: RENAME for a Drifted
+node, RELOCATE for a Misplaced one, SWEEP for a Loose one. Never a new action kind
+- a Repair is a slice of the Plan conform already builds. A Mapped node earns none
+because nothing is wrong; an Unfiled node earns none because only a person can
+decide where it belongs.
+
+**Offer**
+What the repair key would do on the node under the cursor. An Offer that is not
+repairable carries a reason, because a key that does nothing and says nothing is
+indistinguishable from a key that is broken.
+
+**Armed**
+A Repair previewed on the operation line and waiting for Enter. Nothing has touched
+disk. Escape abandons it. The Guard is captured when the Repair is armed, not when
+it is confirmed - what it holds is what the preview saw.
+
+**Inline Confirm**
+The confirmation a one-Action Plan gets: the operation line, not a modal.
+Confirmation weight follows plan size, so a longer Plan still gets the modal, which
+is the surface that can show a list.
+
+**Undo Stack**
+The applied Plans for one Project, in memory, most recent first, with no redo. Undo
+restores the precondition that offered the Repair, so re-pressing the repair key is
+redo. A Plan that cannot be inverted is refused when it is pushed, never when it is
+popped - a stack that cannot honour a depth it advertised is worse than one that
+never advertised it.
+
+**Undo Guard**
+The check that runs before an undo: the drive map, and the folders the inverse
+touches. Distinct from the guard on a Repair, which additionally re-derives the
+Plan from the map and compares. An undo's Plan reverses the map rather than
+following it, so re-deriving it can only ever disagree.

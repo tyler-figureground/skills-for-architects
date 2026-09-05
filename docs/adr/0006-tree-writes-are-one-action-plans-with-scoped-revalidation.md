@@ -118,3 +118,31 @@ Warning rather than refusing on path length means Atlas can be used to create a
 path that other studio tools cannot open. That is the operator's call to make, and
 it is only an honest call because Atlas does not apply the extended-length prefix
 to hide the consequence.
+
+## Corrections
+
+Two claims in this ADR were wrong. Both were written before the code existed and
+both were found by pressing the key rather than by reading the design.
+
+**"The same guard runs on every undo pop."** It cannot. `Guard.for_action.check`
+re-derives the Plan from the drive map and compares - which is the strongest check
+available for a repair, because a repair *is* a slice of the Plan conform builds.
+An undo's Plan is by construction not map-derived: the map wants
+`Meetings -> 11 Meetings`, and the undo does the reverse. Guarding an inverse that
+way refuses every time, on a drive nothing has changed on.
+
+What an undo has to verify is not "does the map still want this work" - it never
+did - but "are these folders still as they were when the repair applied". That is
+the watched-directory snapshot, and the snapshot needed no change. `Guard.for_undo`
+keeps the map check and the snapshot and drops the re-derivation, carrying a
+`derived` flag that says which it is. Ticket 23, session 9.
+
+**Ticket 10's parity question is settled and it reaches back here.** This ADR
+deferred CLI equivalents for tree actions to that ticket. ADR 0008 answers it: a
+capability that writes owes a CLI form, discharged in the same session. The tree's
+repair key is `conform --node PATH`, and its undo is `conform --revert FILE`,
+reading back the `--json` manifest a prior apply printed. The CLI has no session,
+so it cannot hold the per-Project stack this ADR specifies; what it can do is take
+back what it printed, which is what makes `invert_plan` reachable from outside.
+That needed `plan_from_dict` - `action_to_dict` had no inverse, so the Move
+Manifest was write-only.

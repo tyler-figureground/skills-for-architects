@@ -11,7 +11,15 @@ import sys
 from pathlib import Path
 
 from . import __version__
-from .core.conform import action_to_dict, apply_plan, build_plan
+from .core.conform import (
+    NotInvertible,
+    action_to_dict,
+    apply_plan,
+    build_plan,
+    build_repair_plan,
+    invert_plan,
+    plan_from_dict,
+)
 from .core.contacts import (
     Contact,
     ContactDraft,
@@ -685,10 +693,53 @@ def cmd_clean(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_revert(args: argparse.Namespace, root: Path, m) -> int:
+    """Undo an applied conform from the manifest it printed.
+
+    The CLI has no session, so it cannot hold the TUI's undo stack (ADR 0006:
+    in memory, one per Project). What it can do is take back what it printed -
+    `--json` out, `--revert` in - which makes `invert_plan` reachable from
+    outside without Atlas persisting any state of its own to the drive.
+    """
+    manifest = Path(args.revert)
+    try:
+        payload = json.loads(manifest.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        print(f"error: cannot read {manifest}: {error}", file=sys.stderr)
+        return 2
+
+    plans = payload if isinstance(payload, list) else [payload]
+    try:
+        inverses = [(p["project"], invert_plan(plan_from_dict(p))) for p in plans]
+    except NotInvertible as error:
+        print(f"error: cannot reverse this manifest: {error}", file=sys.stderr)
+        return 2
+    except (OpsError, KeyError, TypeError) as error:
+        print(f"error: cannot read {manifest}: {error}", file=sys.stderr)
+        return 2
+
+    for name, inverse in inverses:
+        project_path = root / name
+        if not project_path.is_dir():
+            print(f"error: no project folder '{name}' under {root}", file=sys.stderr)
+            return 2
+        done = apply_plan(root, project_path, m, inverse)
+        for a in done.actions:
+            print(f"    {a.kind:9} {a.src} -> {a.dst} [{a.status}]")
+    return 0
+
+
 def cmd_conform(args: argparse.Namespace) -> int:
     root = _resolve_drive(args.drive)
     inventory = scan_drive(root)
     m = inventory.map
+    if args.revert:
+        return cmd_revert(args, root, m)
+    if args.node and not args.project:
+        # A Node Key is project-relative, so the same key names a different
+        # folder in every project. Drive-wide is meaningless here.
+        print("error: --node needs --project <name>", file=sys.stderr)
+        return 2
     if args.all:
         targets = list(inventory.projects)
     else:
@@ -704,7 +755,11 @@ def cmd_conform(args: argparse.Namespace) -> int:
     results = []
     pending = False
     for inv in targets:
-        plan = build_plan(report_project(inv, m), m, project=inv.path)
+        report = report_project(inv, m)
+        if args.node:
+            plan = build_repair_plan(report, m, args.node, project=inv.path)
+        else:
+            plan = build_plan(report, m, project=inv.path)
         if plan.empty:
             results.append(plan)
             continue
@@ -723,7 +778,10 @@ def cmd_conform(args: argparse.Namespace) -> int:
     else:
         for plan in results:
             if plan.empty:
-                print(f"[OK     ] {plan.project}: conforms already")
+                if args.node:
+                    print(f"[OK     ] {plan.project}: {args.node} needs no repair")
+                else:
+                    print(f"[OK     ] {plan.project}: conforms already")
                 continue
             print(f"[{'APPLIED' if args.apply else 'PLAN':7}] {plan.project}")
             for a in plan.actions:
@@ -875,6 +933,13 @@ def main(argv: list[str] | None = None) -> int:
     sub.choices["clean"].add_argument("--include-seeds", action="store_true",
                                       help="allow removing empty seed sections too")
     sub.choices["conform"].add_argument("--project", help="project folder name")
+    sub.choices["conform"].add_argument(
+        "--revert", metavar="FILE",
+        help="undo an applied conform from the --json manifest it printed")
+    sub.choices["conform"].add_argument(
+        "--node",
+        help="repair one node by its project-relative path; needs --project. "
+             "Unlike --only, which filters by action class, this names a folder")
     sub.choices["conform"].add_argument("--all", action="store_true", help="every project on the drive")
     sub.choices["conform"].add_argument("--apply", action="store_true", help="perform the plan")
     sub.choices["conform"].add_argument("--only", action="append",

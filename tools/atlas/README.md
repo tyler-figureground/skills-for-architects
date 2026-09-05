@@ -25,10 +25,17 @@ leaves conflicts in place. Clean removes file-empty folders only.
 | `atlas add --project NAME --section SECTION` | Add map-approved project folders |
 | `atlas clean --project NAME [--apply]` | Preview or remove empty folders |
 | `atlas conform --project NAME [--apply]` | Preview or apply mapped repairs |
+| `atlas conform --project NAME --node PATH [--apply]` | Preview or apply the repair for one node, by project-relative path |
+| `atlas conform --revert FILE` | Undo an applied conform from the `--json` manifest it printed |
 
 TUI keys: `n` new project, `e` edit selected project, `m` manage contacts, `/` filter,
-`Enter` inspect, `Space` mark, `x` conform marked, `a` add folders, `f` conform, `?` help,
-`Ctrl+P` command palette. Additional actions remain searchable in the palette.
+`Enter` drill in or confirm, `Escape` back, `Tab` next Region, `Space` mark or open a folder,
+`x` conform marked, `a` add folders, `f` conform, `u` undo, `?` help, `Ctrl+P` command palette.
+Additional actions remain searchable in the palette.
+
+`f` acts on whatever has focus: the whole project from the list, one folder or file from the
+tree. A single repair previews on the operation line and waits for `Enter`; nothing is written
+until then. `u` undoes the last repair in that project.
 
 Exit codes: `0` clean, `1` findings/pending work, `2` error. `--json` is the agent interface.
 

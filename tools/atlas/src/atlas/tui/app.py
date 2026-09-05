@@ -33,7 +33,16 @@ from textual.widgets import (
     Static,
 )
 
-from ..core.conform import CONFLICT, DONE, SKIPPED, Plan, apply_plan, build_plan
+from ..core.conform import (
+    CONFLICT,
+    DONE,
+    SKIPPED,
+    Guard,
+    Plan,
+    apply_plan,
+    build_plan,
+    build_repair_plan,
+)
 from ..core.contacts import (
     Contact,
     ContactDraft,
@@ -60,7 +69,13 @@ from ..core.project_data import (
     load_project_record,
     preview_project_update,
 )
-from ..core.scan import DriveInventory, ProjectInventory, discover_drives, scan_drive
+from ..core.scan import (
+    DriveInventory,
+    ProjectInventory,
+    discover_drives,
+    list_entries,
+    scan_drive,
+)
 from ..core.tree import ProjectTree, open_project_tree
 from . import tokens
 from .wordmark import BAR, composition_for, mark_width, render_mark
@@ -84,7 +99,31 @@ from .layout import (
     unwind,
 )
 from .model import ProjectRow, project_detail, project_rows, visible_rows
+from .repair import UndoStack, confirm_line, confirms_inline, repair_offer
 from .treeview import ProjectTreeView
+
+@dataclass(frozen=True)
+class _ArmedRepair:
+    """A one-Action repair waiting on the operation line for Enter.
+
+    The Guard is captured when the repair is armed, not when it is confirmed:
+    what it holds is what the preview saw, and its whole job is to notice that
+    the drive has moved on since. Rebuilding it at confirm time would guard the
+    write against itself.
+    """
+
+    project: str
+    plan: Plan
+    guard: Guard
+    node: str
+
+
+# What `#operation`'s `padding: 0 2` costs, in columns. Anything sized against
+# that line subtracts this from the terminal width first. Ticket 17 needed the
+# same correction for the wordmark and named it MARGIN there; getting it wrong
+# does not error, it just quietly clips the last few characters - which on a
+# confirm is the cancel key.
+OPERATION_MARGIN = 4
 
 STATUS_STYLES = {name: f"bold {hex_}" for name, hex_ in tokens.PALETTE.status.items()}
 
@@ -795,7 +834,10 @@ class AtlasApp(App):
         Binding("r", "refresh", "Refresh", show=False),
         Binding("slash", "filter_projects", "Filter"),
         Binding("tab", "next_region", "Region", priority=True),
-        Binding("enter", "drill", "Open"),
+        # Priority for the same reason tab is: a widget binding beats an App one,
+        # and Textual's Tree binds enter to select_cursor. ADR 0005 makes Enter
+        # Atlas's own key in every Region, so the tree does not get to take it.
+        Binding("enter", "drill", "Open", priority=True),
         Binding("d", "cycle_companion", "Companion", show=False),
         Binding("left_square_bracket", "collapse_list", "Collapse list", show=False),
         Binding("right_square_bracket", "collapse_companion", "Collapse companion", show=False),
@@ -806,6 +848,7 @@ class AtlasApp(App):
         Binding("a", "add_section", "Add folders"),
         Binding("c", "clean", "Clean", show=False),
         Binding("f", "conform", "Conform"),
+        Binding("u", "undo", "Undo", show=False),
         Binding("o", "open_folder", "Open", show=False),
         Binding("space", "toggle_mark", "Mark", show=False),
         Binding("x", "conform_marked", "Conform marked", show=False),
@@ -829,6 +872,11 @@ class AtlasApp(App):
         self._summary_text = ""
         self._operation_text = "Ready"
         self._trees: dict[str, ProjectTree] = {}
+        # A repair armed on the operation line, waiting for Enter (ADR 0006:
+        # confirmation weight follows plan size), and the per-Project history
+        # that Undo pops. Both are session state and neither reaches the CLI.
+        self._armed: _ArmedRepair | None = None
+        self._undo = UndoStack()
         self._follow_debounce = follow_debounce
         self._follow_timer = None
         self._workspace_project = ""
@@ -957,10 +1005,22 @@ class AtlasApp(App):
         self.query_one("#operation", Static).update(text)
 
     def _focus_current_region(self) -> None:
-        """Move keyboard focus to whatever Region is current, if it is drawn."""
+        """Move keyboard focus to whatever Region is current, if it is drawn.
+
+        The focusable widget, not the Region's container. `#tree` is a `Vertical`
+        holding a title and the tree; a `Vertical` cannot take focus, so calling
+        `focus()` on it silently does nothing and the keyboard stays wherever it
+        was. Ticket 20 shipped exactly that: the app believed it had drilled into
+        the tree while the arrow keys still drove the project list. Found by
+        rendering the screen, not by a test - which is why one exists now.
+        """
         target = {PROJECT_LIST: "#projects", TREE: "#tree", COMPANION: "#companion"}
-        widget = self.query_one(target[self._focus_region])
-        if widget.display:
+        region = self.query_one(target[self._focus_region])
+        if not region.display:
+            return
+        widget = region if region.focusable else next(
+            (child for child in region.query("*") if child.focusable), None)
+        if widget is not None:
             widget.focus()
 
     def on_mount(self) -> None:
@@ -1419,6 +1479,10 @@ class AtlasApp(App):
         if self._work_kind == "scan":
             self._show_drives(auto_open=False)
             return
+        if self._cancel_repair():
+            # Escape unwinds, and the innermost thing to unwind out of is an
+            # armed write. Nothing has happened on disk, so this costs nothing.
+            return
         filter_input = self.query_one("#filter", Input)
         if filter_input.display:
             filter_input.value = ""
@@ -1451,8 +1515,16 @@ class AtlasApp(App):
         self._move_to_region(next_region(self._focus_region, collapsed=self._collapsed))
 
     def action_drill(self) -> None:
-        """Enter drills toward the tree."""
+        """Enter drills toward the tree - or commits an armed repair.
+
+        Enter is the confirm key precisely because it is already the "yes, this
+        one" key. While a repair is armed the operation line says so, so the
+        overload is announced rather than latent.
+        """
         if self._busy or self._showing != "projects":
+            return
+        if self._armed is not None:
+            self._commit_repair()
             return
         self._move_to_region(drill(self._focus_region))
 
@@ -2011,8 +2083,169 @@ class AtlasApp(App):
             done,
         )
 
+    # ------------------------------------------------- the tree's writes
+    #
+    # ADR 0006's other half. The tree invents no action kinds: every repair here
+    # is a one-Action slice of the Plan conform already builds, guarded at the
+    # scope of that action rather than by the 4.24-second rescan a project-wide
+    # conform pays for. The rule about what a key means lives in `tui/repair.py`;
+    # what is here is the applying of it.
+
+    def _arm_repair(self) -> None:
+        """Offer a repair for the Tree Node under the cursor, or say why not."""
+        row = self._selected_row()
+        tree = self._trees.get(self._workspace_project)
+        facts = self.query_one(ProjectTreeView).selected_facts()
+        if row is None or tree is None or self._inventory is None:
+            return
+        if facts is None:
+            # The cursor is on nothing - an empty project, or a tree still
+            # loading. Say so; an inert key that stays quiet reads as broken.
+            self._set_operation("Select a folder or file first", "warning")
+            return
+
+        offer = repair_offer(facts)
+        if not offer.repairable:
+            self._set_operation(offer.reason, "warning")
+            return
+
+        inventory = self._inventory
+        project = next(
+            (p for p in inventory.projects if p.name == row.key), None)
+        if project is None:
+            return
+        plan = build_repair_plan(row.report, inventory.map, offer.target,
+                                 project=project.path)
+        if plan.empty:
+            self._set_operation(f"{facts.name} needs no repair", "warning")
+            return
+        if not confirms_inline(plan):
+            # Not reachable from a single node today, and not silently widened
+            # into an inline confirm if it ever becomes so: ADR 0006 gives a
+            # longer plan the modal because the modal is what can show a list.
+            self.action_conform()
+            return
+
+        self._armed = _ArmedRepair(
+            project=row.key,
+            plan=plan,
+            guard=Guard.for_action(inventory.root, row.key, inventory.map, plan),
+            node=offer.target,
+        )
+        room = (self.size.width or 0) - OPERATION_MARGIN
+        self._set_operation(confirm_line(plan, max(0, room)))
+
+    def _cancel_repair(self) -> bool:
+        """Abandon an armed repair. True if there was one to abandon."""
+        if self._armed is None:
+            return False
+        self._armed = None
+        self._set_operation("Repair cancelled")
+        return True
+
+    def _commit_repair(self) -> None:
+        """Apply the armed repair, after the scoped Guard agrees it is still
+        the same work."""
+        armed = self._armed
+        self._armed = None
+        if armed is None or self._inventory is None:
+            return
+        self._apply_repair(armed.project, armed.plan, armed.guard, armed.node,
+                           remember=True)
+
+    def action_undo(self) -> None:
+        """Put the last repair in this Project back.
+
+        One stack per Project, no redo (ADR 0006): undo restores the precondition
+        that offered the repair, so re-pressing the repair key is redo. The
+        inverse is guarded exactly as the repair was, which is what lets the
+        stack be optimistic rather than eagerly invalidated.
+        """
+        if self._busy or self._showing != "projects" or self._inventory is None:
+            return
+        self._cancel_repair()
+        row = self._selected_row()
+        if row is None:
+            return
+        inverse = self._undo.pop(row.key)
+        if inverse is None:
+            self._set_operation(f"Nothing to undo in {row.key}", "warning")
+            return
+        node = inverse.actions[0].src if inverse.actions else ""
+        # for_undo, not for_action: an inverse cannot be re-derived from the map,
+        # so the guard that rebuilds and compares would refuse every undo.
+        guard = Guard.for_undo(self._inventory.root, row.key,
+                               self._inventory.map, inverse)
+        self._apply_repair(row.key, inverse, guard, node, remember=False)
+
+    def _apply_repair(self, project_name: str, plan: Plan, guard: Guard,
+                      node: str, *, remember: bool) -> None:
+        """Guard, apply, remember, reconcile. The one write path for both the
+        repair key and its undo - they differ only in which Plan they carry and
+        whether the result goes on the stack."""
+        inventory = self._inventory
+        if inventory is None:
+            return
+        root = inventory.root
+        stale = guard.check(root)
+        if stale is not None:
+            self._set_operation(f"Nothing moved - {stale}", "warning")
+            return
+
+        project = next((p for p in inventory.projects if p.name == project_name), None)
+        if project is None:
+            self._set_operation(f"Nothing moved - {project_name} is no longer available",
+                                "warning")
+            return
+        try:
+            applied = apply_plan(root, project.path, inventory.map, plan)
+        except OpsError as error:
+            self._set_operation(f"Repair stopped: {error}", "error")
+            return
+
+        conflicts = [a for a in applied.actions if a.status == CONFLICT]
+        if remember:
+            self._undo.push(project_name, applied)
+        self._reconcile_after(project_name, applied, node)
+
+        action = applied.actions[0] if applied.actions else None
+        if conflicts:
+            self._set_operation(
+                f"{conflicts[0].kind} left in place - {conflicts[0].note or 'conflict'}",
+                "warning")
+        elif len(applied.actions) > 1:
+            # Inverting a merge yields one action per child moved. Naming only
+            # the first would report a third of what happened as all of it.
+            self._set_operation(f"Done: {len(applied.actions)} moves in {node or project_name}")
+        elif action is not None:
+            self._set_operation(f"Done: {action.kind} {action.src} -> {action.dst}")
+
+    def _reconcile_after(self, project_name: str, applied: Plan, node: str) -> None:
+        """Forget the folders the Move Manifest names and follow the cursor to
+        where the node went (ADR 0007). Two enumerations, not a walk."""
+        tree = self._trees.get(project_name)
+        if tree is None:
+            return
+        inv = next((p for p in (self._inventory.projects if self._inventory else ())
+                    if p.name == project_name), None)
+        report = None
+        if inv is not None and self._inventory is not None:
+            fresh = ProjectInventory(path=inv.path, name=inv.name,
+                                     root_entries=list_entries(inv.path))
+            report = report_project(fresh, self._inventory.map)
+        landed = tree.follow(node, applied)
+        tree.reconcile(applied, report)
+        view = self.query_one(ProjectTreeView)
+        view.set_source(tree, narrow=(self.size.width or 80) < ABBREVIATE_COLUMNS)
+        view.select_key(landed)
+
     def action_conform(self) -> None:
         if self._busy or not self._inventory_fresh:
+            return
+        if self._focus_region == TREE and self._showing == "projects":
+            # The key means "conform what has focus". On the project list that is
+            # the whole project; in the tree it is the node under the cursor.
+            self._arm_repair()
             return
         selected = self._selected_project()
         row = self._selected_row()

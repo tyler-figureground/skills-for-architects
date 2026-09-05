@@ -201,6 +201,25 @@ Continuity: `.agent/handoff/` per this repo's checkpoint rule.
   replaced by Companion Modes; unmet Expectations is the privileged default
   because it is the only one that must be simultaneous with the tree. Vocabulary
   in `/CONTEXT.md`, decision in `docs/adr/0005`.
+- [The tree's write keys, the inline confirm, and the undo stack](issues/23-tree-write-keys.md)
+  - **built.** `tui/repair.py` is pure like `tui/layout.py`: what the key offers,
+  what the confirm reads, and a per-Project undo stack that refuses an
+  uninvertible Plan **at push rather than at pop**. `f` means "conform what has
+  focus" - the whole project from the list, one node from the tree - and arms an
+  inline confirm on the operation line that Enter commits and Escape abandons.
+  `u` undoes. `conform --node PATH` and `conform --revert FILE` are the CLI forms
+  ADR 0008 obliges; `--revert` needed `plan_from_dict`, because `action_to_dict`
+  had no inverse and the Move Manifest was write-only. **Five bugs, two of them
+  design errors in shipped ADRs.** `Guard.for_action` cannot guard an undo - it
+  re-derives the Plan from the map and an undo reverses the map, so it refused
+  every undo on an unchanged drive. `reconcile` missed the folder a merge
+  consumed, because every Move in a merge names a *child*, and the tree drew a row
+  for a directory that no longer existed. And **the Tree Region could not take
+  keyboard focus at all** - `#tree` is a `Vertical` and `Vertical.focus()` is a
+  no-op, so the widget shipped unreachable by keyboard while sixteen widget tests
+  passed; fixing it exposed Textual's `Tree` taking Atlas's Enter and a drilled
+  tree having no cursor. Corrections on `docs/adr/0006` and `0007`. 405 tests, up
+  from 364.
 - [CLI parity and the accessible fallback](issues/10-cli-parity-and-accessibility.md) -
   **a CLI form is owed by every capability that writes and every capability that
   produces a fact; navigation is exempt, and the obligation is discharged in the
