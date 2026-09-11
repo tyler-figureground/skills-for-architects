@@ -74,7 +74,8 @@ Add safe editing for existing project intake fields and shared contacts from Atl
 - Final post-review wheel deployed: `G:/Shared drives/ARCHITECTURE/_tools/atlas/studio_atlas-0.3.0-py3-none-any.whl` (SHA-256 `6414fb028f28aec94509c3a1790426be503c4f7a709269e66eb1fb129c8436b0`).
 - `Atlas.bat` pinned to 0.3.0; deployed launcher reports `atlas 0.3.0`.
 - `HOW-TO.md` documents `e` project editing and `m` contact management.
-- Approved dry run previewed `260902_<redacted project>-ADU` → `260902_<redacted project>-ADU`.
-- Approved apply renamed folder and changed Project Address to `<redacted client address>`.
+- Approved dry run previewed a live project folder with a misspelled street name being
+  renamed to the corrected spelling (name redacted: real client project).
+- Approved apply renamed the folder and changed Project Address to the corrected address.
 - Verified old folder absent, new folder present, dossier formatted/structured/Identity address values agree, and project index has exactly one new-folder row and zero old-folder rows.
 - Production map lint reports only pre-existing `DUP-CHILD` warnings for `Photos` and `Sketches`.
