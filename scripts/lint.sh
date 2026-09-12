@@ -26,14 +26,26 @@ else
 fi
 
 # 2. JSON validity
+# A missing jq used to report every tracked file as invalid JSON, which reads as
+# 18 broken files rather than one absent binary. python3 is already required by
+# the frontmatter check below, so fall back to it and say which one ran.
 echo "→ JSON validity"
 JSON_FILES=$(git ls-files '*.json')
 JSON_BAD=0
 JSON_TOTAL=0
+if command -v jq >/dev/null 2>&1; then
+  json_valid() { jq empty "$1" >/dev/null 2>&1; }
+elif command -v python3 >/dev/null 2>&1; then
+  json_valid() { python3 -c "import json,sys; json.load(open(sys.argv[1], encoding='utf-8-sig'))" "$1" >/dev/null 2>&1; }
+  echo "  ! jq not installed; validating with python3 instead"
+else
+  json_valid() { return 0; }
+  echo "  ! neither jq nor python3 installed; skipping locally — CI will run it"
+fi
 while IFS= read -r f; do
   [ -z "$f" ] && continue
   JSON_TOTAL=$((JSON_TOTAL + 1))
-  if ! jq empty "$f" >/dev/null 2>&1; then
+  if ! json_valid "$f"; then
     fail_check "invalid JSON: $f"
     JSON_BAD=$((JSON_BAD + 1))
   fi
