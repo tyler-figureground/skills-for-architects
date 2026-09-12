@@ -7,6 +7,7 @@ schema table (atlas-tui-spec.md section 8) for the contract this module reads.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -23,6 +24,23 @@ class Section:
 
 
 @dataclass(frozen=True)
+class FileRule:
+    """One rule filing a Loose file at a project root into a mapped folder.
+
+    Every filter given must match; within one filter, any value may. Name filters
+    are checked before content, so a PDF is only opened once its name has already
+    qualified. Empty means "not a filter", never "matches nothing". See ADR 0009.
+    """
+
+    name: str
+    target: str
+    extensions: tuple[str, ...] = ()   # lowercased, no leading dot
+    names: tuple[str, ...] = ()        # fnmatch globs, case-insensitive
+    name_regex: str = ""               # re.search, case-insensitive
+    pdf_text: tuple[str, ...] = ()     # any phrase, in the title or on page one
+
+
+@dataclass(frozen=True)
 class DriveMap:
     path: Path
     drive: str
@@ -32,6 +50,7 @@ class DriveMap:
     drift_map: dict[str, str] = field(default_factory=dict)
     relocations: dict[str, str] = field(default_factory=dict)
     control_plane: dict[str, str] = field(default_factory=dict)
+    file_rules: tuple[FileRule, ...] = ()
 
     @property
     def section_ids(self) -> tuple[str, ...]:
@@ -115,4 +134,80 @@ def load_map(path: Path) -> DriveMap:
         drift_map=dict(raw.get("driftMap", {})),
         relocations=relocations,
         control_plane=dict(raw.get("controlPlane", {})),
+        file_rules=_parse_file_rules(raw.get("fileRules", []), path),
     )
+
+
+# Match keys a File Rule may use, and the FileRule field each one fills.
+_LIST_FILTERS = {"extensions": "extensions", "names": "names", "pdfText": "pdf_text"}
+_MATCH_KEYS = (*_LIST_FILTERS, "nameRegex")
+
+
+def _parse_file_rules(raw: object, path: Path) -> tuple[FileRule, ...]:
+    """Strictly. Every problem refuses the whole map rather than being skipped.
+
+    This is not lint's job, deliberately. A misspelled filter key that was merely
+    ignored would leave its rule matching more than its author wrote - a rule
+    with ``extension`` instead of ``extensions`` and nothing else would match
+    every file at every root - and a rule that matches more moves more.
+    """
+    if not isinstance(raw, list):
+        raise MapError(f"fileRules must be a list of rules: {path}")
+    rules: list[FileRule] = []
+    for index, entry in enumerate(raw):
+        where = f"fileRules[{index}]"
+        if not isinstance(entry, dict):
+            raise MapError(f"{where} is not an object: {path}")
+        name = entry.get("name")
+        if not isinstance(name, str) or not name.strip():
+            raise MapError(f"{where} needs a 'name': {path}")
+        where = f"{where} '{name}'"
+        target = _safe_target(entry.get("target"), where, path)
+        match = entry.get("match")
+        if not isinstance(match, dict) or not match:
+            raise MapError(f"{where} needs a non-empty 'match' - an empty one matches every file: {path}")
+        unknown = sorted(set(match) - set(_MATCH_KEYS))
+        if unknown:
+            raise MapError(
+                f"{where}: unknown match key {', '.join(repr(k) for k in unknown)} "
+                f"(expected one of {', '.join(_MATCH_KEYS)}): {path}"
+            )
+        fields: dict[str, object] = {}
+        for key, attr in _LIST_FILTERS.items():
+            if key in match:
+                fields[attr] = _string_list(match[key], f"{where} {key}", path)
+        if "extensions" in fields:
+            fields["extensions"] = tuple(e.lower().lstrip(".") for e in fields["extensions"])
+        if "nameRegex" in match:
+            fields["name_regex"] = _regex(match["nameRegex"], f"{where} nameRegex", path)
+        rules.append(FileRule(name=name, target=target, **fields))
+    return tuple(rules)
+
+
+def _safe_target(value: object, where: str, path: Path) -> str:
+    """A project-relative folder. Never absolute, never above the project."""
+    if not isinstance(value, str) or not value.strip():
+        raise MapError(f"{where} needs a 'target' folder: {path}")
+    normalised = value.replace("\\", "/")
+    if (normalised.startswith("/") or re.match(r"^[A-Za-z]:", normalised)
+            or ".." in normalised.split("/")):
+        raise MapError(f"{where}: target '{value}' must stay inside the project: {path}")
+    return value
+
+
+def _string_list(value: object, where: str, path: Path) -> tuple[str, ...]:
+    values = [value] if isinstance(value, str) else value
+    if (not isinstance(values, list) or not values
+            or not all(isinstance(v, str) and v.strip() for v in values)):
+        raise MapError(f"{where} must be a non-empty string or list of non-empty strings: {path}")
+    return tuple(values)
+
+
+def _regex(value: object, where: str, path: Path) -> str:
+    if not isinstance(value, str) or not value:
+        raise MapError(f"{where} must be a non-empty string: {path}")
+    try:
+        re.compile(value)
+    except re.error as e:
+        raise MapError(f"{where} is not a valid regular expression ({e}): {path}") from e
+    return value

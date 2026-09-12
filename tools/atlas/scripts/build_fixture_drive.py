@@ -10,6 +10,8 @@ import shutil
 import sys
 from pathlib import Path
 
+from pypdf import PdfWriter
+
 FIXTURE_MAP = {
     "drive": "TESTDRIVE",
     "version": "2.0",
@@ -33,7 +35,28 @@ FIXTURE_MAP = {
         "08 OUT/Invoices": "10 Legal/Invoices",
         "HANDOFF-*.md": ".agent/handoff/",
     },
+    "fileRules": [
+        {
+            "name": "Issued sets",
+            "target": "08 OUT/Transmittals",
+            "match": {"extensions": ["pdf"], "pdfText": ["issued for permit"]},
+        },
+        {
+            "name": "Fee sheets",
+            "target": "10 Legal/Invoices",
+            "match": {"extensions": ["xlsx"]},
+        },
+    ],
 }
+
+
+def _pdf(path: Path, title: str) -> None:
+    """A one-page PDF carrying `title` in its metadata, for the content rule."""
+    writer = PdfWriter()
+    writer.add_blank_page(width=612, height=792)
+    writer.add_metadata({"/Title": title})
+    with path.open("wb") as handle:
+        writer.write(handle)
 
 
 def build(root: Path) -> None:
@@ -60,8 +83,15 @@ def build(root: Path) -> None:
     (project / "08 OUT" / "Invoices").mkdir()
     (project / "08 OUT" / "Invoices" / "INV-001.pdf").write_text("x", encoding="utf-8")
 
-    # Loose: a file the map sweeps into the handoff dir.
+    # Loose: a file the map sweeps into the handoff dir, by glob.
     (project / "HANDOFF-2026-08-13.md").write_text("handoff", encoding="utf-8")
+
+    # Loose by File Rule: one matched on content, one on extension alone. The
+    # second PDF is the control - same extension, wrong words, so it stays Unfiled
+    # and the tree draws the two states side by side.
+    _pdf(project / "A-101 Permit Set.pdf", "ISSUED FOR PERMIT - 2026-08-13")
+    _pdf(project / "A-102 Sketch.pdf", "WORK IN PROGRESS - DO NOT USE")
+    (project / "fee proposal.xlsx").write_text("fees", encoding="utf-8")
 
     # Unfiled: nothing in the map accounts for this at all.
     (project / "Random Stuff").mkdir()

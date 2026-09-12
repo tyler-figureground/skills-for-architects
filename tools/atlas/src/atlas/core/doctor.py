@@ -12,6 +12,7 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .filerules import first_match
 from .mapfile import DriveMap
 from .scan import DriveInventory, ProjectInventory, long_path, count_files
 
@@ -41,6 +42,9 @@ class ProjectReport:
     drift: tuple[tuple[str, str], ...] = ()          # (found-name, canonical)
     relocations: tuple[RelocationHit, ...] = ()
     sweeps: tuple[tuple[str, str], ...] = ()          # (root file, target dir)
+    # Which File Rule produced a sweep, by root file. A sweep from a glob
+    # relocation has no entry: the relocation is its own explanation. ADR 0009.
+    sweep_rules: tuple[tuple[str, str], ...] = ()     # (root file, rule name)
     unfiled: tuple[str, ...] = ()
     # Folders Atlas could not enumerate. Not actionable - Atlas cannot repair what
     # it cannot read - but never silently treated as empty. See ADR 0004.
@@ -159,6 +163,21 @@ def report_project(inv: ProjectInventory, m: DriveMap) -> ProjectReport:
     explained.update(name for name, _ in drift)
     explained.update(h.source for h in reloc_hits)
     swept = {name for name, _ in sweeps}
+
+    # File Rules: organize-style filing, for root files nothing above has
+    # claimed. After the glob relocations so an older rule's meaning never shifts
+    # under a newer one, and never over the control plane - a rule for *.md must
+    # not file PROJECT.md away. ADR 0009.
+    sweep_rules: list[tuple[str, str]] = []
+    if m.file_rules:
+        for e in inv.root_entries:
+            if e.is_dir or e.name in swept or e.name in explained or _tolerated(e.name):
+                continue
+            rule = first_match(m.file_rules, e.name, inv.path / e.name)
+            if rule is not None:
+                sweeps.append((e.name, rule.target))
+                sweep_rules.append((e.name, rule.name))
+                swept.add(e.name)
     unfiled = sorted(
         e.name
         for e in inv.root_entries
@@ -190,6 +209,7 @@ def report_project(inv: ProjectInventory, m: DriveMap) -> ProjectReport:
         drift=tuple(drift),
         relocations=tuple(reloc_hits),
         sweeps=tuple(sweeps),
+        sweep_rules=tuple(sweep_rules),
         unfiled=tuple(unfiled),
         unreadable=tuple(unreadable),
     )
@@ -221,7 +241,10 @@ def report_to_dict(report: DriveReport) -> dict:
                     {"source": h.source, "target": h.target, "files": h.file_count}
                     for h in p.relocations
                 ],
-                "sweeps": [{"file": a, "target": b} for a, b in p.sweeps],
+                "sweeps": [
+                    {"file": a, "target": b, "rule": dict(p.sweep_rules).get(a)}
+                    for a, b in p.sweeps
+                ],
                 "unfiled": list(p.unfiled),
                 "unreadable": list(p.unreadable),
             }

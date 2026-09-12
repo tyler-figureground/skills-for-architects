@@ -39,6 +39,51 @@ until then. `u` undoes the last repair in that project.
 
 Exit codes: `0` clean, `1` findings/pending work, `2` error. `--json` is the agent interface.
 
+## Filing loose files by rule
+
+A file at a project root that the map can recognise is **Loose**: Atlas knows where it
+belongs and can file it with one key. Two things make a file Loose - a glob in
+`relocations`, and a **file rule**, which can also match on what is inside the file.
+
+Rules live in the drive map, under `fileRules`, and are tried in order after the glob
+relocations. The first that matches wins.
+
+```json
+"fileRules": [
+  {
+    "name": "Issued sets",
+    "target": "08 OUT/Transmittals",
+    "match": { "extensions": ["pdf"], "pdfText": ["issued for permit", "issued for construction"] }
+  },
+  { "name": "Fee sheets", "target": "10 Legal/Invoices", "match": { "extensions": ["xlsx"] } },
+  { "name": "RFIs",       "target": "08 OUT/RFI",        "match": { "nameRegex": "^\\d{6}_RFI-\\d+" } }
+]
+```
+
+| Filter | Matches |
+|---|---|
+| `extensions` | File extension, case-insensitive, leading dot optional |
+| `names` | Glob on the file name, case-insensitive |
+| `nameRegex` | Regular expression searched in the file name, case-insensitive |
+| `pdfText` | A phrase in the PDF's title, subject, keywords, or first page - case- and spacing-insensitive |
+
+Every filter given must match; within one filter, any value may. `doctor` names the rule
+that filed each file, in text and in `--json`.
+
+Rules produce the same repair a glob sweep does, so preview, confirm, undo, and
+`conform --node` all work on them unchanged. A rule never touches `PROJECT.md`,
+`CLAUDE.md`, `desktop.ini`, or a folder, and never reaches below the project root.
+
+A malformed rule refuses the whole map rather than being skipped - a misspelled filter
+key would otherwise leave a rule matching more files than its author wrote. Run
+`atlas lint` to check targets.
+
+**Content costs a read.** On the Drive mount, reading a file downloads it. Atlas only
+opens a file after the rule's name filters pass, only when it is named `*.pdf`, and
+never above 64 MB. Reads are cached per file until it changes. A PDF that cannot be
+read - damaged, or locked with a password - never matches; a set that is merely locked
+against editing reads normally.
+
 ## New project intake
 
 Press `n` in the TUI. Three steps collect:

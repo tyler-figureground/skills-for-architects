@@ -92,6 +92,47 @@ def make_project(drive: Path, name: str, *, sections: list[str] = (), files: dic
     return project
 
 
+def _pdf_string(s: str) -> bytes:
+    return s.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)").encode("latin-1")
+
+
+def make_pdf(path: Path, text: str = "", title: str | None = None) -> Path:
+    """A real one-page PDF: ``text`` on page one, ``title`` in its metadata.
+
+    Hand-assembled rather than written through pypdf so a test of Atlas reading a
+    PDF does not also depend on pypdf being able to write one, and so the bytes are
+    exactly what a title block exporter would leave: a content stream with the
+    words in it and nothing clever.
+    """
+    content = b"BT /F1 12 Tf 72 720 Td (" + _pdf_string(text) + b") Tj ET"
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R "
+        b"/Resources << /Font << /F1 5 0 R >> >> >>",
+        b"<< /Length %d >>\nstream\n" % len(content) + content + b"\nendstream",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    ]
+    if title is not None:
+        objects.append(b"<< /Title (" + _pdf_string(title) + b") >>")
+    out = bytearray(b"%PDF-1.4\n")
+    offsets = []
+    for number, body in enumerate(objects, 1):
+        offsets.append(len(out))
+        out += b"%d 0 obj\n" % number + body + b"\nendobj\n"
+    xref = len(out)
+    out += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objects) + 1)
+    for offset in offsets:
+        out += b"%010d 00000 n \n" % offset
+    trailer = b"<< /Size %d /Root 1 0 R" % (len(objects) + 1)
+    if title is not None:
+        trailer += b" /Info %d 0 R" % len(objects)
+    out += b"trailer\n" + trailer + b" >>\nstartxref\n%d\n%%%%EOF\n" % xref
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(bytes(out))
+    return path
+
+
 @pytest.fixture()
 def fixture_drive(tmp_path: Path) -> Path:
     drive = tmp_path / "TESTDRIVE"

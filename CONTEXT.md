@@ -69,7 +69,8 @@ repair it without a human decision.
 
 **Loose**
 Filing State of a file sitting at a Project root that the drive map files into a
-target folder. Atlas can repair it without a human decision.
+target folder, by a glob relocation or by a File Rule. Atlas can repair it without
+a human decision.
 
 **Unfiled**
 Filing State of a Tree Node the drive map knows nothing about. Atlas can never
@@ -319,3 +320,39 @@ The check that runs before an undo: the drive map, and the folders the inverse
 touches. Distinct from the guard on a Repair, which additionally re-derives the
 Plan from the map and compares. An undo's Plan reverses the map rather than
 following it, so re-deriving it can only ever disagree.
+
+## Atlas File Rules
+
+**File Rule**
+A drive map entry that makes a file at a Project root Loose, by what its name says
+and, optionally, what its content says. Its only output is a Sweep: a File Rule
+never adds an Action kind or a Filing State. Tried in map order, after the glob
+relocations; the first that matches decides. Never applies to the control plane,
+to a tolerated file, or to a folder.
+_Avoid_: organize rule, automation, smart folder.
+
+**Filter**
+One test inside a File Rule: `extensions`, `names`, `nameRegex`, or `pdfText`.
+Every Filter a rule gives must match; within one Filter any value may. An absent
+Filter is no test at all, never "matches nothing".
+
+**Name Filter**
+A Filter decided by the file's name alone - `extensions`, `names`, `nameRegex`.
+Free: it reads nothing beyond the listing Atlas already holds. Always evaluated
+before any Content Filter on the same rule.
+
+**Content Filter**
+A Filter decided by what is inside the file - today only `pdfText`. Costs a read,
+and on the Drive mount a read is a download, so it runs only after the rule's Name
+Filters pass, only on a file named for its format, and never past the Read Limit.
+A file it cannot evaluate - damaged, truncated, password-locked, not what its name
+claims - does not match. Uncertainty never moves a file.
+
+**Read Limit**
+The size above which Atlas never opens a file for a Content Filter: 64 MB. A cost
+limit, not folder structure, so it lives in code rather than in the drive map.
+
+**Rule Attribution**
+The name of the File Rule that made a file Loose. Carried beside the Sweep and shown
+wherever the Sweep is shown - `doctor` text, `--json`, the console's project
+detail. A Sweep from a glob relocation has none; the relocation explains itself.

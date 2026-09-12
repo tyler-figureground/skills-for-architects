@@ -4,6 +4,7 @@ version = "0.3.0"
 description = "Atlas - map-driven TUI/CLI for studio shared-drive project tooling (spec: LIBRARY - Reference/_House Standard/atlas-tui-spec.md)"
 requires-python = ">=3.12"
 dependencies = [
+    "pypdf[crypto]>=6.18,<7",
     "textual>=8.2,<9",
 ]
 

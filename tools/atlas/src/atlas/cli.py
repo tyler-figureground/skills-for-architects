@@ -111,8 +111,10 @@ def cmd_doctor(args: argparse.Namespace) -> int:
                 print(f"    drift: {src} -> {dst}")
             for h in p.relocations:
                 print(f"    relocation pending: {h.source} -> {h.target} ({h.file_count} files)")
+            rules = dict(p.sweep_rules)
             for name, dst in p.sweeps:
-                print(f"    sweep pending: {name} -> {dst}")
+                because = f" (rule: {rules[name]})" if name in rules else ""
+                print(f"    sweep pending: {name} -> {dst}{because}")
             for name in p.unfiled:
                 print(f"    unfiled: {name}")
     pending = any(p.actionable or p.unfiled for p in report.projects)

@@ -221,6 +221,18 @@ question, still deferred.
 
 ## Frontier
 
+**As of session 10:** unblocked and unclaimed are **24** (`atlas tree`), **26** (do
+File Rules reach below the project root - a grilling ticket), **27** (duplicates as a
+`doctor` finding, via fclones), **28** (more content filters - DXF, true content type),
+08 (global search scope), 09 (dossier Companion Mode), and 11 (Drive API read path).
+Nothing is blocked. 25 is resolved.
+
+26 is the natural next one: it is the only open question that can *change* what
+shipped this session, and every week it stays open is a week of rules written against
+roots-only semantics that may later want to reach deeper.
+
+*The section below is the session-9 frontier, kept for the reasoning.*
+
 **As of session 9:** unblocked and unclaimed are **24** (`atlas tree` - ticket 22's
 retroactive parity debt under ADR 0008, charted and deliberately not folded into
 another ticket's commit), 08 (global search scope), 09 (dossier Companion Mode),
@@ -402,3 +414,95 @@ date in **two** ways, not one. It still draws missing folders inline in the tree
 which ticket 14 ruled out. And its renders are all 132x38, a width that ticket 03
 established is not one the user actually works at. It has not been re-rendered and
 the user has not said whether to.
+
+## Session 10 - the map learned to read files
+
+Ticket 25, from a question the user asked directly: which open-source projects could
+Atlas download and use to get stronger at managing and organizing files. The survey is
+`docs/research/atlas-file-management-oss.md` and is indexed from root `AGENTS.md`, with
+a per-row backlog table that is meant to be maintained rather than read once.
+
+**The survey's finding is a filter, not a shortlist.** Every Atlas write crosses a
+Plan, is guarded, logged and reversible. So a tool that mutates on its own - organize's
+actions, f2's undo, fclones' dedupe - can only ever contribute its *design*, while a
+tool that reads contributes its code. That single line sorted every candidate, and it
+is why the thing adopted was pypdf and the thing ported was organize's rule vocabulary.
+
+**File Rules.** `fileRules` in the drive map: `extensions`, `names`, `nameRegex`,
+`pdfText`, ANDed, first match wins, after the glob relocations. A match emits the SWEEP
+that Loose already earned - so the tree, the repair key, the inline confirm, the Guard,
+the Move Manifest, undo, `conform --node` and `conform --revert` all took it without a
+line of change. ADR 0006 held with room to spare. ADR 0009, vocabulary in `/CONTEXT.md`.
+
+452 tests, up from 405. Tickets 26, 27, 28 graduated.
+
+Four things found by building rather than deciding:
+
+- **Most issued sets are encrypted.** Not with a password - with *permissions*, which
+  Acrobat writes as AES. Without `pypdf[crypto]` and an empty-password attempt, the
+  headline use case matches nothing and says nothing. `cryptography` is therefore
+  Atlas's first native dependency; it ships Windows wheels, so the editable install is
+  unaffected.
+- **pypdf prints to stderr on a damaged file**, through logging's last-resort handler -
+  which under the console draws over the screen. **pytest cannot see this**: it attaches
+  its capture handlers to non-propagating loggers too, so an in-process test passes
+  whether or not Atlas silenced it. Both regression tests run in a subprocess. This is
+  the same lesson as the render scripts, in a new place: the suite asserts on what the
+  app believes.
+- **A rule is the first Filing State that can change without the directory changing.**
+  Edit a PDF's title block and a Loose file stops being Loose with no listing moved.
+  The Guard copes - it re-derives before writing - but the tree's 60-second Shelf Life
+  keys on listings, so a row can be stale for a minute. Recorded on ADR 0009.
+- **The operation line spoke two vocabularies.** It armed a repair as `file X -> Y` and
+  reported it as `sweep X -> Y`, and undoing a sweep printed `-> ` with nothing after
+  it, because the project root's path is the empty string. Pre-existing, found by
+  running the keys and looking. `tui/repair.result_line`, with tests.
+
+**Fixed a genuinely intermittent test rather than living with it.**
+`test_edit_project_prepopulates_and_confirms_folder_rename` raced the confirm modal's
+mount - one `pilot.pause()` where the modal can be the active screen a frame before its
+buttons exist. It now uses this file's own `settle()`. Verified 5/5 on the file and
+0/10 failures alone; the session-9 note about it can be considered closed.
+
+**The machine, not the code:** a full-suite run hung twice, in
+`socket.accept` inside `asyncio.new_event_loop`. The machine was at 48,000-51,000
+sockets in `TIME_WAIT` (Windows has ~16k ephemeral ports) from other pytest and
+coverage processes running concurrently. Per-file runs pass; the full suite is a
+lottery while that is true. If a suite hangs and the stack bottoms out in
+`_fallback_socketpair`, check `netstat -an | grep -c TIME_WAIT` before suspecting the
+diff.
+
+## Notes for session 11
+
+`fileRules` is **inert until a drive's map carries the key**, and this session
+deliberately did not touch the studio drive or its map. The schema table in
+`atlas-tui-spec.md` on the shared drive still needs `fileRules` added by hand.
+
+**Measure the hydration cost before writing a broad content rule on the real drive.**
+Reading a file on the Drive mount downloads it. Atlas bounds this four ways (name
+filters first, `*.pdf` only, 64 MB limit, cached by path+size+mtime) but none of it has
+been measured against Google Drive File Stream, because development never touches it.
+`atlas-tui-ux-evidence.md` already said "do not preload files on the shared drive" for
+exactly this reason.
+
+**`main`'s history was rewritten on 2026-09-10** - `prompts/Random Notes/` removed from
+every commit, a passwords file among them, so every hash before `6a24914` changed
+(session 9's tip was `bc506bf`, now `8ac4591`). Anything branched from an old hash has
+to be `git rebase --onto main <old-base>`; a plain merge brings the deleted files back.
+This session's work was uncommitted at the time and needed nothing. Lint and the full
+suite were re-run against the rewritten `main`: green, 455 tests.
+
+**`scripts/lint.sh` reports every JSON file invalid when `jq` is missing**, which reads
+as 18 real failures and is not one. `jq` is installed on this machine but WinGet's
+`Links` directory is not on the Git Bash PATH; prepend
+`$LOCALAPPDATA/Microsoft/WinGet/Packages/jqlang.jq_Microsoft.Winget.Source_8wekyb3d8bbwe`.
+A python3 fallback that also names which validator ran is committed on branch
+`atlas-agents-md` (`cd6ec2b`), separately from that branch's feature commit.
+
+A second session (`skills-for-architects-ff`) worked in parallel on the AGENTS.md /
+CLAUDE.md control plane, ADR 0010, branch `atlas-agents-md`, and bumped Atlas to 0.4.0.
+It expects conflicts against this session's uncommitted hunks in `core/mapfile.py`,
+`core/doctor.py`, `cli.py`, `tests/conftest.py`, `README.md`, `CONTEXT.md` and
+`pyproject.toml`, and will resolve them on its side once this work lands. AGENTS.md
+being control plane is good news here: `explained` already covers it, so no `*.md` rule
+can sweep it.

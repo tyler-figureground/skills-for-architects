@@ -252,13 +252,27 @@ Continuity: `.agent/handoff/` per this repo's checkpoint rule.
   primitive; stock Textual `DirectoryTree` is the wrong loader; filesystem watching
   is not a dependable staleness signal; `Path.rglob` swallows every `OSError` and
   must never be used here. Report: `docs/research/atlas-drive-tree-read-cost.md`.
+- [File Rules](issues/25-file-rules.md) - **built.** The map can file a loose root file
+  by extension, glob, name regex, or the words inside a PDF. The design is organize's
+  (MIT); its code is not, because the map is the only brain and every write crosses a
+  Plan. A rule emits the SWEEP that Loose already earned, so ADR 0006 held and the
+  tree, the repair key, the Guard and undo were untouched. A malformed rule refuses
+  the whole map rather than being skipped - a widened rule moves more. Content is read
+  last, only for `*.pdf`, never past 64 MB, cached by path+size+mtime, and silent on a
+  damaged file. Decision in `docs/adr/0009`, vocabulary in `/CONTEXT.md`, survey in
+  `docs/research/atlas-file-management-oss.md`. Tickets 26, 27, 28 graduated.
 
 ## Not yet specified
 
 Fog toward the destination. Graduates into tickets as the frontier clears it.
 
 - **File-level action set.** Which actions the tree offers, what core plan each
-  builds, and how each previews. Depends on the write contract.
+  builds, and how each previews. Depends on the write contract. *Partly cleared:*
+  ticket 25 gave the map a way to make a root file Loose by name or content, and the
+  tree already offers its Sweep. What is still fog is everything that is not a Sweep -
+  open, reveal in Explorer, rename, delete, and whether a file the operator picks can
+  be moved anywhere the map has not named. Ticket 26 asks the narrowest version of
+  the last one.
 - **Load State labels do not abbreviate.** Ticket 10 gave the Fault Word a short
   form; the Load State label beside it kept its long one, so `not opened yet` runs
   past the viewport at 46 columns and the row scrolls. Same principle, different

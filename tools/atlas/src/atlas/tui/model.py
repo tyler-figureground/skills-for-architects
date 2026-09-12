@@ -133,7 +133,11 @@ def project_detail(row: ProjectRow) -> str:
         f"Move {hit.source} -> {hit.target} ({hit.file_count} files)"
         for hit in report.relocations
     )
-    fix_lines.extend(f"File {name} -> {target}" for name, target in report.sweeps)
+    rules = dict(report.sweep_rules)
+    fix_lines.extend(
+        f"File {name} -> {target}" + (f" (rule: {rules[name]})" if name in rules else "")
+        for name, target in report.sweeps
+    )
     lines.extend(f"  {line}" for line in fix_lines)
     if not fix_lines:
         lines.append("  No mapped repairs pending")
