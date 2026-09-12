@@ -119,6 +119,21 @@ def confirm_line(plan: Plan, width: int = 0) -> str:
     return line
 
 
+def result_line(action: Action) -> str:
+    """What the operation line reads once a repair has been applied.
+
+    The same verb the armed line used. `sweep` and `relocate` are the model's
+    words for these, and the operator was shown `file` and `move` one keystroke
+    ago; reporting the result in a different vocabulary reads as a different
+    operation. The project root is named rather than printed, because its path is
+    the empty string and an arrow pointing at nothing is not a destination.
+    """
+    verb = _VERB.get(action.kind, action.kind)
+    if not action.src:
+        return f"Done: {verb} {action.dst}"
+    return f"Done: {verb} {action.src} -> {action.dst or 'the project root'}"
+
+
 # ------------------------------------------------------- the undo stack
 
 

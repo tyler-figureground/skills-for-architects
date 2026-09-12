@@ -23,7 +23,13 @@ from atlas.core.conform import (
 )
 from atlas.core.tree import DRIFTED, LOOSE, MAPPED, MISPLACED, UNFILED, Expectation, TreeNode
 from atlas.tui.layout import MIN_COLUMNS
-from atlas.tui.repair import UndoStack, confirm_line, confirms_inline, repair_offer
+from atlas.tui.repair import (
+    UndoStack,
+    confirm_line,
+    confirms_inline,
+    repair_offer,
+    result_line,
+)
 
 
 def node(name: str, filing: str, *, is_dir: bool = True) -> TreeNode:
@@ -187,3 +193,28 @@ def test_a_plan_that_cannot_be_reversed_is_refused_at_push_not_at_pop():
     stack.push("A", plan_of(Action(kind=BACKFILL, src="", dst="PROJECT.md", status=DONE)))
 
     assert stack.depth("A") == 0
+
+
+# ------------------------------------------------------- what an apply reports
+
+
+def test_a_finished_repair_reports_in_the_operator_s_words():
+    """Same register as the armed line. `sweep` is the model's word for it;
+    the operator was shown `file` a keystroke ago."""
+    action = Action(kind=SWEEP, src="A-101.pdf", dst="08 OUT/Transmittals", status=DONE)
+
+    assert result_line(action) == "Done: file A-101.pdf -> 08 OUT/Transmittals"
+
+
+def test_a_repair_that_lands_at_the_project_root_names_the_root():
+    """Undoing a sweep files the file back to the root, whose path is the empty
+    string. Printed raw it left the line ending in an arrow pointing nowhere."""
+    action = Action(kind=SWEEP, src="08 OUT/Transmittals/A-101.pdf", dst="", status=DONE)
+
+    assert result_line(action) == "Done: file 08 OUT/Transmittals/A-101.pdf -> the project root"
+
+
+def test_a_backfill_reports_what_it_created():
+    action = Action(kind=BACKFILL, src="", dst="decisions", status=DONE)
+
+    assert result_line(action) == "Done: create decisions"

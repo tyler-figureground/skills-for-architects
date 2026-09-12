@@ -99,7 +99,13 @@ from .layout import (
     unwind,
 )
 from .model import ProjectRow, project_detail, project_rows, visible_rows
-from .repair import UndoStack, confirm_line, confirms_inline, repair_offer
+from .repair import (
+    UndoStack,
+    confirm_line,
+    confirms_inline,
+    repair_offer,
+    result_line,
+)
 from .treeview import ProjectTreeView
 
 @dataclass(frozen=True)
@@ -2218,7 +2224,7 @@ class AtlasApp(App):
             # the first would report a third of what happened as all of it.
             self._set_operation(f"Done: {len(applied.actions)} moves in {node or project_name}")
         elif action is not None:
-            self._set_operation(f"Done: {action.kind} {action.src} -> {action.dst}")
+            self._set_operation(result_line(action))
 
     def _reconcile_after(self, project_name: str, applied: Plan, node: str) -> None:
         """Forget the folders the Move Manifest names and follow the cursor to
