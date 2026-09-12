@@ -33,6 +33,7 @@ from .project_index import (
     preflight_project_index,
 )
 from .projectmd import (
+    agents_md_lines,
     claude_md_lines,
     create_crlf_no_bom,
     decisions_readme_lines,
@@ -147,6 +148,8 @@ def new_project(drive_root: Path, m: DriveMap, request: ProjectIntake) -> NewPro
     if project.exists():
         raise OpsError(f"a folder named '{folder_name}' already exists")
     planned_paths = [m.project_file, m.decisions_dir, f"{m.decisions_dir}/README.md", m.claude_file]
+    if m.agents_file:
+        planned_paths.append(m.agents_file)
     if m.analysis_dir:
         planned_paths.append(m.analysis_dir)
     planned_paths.extend(section.id for section in m.sections if section.seed)
@@ -184,6 +187,9 @@ def new_project(drive_root: Path, m: DriveMap, request: ProjectIntake) -> NewPro
             raise OpsError("decisions/README.md appeared while creating the project; left unchanged")
         if m.analysis_dir:
             mkdir_below(project, m.analysis_dir)
+        # AGENTS.md first: CLAUDE.md is only the pointer at it (ADR 0010).
+        if m.agents_file and not create_crlf_no_bom(project / m.agents_file, agents_md_lines(m)):
+            raise OpsError(f"{m.agents_file} appeared while creating the project; left unchanged")
         if not create_crlf_no_bom(project / m.claude_file, claude_md_lines(m)):
             raise OpsError(f"{m.claude_file} appeared while creating the project; left unchanged")
         append_project_index_row(drive_root, m, folder_name, request)

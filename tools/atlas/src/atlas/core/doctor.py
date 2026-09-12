@@ -14,6 +14,7 @@ from pathlib import Path
 
 from .filerules import first_match
 from .mapfile import DriveMap
+from .projectmd import agents_block_current, is_claude_pointer
 from .scan import DriveInventory, ProjectInventory, long_path, count_files
 
 # Files tolerated at a project root without being flagged: OS noise plus the
@@ -75,6 +76,8 @@ def _control_plane_paths(m: DriveMap) -> dict[str, str]:
         m.decisions_dir: m.decisions_dir,
         m.claude_file: m.claude_file,
     }
+    if m.agents_file:
+        paths[m.agents_file] = m.agents_file
     if m.analysis_dir:
         paths[m.analysis_dir] = m.analysis_dir
     return paths
@@ -82,6 +85,29 @@ def _control_plane_paths(m: DriveMap) -> dict[str, str]:
 
 def _tolerated(name: str) -> bool:
     return any(fnmatch.fnmatch(name.lower(), pat.lower()) for pat in TOLERATED_ROOT_FILES)
+
+
+def _read_control_file(path: Path) -> str | None:
+    try:
+        return path.read_bytes().decode("utf-8-sig")
+    except (OSError, UnicodeDecodeError):
+        return None
+
+
+def _agents_file_current(project: Path, m: DriveMap, root_names: set[str]) -> bool:
+    if m.agents_file not in root_names:
+        return False
+    text = _read_control_file(project / m.agents_file)
+    return text is not None and agents_block_current(text, m)
+
+
+def _claude_file_current(project: Path, m: DriveMap, root_names: set[str]) -> bool:
+    if m.claude_file not in root_names:
+        return False
+    if not m.agents_file:
+        return True     # no agents file configured: any CLAUDE.md will do, as before
+    text = _read_control_file(project / m.claude_file)
+    return text is not None and is_claude_pointer(text, m)
 
 
 def _dir_exists_exact(base: Path, rel: str) -> bool:
@@ -129,9 +155,16 @@ def report_project(inv: ProjectInventory, m: DriveMap) -> ProjectReport:
                 head = ""
             if not head.lstrip().startswith("---"):
                 missing.append(m.project_file)
-    for label in (m.decisions_dir, m.claude_file):
-        if label and label not in root_names:
-            missing.append(label)
+    if m.decisions_dir and m.decisions_dir not in root_names:
+        missing.append(m.decisions_dir)
+    # Agent files, AGENTS.md first so conform migrates before it points: AGENTS.md
+    # must carry a current Atlas block, CLAUDE.md must be the bare pointer. Names
+    # are exact-case, so a hand-saved "Agents.md" reads as missing and conform
+    # renames it. ADR 0010.
+    if m.agents_file and not _agents_file_current(inv.path, m, root_names):
+        missing.append(m.agents_file)
+    if m.claude_file and not _claude_file_current(inv.path, m, root_names):
+        missing.append(m.claude_file)
     if m.analysis_dir and not (inv.path / m.analysis_dir).exists():
         missing.append(m.analysis_dir)
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from atlas.core.doctor import report_drive, report_to_dict
 from atlas.core.scan import scan_drive
 
-from conftest import make_project
+from conftest import agent_files, make_project
 
 
 def project_report(drive, name):
@@ -11,13 +11,13 @@ def project_report(drive, name):
     return next(p for p in report.projects if p.name == name)
 
 
-def full_control_plane(files=None):
+def full_control_plane(drive, files=None):
     base = {
         "PROJECT.md": "---\nproject: x\n---\n",
-        "CLAUDE.md": "# workspace\n",
         "decisions/README.md": "# Decisions\n",
         "06 Research/Code/.keep": "",
     }
+    base.update(agent_files(drive))
     base.update(files or {})
     return base
 
@@ -26,7 +26,7 @@ def test_conform_project_reports_conform(fixture_drive):
     make_project(
         fixture_drive, "260101_Test-House",
         sections=["01 Model", "06 Research", "08 OUT", "11 Meetings"],
-        files=full_control_plane(),
+        files=full_control_plane(fixture_drive),
     )
     p = project_report(fixture_drive, "260101_Test-House")
     assert p.status == "conform"
@@ -52,7 +52,7 @@ def test_drift_folder_detected_case_insensitive(fixture_drive):
     make_project(
         fixture_drive, "260104_Drifty",
         sections=["01 Model", "meetings"],
-        files=full_control_plane(),
+        files=full_control_plane(fixture_drive),
     )
     p = project_report(fixture_drive, "260104_Drifty")
     assert ("meetings", "11 Meetings") in p.drift
@@ -63,7 +63,7 @@ def test_relocation_source_counted(fixture_drive):
     make_project(
         fixture_drive, "260105_Reloc",
         sections=["01 Model", "08 OUT/Invoices"],
-        files=full_control_plane({"08 OUT/Invoices/inv-001.pdf": "x"}),
+        files=full_control_plane(fixture_drive, {"08 OUT/Invoices/inv-001.pdf": "x"}),
     )
     p = project_report(fixture_drive, "260105_Reloc")
     hits = {(h.source, h.target, h.file_count) for h in p.relocations}
@@ -74,7 +74,7 @@ def test_handoff_sweep_matches_glob_and_is_not_unfiled(fixture_drive):
     make_project(
         fixture_drive, "260106_Sweepy",
         sections=["01 Model"],
-        files=full_control_plane({"HANDOFF-roof-01.md": "x"}),
+        files=full_control_plane(fixture_drive, {"HANDOFF-roof-01.md": "x"}),
     )
     p = project_report(fixture_drive, "260106_Sweepy")
     assert ("HANDOFF-roof-01.md", ".agent/handoff/") in p.sweeps
@@ -96,7 +96,7 @@ def test_case_only_renamed_source_is_not_a_pending_relocation(fixture_drive, tmp
     make_project(
         fixture_drive, "260109_Cased",
         sections=["01 Model", "08 OUT/Change Orders"],  # already renamed on disk
-        files=full_control_plane(),
+        files=full_control_plane(fixture_drive),
     )
     p = project_report(fixture_drive, "260109_Cased")
     assert not any(h.source == "08 OUT/change Orders" for h in p.relocations), p.relocations
@@ -106,7 +106,7 @@ def test_tolerated_root_files_not_unfiled(fixture_drive):
     make_project(
         fixture_drive, "260107_Ledger",
         sections=["01 Model"],
-        files=full_control_plane({"jdp-time-ledger.ndjson": "{}", "desktop.ini": ""}),
+        files=full_control_plane(fixture_drive, {"jdp-time-ledger.ndjson": "{}", "desktop.ini": ""}),
     )
     p = project_report(fixture_drive, "260107_Ledger")
     assert p.unfiled == ()

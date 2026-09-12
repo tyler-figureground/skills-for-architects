@@ -21,7 +21,7 @@ fi
 
 # Skip README files and rule files
 BASENAME=$(basename "$FILE_PATH")
-if [[ "$BASENAME" == "README.md" || "$BASENAME" == "SKILL.md" || "$BASENAME" == "CLAUDE.md" ]]; then
+if [[ "$BASENAME" == "README.md" || "$BASENAME" == "SKILL.md" || "$BASENAME" == "CLAUDE.md" || "$BASENAME" == "AGENTS.md" ]]; then
   exit 0
 fi
 

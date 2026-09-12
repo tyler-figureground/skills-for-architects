@@ -15,7 +15,7 @@ Atlas project intake pre-populates project identity, full address, Project Use C
 
 ## What this is not
 
-- **Not Claude memory.** User preferences and firm conventions belong in Claude Code's own memory (CLAUDE.md, auto memory). The dossier holds project facts only.
+- **Not agent instructions.** User preferences and firm conventions belong in the project's `AGENTS.md` (`CLAUDE.md` is only a pointer at it) or Claude Code's auto memory. The dossier holds project facts only.
 - **Not a collaboration platform.** No sync, statuses dashboard, or approvals — the files live in the project folder and are shared however the project already is (git, Drive, Dropbox). That's deliberate: files outlive tools.
 
 ## Quick start

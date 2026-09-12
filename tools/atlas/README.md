@@ -94,6 +94,14 @@ Press `n` in the TUI. Three steps collect:
 
 Folder format: `YYMMDD_<street number + street>-<description>`. Unit, city, state, and ZIP remain in `PROJECT.md` but stay out of the folder name. Selecting **Other** as Project Use Case requires a custom label. **Add new contact…** writes to the selected drive's shared contact directory; first name, last name, and email are required.
 
+## Agent files
+
+Every project carries `AGENTS.md` and `CLAUDE.md` at its root (ADR 0010). `AGENTS.md` holds the instructions and the index; `CLAUDE.md` holds one line - `@AGENTS.md` - so Claude Code reads the same file Codex and every other agent reads. The pointer is relative, so a folder rename cannot strand it.
+
+Atlas owns the block between `<!-- atlas:agents-begin -->` and `<!-- atlas:agents-end -->`: house working style plus an index built from the drive map. Everything outside the markers belongs to the project and is never rewritten.
+
+Doctor reports `AGENTS.md` when it is absent or its block is stale, and `CLAUDE.md` when it is anything but the pointer. Conform backfills both. A project carrying a hand-written `CLAUDE.md` is migrated: its words move into `AGENTS.md` first, and `CLAUDE.md` becomes the pointer only once every line of it is provably present there - otherwise it is left alone as a conflict for a person to merge. A hand-saved `Agents.md` is renamed to the canonical spelling rather than duplicated.
+
 ## Editing projects and contacts
 
 Select a project and press `e`. Atlas pre-populates every intake field, shows the derived folder name, then requires a second confirmation when Address or Description changes the folder path. It refuses collisions and updates `PROJECT.md` plus the project-index row together. Project contact reassignment refreshes that project's snapshots only.

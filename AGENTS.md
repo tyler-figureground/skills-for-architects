@@ -24,6 +24,19 @@ Good: "Tests fail. Missing dep."
 
 Never use em dashes in public-facing copy. Use a spaced hyphen ( - ) instead.
 
+## Paths
+
+Every file or handoff path you hand back is a full absolute path, drive letter first, so it copy-pastes: `C:\Users\YOLOTRON\Documents\GitHub\skills-for-architects\docs\adr\0010-....md`, not `docs/adr/0010-....md`. Applies to chat replies, task summaries, handoff notes, and anything pointing at a file on the studio drive.
+
+## New projects
+
+Every new project starts with two files at its root:
+
+- `AGENTS.md` - the instructions and the index. What every coding agent reads.
+- `CLAUDE.md` - one line, `@AGENTS.md`, and nothing else.
+
+Never split instructions across the two. On the studio drive Atlas writes and backfills both; see `docs/adr/0010-agents-md-holds-the-instructions-and-claude-md-points-at-it.md`.
+
 ## Commands
 
 Repo lint. Structural checks over the Markdown and JSON surface. Same command CI runs.

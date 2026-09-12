@@ -7,9 +7,13 @@ deletions are rmdir-shaped (file-empty only), moves never clobber (collisions
 survive in place and are reported), case-only renames go through a temp name,
 every applied action is logged.
 
-Control-plane backfill is constructive only. Missing files are created
-exclusively. An existing PROJECT.md without the machine contract is reported
-as a conflict and left unchanged; nothing existing is overwritten.
+Control-plane backfill is constructive, with two bounded exceptions (ADR 0010).
+Missing files are created exclusively. An existing PROJECT.md without the
+machine contract is reported as a conflict and left unchanged. AGENTS.md's
+marker-wrapped Atlas block is refreshed in place and nothing outside the markers
+is touched. CLAUDE.md is rewritten to its one-line pointer only when its words
+are stock generator output or already present in AGENTS.md; otherwise it is a
+conflict and a person merges it.
 """
 
 from __future__ import annotations
@@ -24,11 +28,19 @@ from .mapfile import DriveMap, find_map, load_map
 from .ops import OpsError, append_log, mkdir_below
 from .projectmd import (
     FRONT_MATTER_HEAD,
+    AgentsBlockError,
+    agents_md_lines,
     blank_intake_front_matter,
     blank_intake_identity_rows,
+    carried_by,
     claude_md_lines,
     create_crlf_no_bom,
     decisions_readme_lines,
+    is_claude_pointer,
+    is_legacy_claude,
+    meaningful_lines,
+    with_agents_block,
+    write_crlf_no_bom,
 )
 from .scan import ProjectInventory, list_entries, long_path, scan_drive
 
@@ -501,17 +513,127 @@ def _apply_backfill(project: Path, m: DriveMap, action: Action) -> Action:
         if not readme.exists() and not create_crlf_no_bom(readme, decisions_readme_lines()):
             return replace(action, status=SKIPPED, note="README appeared during apply; rerun")
         return replace(action, status=DONE)
+    if m.agents_file and target == m.agents_file:
+        return _backfill_agents(project, m, action)
     if target == m.claude_file:
-        path = project / m.claude_file
-        if path.exists():
-            return replace(action, status=SKIPPED, note="exists")
-        if not create_crlf_no_bom(path, claude_md_lines(m)):
-            return replace(action, status=SKIPPED, note="appeared during apply; rerun")
-        return replace(action, status=DONE)
+        return _backfill_claude(project, m, action)
     if target == m.analysis_dir:
         mkdir_below(project, m.analysis_dir)
         return replace(action, status=DONE)
     return replace(action, status=SKIPPED, note=f"unknown control-plane item '{target}'")
+
+
+# ---- agent files (ADR 0010) ---------------------------------------------------
+
+def _root_spelling(project: Path, name: str) -> str | None:
+    """How the root file ``name`` is actually spelled, or None if it is absent.
+
+    Path.exists() is case-insensitive on this mount, so it cannot tell AGENTS.md
+    from the Agents.md a person saved by hand. Only a listing can.
+    """
+    variant = None
+    for e in list_entries(project):
+        if e.is_dir or e.name.lower() != name.lower():
+            continue
+        if e.name == name:
+            return name
+        variant = e.name
+    return variant
+
+
+def _canonical_spelling(project: Path, name: str) -> tuple[bool, str]:
+    """Give the root file ``name`` exactly that spelling.
+
+    Returns whether it exists, plus a note when a case variant was renamed. Two
+    steps through a temp name, as for folders: a one-step case-only rename is a
+    no-op on a case-insensitive mount.
+    """
+    found = _root_spelling(project, name)
+    if found is None:
+        return False, ""
+    if found == name:
+        return True, ""
+    tmp = project / f"{found}.atlas-tmp"
+    (project / found).rename(tmp)
+    tmp.rename(project / name)
+    return True, f"renamed {found} -> {name}"
+
+
+def _read_utf8(path: Path) -> tuple[bytes, str] | None:
+    raw = path.read_bytes()
+    try:
+        return raw, raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        return None
+
+
+def _notes(*parts: str) -> str:
+    return "; ".join(p for p in parts if p)
+
+
+def _backfill_agents(project: Path, m: DriveMap, action: Action) -> Action:
+    exists, renamed = _canonical_spelling(project, m.agents_file)
+    path = project / m.agents_file
+    if not exists:
+        claude = project / m.claude_file
+        seed = _read_utf8(claude) if m.claude_file and claude.is_file() else None
+        text = seed[1] if seed else ""
+        if meaningful_lines(text) and not is_claude_pointer(text, m) and not is_legacy_claude(text, m):
+            # A person's CLAUDE.md becomes AGENTS.md with its words intact; the
+            # CLAUDE.md backfill points at it once it can see them here.
+            lines, note = with_agents_block(text.splitlines(), m), f"created from {m.claude_file}"
+        else:
+            lines, note = agents_md_lines(m), ""
+        if not create_crlf_no_bom(path, lines):
+            return replace(action, status=SKIPPED, note="appeared during apply; rerun")
+        return replace(action, status=DONE, note=note)
+
+    read = _read_utf8(path)
+    if read is None:
+        return replace(action, status=CONFLICT, note=_notes(renamed, "not UTF-8; left unchanged"))
+    raw, text = read
+    try:
+        lines = with_agents_block(text.splitlines(), m)
+    except AgentsBlockError as error:
+        return replace(action, status=CONFLICT, note=_notes(renamed, str(error)))
+    if lines == text.splitlines():
+        return replace(action, status=DONE if renamed else SKIPPED,
+                       note=renamed or "Atlas block already current")
+    if path.read_bytes() != raw:
+        return replace(action, status=SKIPPED, note=_notes(renamed, "changed during apply; rerun"))
+    write_crlf_no_bom(path, lines)
+    return replace(action, status=DONE, note=_notes(renamed, "Atlas block written"))
+
+
+def _backfill_claude(project: Path, m: DriveMap, action: Action) -> Action:
+    exists, renamed = _canonical_spelling(project, m.claude_file)
+    path = project / m.claude_file
+    if not exists:
+        if not create_crlf_no_bom(path, claude_md_lines(m)):
+            return replace(action, status=SKIPPED, note="appeared during apply; rerun")
+        return replace(action, status=DONE)
+    if not m.agents_file:
+        return replace(action, status=DONE if renamed else SKIPPED, note=renamed or "exists")
+
+    read = _read_utf8(path)
+    if read is None:
+        return replace(action, status=CONFLICT, note=_notes(renamed, "not UTF-8; left unchanged"))
+    raw, text = read
+    if is_claude_pointer(text, m):
+        return replace(action, status=DONE if renamed else SKIPPED,
+                       note=renamed or "already a pointer")
+    agents = project / m.agents_file
+    host = _read_utf8(agents) if agents.is_file() else None
+    if host is None:
+        return replace(action, status=CONFLICT, note=_notes(
+            renamed, f"no readable {m.agents_file} to point at; left unchanged"))
+    if not (is_legacy_claude(text, m) or carried_by(text, host[1])):
+        return replace(action, status=CONFLICT, note=_notes(
+            renamed, f"has words {m.agents_file} lacks; merge them there, then rerun"))
+    if path.read_bytes() != raw:
+        return replace(action, status=SKIPPED, note=_notes(renamed, "changed during apply; rerun"))
+    write_crlf_no_bom(path, claude_md_lines(m))
+    return replace(action, status=DONE, note=_notes(renamed, f"now points at {m.agents_file}"))
 
 
 # ---- moves (renames + relocations share one engine) -------------------------

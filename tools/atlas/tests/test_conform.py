@@ -69,7 +69,9 @@ def test_backfill_leaves_existing_contract_alone(fixture_drive):
     )
     result, inv, m = conform(fixture_drive, "260203_HasFM")
     assert (inv.path / "PROJECT.md").read_text(encoding="utf-8") == original
-    assert (inv.path / "CLAUDE.md").read_text(encoding="utf-8") == "keep me"
+    # CLAUDE.md's words move into AGENTS.md first; then it becomes the pointer.
+    assert "keep me" in (inv.path / "AGENTS.md").read_text(encoding="utf-8")
+    assert (inv.path / "CLAUDE.md").read_text(encoding="utf-8") == "@AGENTS.md\n"
 
 
 def test_rename_moves_drift_folder(fixture_drive):

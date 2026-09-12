@@ -32,7 +32,7 @@ Checks written `.md` files for the `<!-- architecture-studio:requires-disclaimer
 
 ### post-output-metadata
 
-Prepends YAML front matter to new markdown reports that don't already have it. Skips README.md, SKILL.md, CLAUDE.md, and files inside rules/, hooks/, or .claude-plugin/ directories.
+Prepends YAML front matter to new markdown reports that don't already have it. Skips README.md, SKILL.md, CLAUDE.md, AGENTS.md, and files inside rules/, hooks/, or .claude-plugin/ directories.
 
 ### pre-commit-spec-lint
 

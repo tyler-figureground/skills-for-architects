@@ -356,3 +356,34 @@ limit, not folder structure, so it lives in code rather than in the drive map.
 The name of the File Rule that made a file Loose. Carried beside the Sweep and shown
 wherever the Sweep is shown - `doctor` text, `--json`, the console's project
 detail. A Sweep from a glob relocation has none; the relocation explains itself.
+
+
+## Atlas Agent Files
+
+**Agent Files**
+The two files at a project root that tell a coding agent where it is: AGENTS.md and
+CLAUDE.md. Control plane, like PROJECT.md and decisions/ - Atlas writes them at
+creation and backfills them on conform. ADR 0010.
+
+**AGENTS.md**
+The instructions and the index. What every coding agent reads. Carries the Atlas
+Block plus whatever the project has learned about itself - code posture, model
+traps, house gotchas.
+
+**CLAUDE.md**
+The pointer, and nothing else: one line reading @AGENTS.md. Claude Code expands the
+import, so it reads the same file every other agent reads and there is no second
+copy to drift. Relative on purpose - an absolute pointer goes stale the day its
+folder is renamed.
+
+**Atlas Block**
+The marker-wrapped region of AGENTS.md that Atlas owns, from atlas:agents-begin to
+atlas:agents-end. House working style and an index built from the drive map.
+Refreshed in place by conform; everything outside the markers is the project's own
+and is never rewritten. Broken markers are a conflict, never a guess.
+
+**Migration**
+What conform does with a project whose CLAUDE.md still holds instructions: the
+words move into AGENTS.md first, and CLAUDE.md becomes the Pointer only once every
+non-blank line of it is provably present there, or it is stock generator output.
+Anything else is left in place as a conflict for a person to merge.

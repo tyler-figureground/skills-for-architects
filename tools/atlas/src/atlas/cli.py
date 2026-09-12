@@ -445,7 +445,9 @@ def cmd_new(args: argparse.Namespace) -> int:
         print(f"billing: {result.intake.billing_contact.full_name}")
         print(f"client:  {result.intake.client_contact.full_name}")
         print(f"seed:    {', '.join(result.seeded)}")
-        print(f"control: {drive_map.project_file}, {drive_map.decisions_dir}\\, {drive_map.claude_file}, {drive_map.analysis_dir}\\")
+        agents = f"{drive_map.agents_file}, " if drive_map.agents_file else ""
+        print(f"control: {drive_map.project_file}, {drive_map.decisions_dir}\\, "
+              f"{agents}{drive_map.claude_file}, {drive_map.analysis_dir}\\")
     return 0
 
 

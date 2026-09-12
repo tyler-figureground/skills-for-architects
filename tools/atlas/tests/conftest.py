@@ -11,6 +11,8 @@ import pytest
 
 from atlas.core.contacts import ContactDraft, add_contact, find_contact, load_contacts
 from atlas.core.intake import ProjectAddress, ProjectIntake, ProjectUseCase
+from atlas.core.mapfile import find_map, load_map
+from atlas.core.projectmd import agents_md_lines, claude_md_lines
 
 FIXTURE_MAP = {
     "drive": "TESTDRIVE",
@@ -21,6 +23,7 @@ FIXTURE_MAP = {
         "decisionsDir": "decisions",
         "handoffsDir": ".agent/handoff",
         "claudeFile": "CLAUDE.md",
+        "agentsFile": "AGENTS.md",
         "analysisDir": "06 Research/Code",
     },
     "sections": [
@@ -131,6 +134,15 @@ def make_pdf(path: Path, text: str = "", title: str | None = None) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(bytes(out))
     return path
+
+
+def agent_files(drive: Path) -> dict[str, str]:
+    """AGENTS.md and CLAUDE.md exactly as Atlas writes them for this drive's map."""
+    m = load_map(find_map(drive))
+    return {
+        m.agents_file: "\n".join(agents_md_lines(m)) + "\n",
+        m.claude_file: "\n".join(claude_md_lines(m)) + "\n",
+    }
 
 
 @pytest.fixture()

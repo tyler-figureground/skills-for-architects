@@ -77,6 +77,12 @@ class DriveMap:
         return self.control_plane.get("claudeFile", "CLAUDE.md")
 
     @property
+    def agents_file(self) -> str:
+        # Defaults on, unlike a PS1-era key: the house rule is that every
+        # project carries AGENTS.md, whatever drive it is on. ADR 0010.
+        return self.control_plane.get("agentsFile", "AGENTS.md")
+
+    @property
     def analysis_dir(self) -> str:
         return self.control_plane.get("analysisDir", "")
 

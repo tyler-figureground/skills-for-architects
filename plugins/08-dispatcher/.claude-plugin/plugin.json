@@ -1,6 +1,6 @@
 {
   "name": "08-dispatcher",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Smart router and help menu — /architect routes tasks to the right agent or skill, /skills shows what's available.",
   "author": {
     "name": "ALPA",
