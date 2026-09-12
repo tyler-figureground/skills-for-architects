@@ -121,7 +121,10 @@ async def test_edit_project_prepopulates_and_confirms_folder_rename(fixture_driv
         await pilot.pause()
         assert "Folder rename:" in str(app.screen.query_one("#review", Static).render())
         app.screen.query_one("#create-project", Button).press()
-        await pilot.pause()
+        # settle, not pause: the confirm modal can be the active screen a frame
+        # before its buttons are mounted, which is the NoMatches this test used to
+        # raise intermittently (session 8 handoff).
+        await settle(app, pilot)
         assert isinstance(app.screen, ConfirmListModal)
         app.screen.query_one("#ok", Button).press()
         await settle(app, pilot)
